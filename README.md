@@ -1,11 +1,14 @@
 CASCExplorer
 ============
 
-Compiled binaries: [Binaries][].
+You can download compiled binaries here: [Binaries][].
 
 Additional files required in order to work: [Dependencies][].
 
-Make sure to edit path to wow folder in condig file before use.
+Make sure to edit path to wow folder in config file before use.
 
-[Binaries]: http://fbe.am/sku
+[Donate][] to support developer!
+
+[Binaries]: http://fbe.am/skE
 [Dependencies]: http://fbe.am/skt
+[Donate]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=CFDMAA6ELV2G8

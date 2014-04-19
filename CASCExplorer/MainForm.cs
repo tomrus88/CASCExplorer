@@ -8,13 +8,13 @@ using System.Windows.Forms;
 
 namespace CASCExplorer
 {
-    public partial class Form1 : Form
+    public partial class MainForm : Form
     {
         CASCFolder root = new CASCFolder(CASCHandler.Hasher.ComputeHash("root"));
         CASCHandler cascHandler;
         ExtractProgress extractProgress;
 
-        public Form1()
+        public MainForm()
         {
             InitializeComponent();
         }
@@ -44,28 +44,34 @@ namespace CASCExplorer
 
         private void loadDataWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
-            if ((int)e.Result == -1)
+            if (e.Error != null)
             {
-                MessageBox.Show("Error!");
+                MessageBox.Show("Error initializing required data files:\n" + e.Error.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
+            //else if(e.Cancelled)
+            //{
 
-            TreeNode node = folderTree.Nodes.Add("Root [Read only]");
-            node.Tag = root;
-            node.Name = root.Name;
-            node.Nodes.Add(new TreeNode() { Name = "tempnode" });
-            node.Expand();
-            folderTree.SelectedNode = node;
+            //}
+            else
+            {
+                TreeNode node = folderTree.Nodes.Add("Root [Read only]");
+                node.Tag = root;
+                node.Name = root.Name;
+                node.Nodes.Add(new TreeNode() { Name = "tempnode" });
+                node.Expand();
+                folderTree.SelectedNode = node;
 
-            statusProgress.Visible = false;
-            statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", e.Result, cascHandler.NumRootEntries - (int)e.Result);
+                int numFileNames = (int)e.Result;
+
+                statusProgress.Visible = false;
+                statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", numFileNames, cascHandler.NumRootEntries - numFileNames);
+            }
         }
 
         private void loadDataWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            BackgroundWorker worker = sender as BackgroundWorker;
-
-            cascHandler = new CASCHandler(root, worker);
+            cascHandler = new CASCHandler(root, sender as BackgroundWorker);
             e.Result = CASCHandler.FileNames.Count;
         }
 

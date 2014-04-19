@@ -123,6 +123,9 @@ namespace CASCExplorer
                 }
             }
 
+            if (IndexData.Count == 0)
+                throw new FileNotFoundException("idx files missing!");
+
             worker.ReportProgress(0);
 
             if (File.Exists(rootFile))
@@ -132,35 +135,35 @@ namespace CASCExplorer
                 {
                     while (br.BaseStream.Position < br.BaseStream.Length)
                     {
-                        uint count = br.ReadUInt32();
+                        int count = br.ReadInt32();
 
                         RootBlock block = new RootBlock();
                         block.Unk1 = br.ReadUInt32();
                         block.LocaleFlags = br.ReadUInt32();
 
-                        RootEntry[] arr1 = new RootEntry[count];
+                        RootEntry[] entries = new RootEntry[count];
 
                         for (var i = 0; i < count; ++i)
                         {
-                            arr1[i] = new RootEntry();
-                            arr1[i].Block = block;
-                            arr1[i].Unk1 = br.ReadInt32();
+                            entries[i] = new RootEntry();
+                            entries[i].Block = block;
+                            entries[i].Unk1 = br.ReadInt32();
                         }
 
                         for (var i = 0; i < count; ++i)
                         {
-                            arr1[i].MD5 = br.ReadBytes(16);
+                            entries[i].MD5 = br.ReadBytes(16);
 
                             ulong hash = br.ReadUInt64();
-                            arr1[i].Hash = hash;
+                            entries[i].Hash = hash;
 
                             if (!RootData.ContainsKey(hash))
                             {
                                 RootData[hash] = new List<RootEntry>();
-                                RootData[hash].Add(arr1[i]);
+                                RootData[hash].Add(entries[i]);
                             }
                             else
-                                RootData[hash].Add(arr1[i]);
+                                RootData[hash].Add(entries[i]);
                         }
 
                         worker.ReportProgress((int)((float)br.BaseStream.Position / (float)br.BaseStream.Length * 100));
@@ -169,7 +172,7 @@ namespace CASCExplorer
             }
             else
             {
-                MessageBox.Show("root file missing!");
+                throw new FileNotFoundException("root file missing!");
             }
 
             worker.ReportProgress(0);
@@ -235,7 +238,7 @@ namespace CASCExplorer
             }
             else
             {
-                MessageBox.Show("list file missing!");
+                throw new FileNotFoundException("list file missing!");
             }
 
             worker.ReportProgress(0);
@@ -304,7 +307,7 @@ namespace CASCExplorer
             }
             else
             {
-                MessageBox.Show("encoding file missing!");
+                throw new FileNotFoundException("encoding file missing!");
             }
         }
 

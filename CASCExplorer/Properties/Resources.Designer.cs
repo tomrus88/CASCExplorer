@@ -61,6 +61,15 @@ namespace CASCExplorer.Properties {
         }
         
         /// <summary>
+        ///   Looks up a localized string similar to https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&amp;hosted_button_id=CFDMAA6ELV2G8.
+        /// </summary>
+        internal static string donateURL {
+            get {
+                return ResourceManager.GetString("donateURL", resourceCulture);
+            }
+        }
+        
+        /// <summary>
         ///   Looks up a localized resource of type System.Drawing.Icon similar to (Icon).
         /// </summary>
         internal static System.Drawing.Icon folder {
