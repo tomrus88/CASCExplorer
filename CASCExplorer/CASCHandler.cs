@@ -99,7 +99,12 @@ namespace CASCExplorer
             if (!Directory.Exists(wowPath))
                 throw new DirectoryNotFoundException(wowPath);
 
-            foreach (var idx in Directory.EnumerateFiles(Path.Combine(wowPath, "Data\\data\\"), "*.idx"))
+            var idxFiles = GetIdxFiles(wowPath);
+
+            if (idxFiles.Count == 0)
+                throw new FileNotFoundException("idx files missing!");
+
+            foreach (var idx in idxFiles)
             {
                 using (var fs = new FileStream(idx, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                 using (var br = new BinaryReader(fs))
@@ -146,9 +151,6 @@ namespace CASCExplorer
                     }
                 }
             }
-
-            if (IndexData.Count == 0)
-                throw new FileNotFoundException("idx files missing!");
 
             worker.ReportProgress(0);
 
@@ -346,6 +348,21 @@ namespace CASCExplorer
         {
             foreach (var stream in DataStreams)
                 stream.Value.Close();
+        }
+
+        private List<string> GetIdxFiles(string wowPath)
+        {
+            List<string> latestIdx = new List<string>();
+
+            for (int i = 0; i < 0x10; ++i)
+            {
+                var files = Directory.EnumerateFiles(Path.Combine(wowPath, "Data\\data\\"), String.Format("{0:X2}*.idx", i));
+
+                if (files.Count() > 0)
+                    latestIdx.Add(files.Last());
+            }
+
+            return latestIdx;
         }
 
         public List<RootEntry> GetRootInfo(ulong hash)
