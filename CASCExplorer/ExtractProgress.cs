@@ -59,17 +59,7 @@ namespace CASCExplorer
 
                     if (idxInfo != null)
                     {
-                        var stream = cascHandler.GetDataStream(idxInfo.DataIndex);
-
-                        stream.BaseStream.Position = idxInfo.Offset;
-
-                        byte[] unkHash = stream.ReadBytes(16);
-                        int size = stream.ReadInt32();
-                        byte[] unkData1 = stream.ReadBytes(2);
-                        byte[] unkData2 = stream.ReadBytes(8);
-
-                        BLTEHandler blte = new BLTEHandler(stream, size);
-                        blte.ExtractData(ExtractPath, file.FullName);
+                        cascHandler.ExtractBLTE(idxInfo, ExtractPath, file.FullName);
                     }
                 }
             }

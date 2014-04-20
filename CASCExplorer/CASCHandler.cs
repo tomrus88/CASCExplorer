@@ -132,9 +132,10 @@ namespace CASCExplorer
                         info.Offset = (indexLow & 0x3FFFFFFF);
                         info.Size = br.ReadInt32();
 
-                        IndexData[key] = info; // duplicate keys wtf...
-                        //if (!IndexData.ContainsKey(key))
-                        //    IndexData.Add(key, info);
+                        // duplicate keys wtf...
+                        //IndexData[key] = info; // use last key
+                        if (!IndexData.ContainsKey(key)) // use first key
+                            IndexData.Add(key, info);
                     }
 
                     padPos = (dataLen + 0x0FFF) & 0xFFFFF000;
@@ -357,24 +358,14 @@ namespace CASCExplorer
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for root file missing!");
 
-            foreach (var key in encInfo.Keys)
+            if (encInfo.Keys.Count > 1)
+                throw new FileNotFoundException("multiple encoding info for root file found!");
+
+            var idxInfo = GetIndexInfo(encInfo.Keys[0]);
+
+            if (idxInfo != null)
             {
-                var idxInfo = GetIndexInfo(key);
-
-                if (idxInfo != null)
-                {
-                    var stream = GetDataStream(idxInfo.DataIndex);
-
-                    stream.BaseStream.Position = idxInfo.Offset;
-
-                    byte[] unkHash = stream.ReadBytes(16);
-                    int size = stream.ReadInt32();
-                    byte[] unkData1 = stream.ReadBytes(2);
-                    byte[] unkData2 = stream.ReadBytes(8);
-
-                    BLTEHandler blte = new BLTEHandler(stream, size);
-                    blte.ExtractData(".", "root");
-                }
+                ExtractBLTE(idxInfo, ".", "root");
             }
         }
 
@@ -382,9 +373,22 @@ namespace CASCExplorer
         {
             var idxInfo = GetIndexInfo(BuildConfig.EncodingKey);
 
+            if (idxInfo != null)
+            {
+                ExtractBLTE(idxInfo, ".", "encoding");
+            }
+        }
+
+        public void ExtractBLTE(IndexEntry idxInfo, string path, string name)
+        {
             var stream = GetDataStream(idxInfo.DataIndex);
 
             stream.BaseStream.Position = idxInfo.Offset;
+
+            byte[] unkHash = stream.ReadBytes(16);
+            int size = stream.ReadInt32();
+            byte[] unkData1 = stream.ReadBytes(2);
+            byte[] unkData2 = stream.ReadBytes(8);
 
             BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size);
             blte.ExtractData(".", "encoding");
