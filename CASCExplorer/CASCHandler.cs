@@ -152,6 +152,81 @@ namespace CASCExplorer
                 }
             }
 
+            BuildConfig.Load(wowPath);
+
+            ExtractEncodingFile();
+
+            worker.ReportProgress(0);
+
+            if (File.Exists(encodingFile))
+            {
+                using (var fs = new FileStream(encodingFile, FileMode.Open))
+                using (var br = new BinaryReader(fs))
+                {
+                    br.ReadBytes(2); // EN
+                    byte b1 = br.ReadByte();
+                    byte b2 = br.ReadByte();
+                    byte b3 = br.ReadByte();
+                    ushort s1 = br.ReadUInt16();
+                    ushort s2 = br.ReadUInt16();
+                    int numEntries = br.ReadInt32BE();
+                    int i1 = br.ReadInt32BE();
+                    byte b4 = br.ReadByte();
+                    int entriesOfs = br.ReadInt32BE();
+
+                    br.BaseStream.Position += entriesOfs; // skip strings
+
+                    for (int i = 0; i < numEntries; ++i)
+                    {
+                        br.ReadBytes(16);
+                        br.ReadBytes(16);
+                    }
+
+                    for (int i = 0; i < numEntries; ++i)
+                    {
+                        ushort keysCount;
+
+                        while ((keysCount = br.ReadUInt16()) != 0)
+                        {
+                            int fileSize = br.ReadInt32BE();
+                            byte[] md5 = br.ReadBytes(16);
+
+                            var entry = new EncodingEntry();
+                            entry.Size = fileSize;
+                            entry.MD5 = md5;
+
+                            for (int ki = 0; ki < keysCount; ++ki)
+                            {
+                                byte[] key = br.ReadBytes(16);
+
+                                entry.Keys.Add(key);
+                            }
+
+                            //Encodings[md5] = entry;
+                            EncodingData.Add(md5, entry);
+                        }
+
+                        //br.ReadBytes(28);
+                        while (br.PeekChar() == 0)
+                            br.BaseStream.Position++;
+
+                        worker.ReportProgress((int)((float)br.BaseStream.Position / (float)br.BaseStream.Length * 100));
+                    }
+                    //var pos = br.BaseStream.Position;
+                    //for (int i = 0; i < i1; ++i)
+                    //{
+                    //    br.ReadBytes(16);
+                    //    br.ReadBytes(16);
+                    //}
+                }
+            }
+            else
+            {
+                throw new FileNotFoundException("encoding file missing!");
+            }
+
+            ExtractRootFile();
+
             worker.ReportProgress(0);
 
             if (File.Exists(rootFile))
@@ -273,75 +348,46 @@ namespace CASCExplorer
             {
                 throw new FileNotFoundException("list file missing!");
             }
+        }
 
-            worker.ReportProgress(0);
+        private void ExtractRootFile()
+        {
+            var encInfo = GetEncodingInfo(BuildConfig.RootMD5);
 
-            if (File.Exists(encodingFile))
+            if (encInfo == null)
+                throw new FileNotFoundException("encoding info for root file missing!");
+
+            foreach (var key in encInfo.Keys)
             {
-                using (var fs = new FileStream(encodingFile, FileMode.Open))
-                using (var br = new BinaryReader(fs))
+                var idxInfo = GetIndexInfo(key);
+
+                if (idxInfo != null)
                 {
-                    br.ReadBytes(2); // EN
-                    byte b1 = br.ReadByte();
-                    byte b2 = br.ReadByte();
-                    byte b3 = br.ReadByte();
-                    ushort s1 = br.ReadUInt16();
-                    ushort s2 = br.ReadUInt16();
-                    int numEntries = br.ReadInt32BE();
-                    int i1 = br.ReadInt32BE();
-                    byte b4 = br.ReadByte();
-                    int entriesOfs = br.ReadInt32BE();
+                    var stream = GetDataStream(idxInfo.DataIndex);
 
-                    br.BaseStream.Position += entriesOfs; // skip strings
+                    stream.BaseStream.Position = idxInfo.Offset;
 
-                    for (int i = 0; i < numEntries; ++i)
-                    {
-                        br.ReadBytes(16);
-                        br.ReadBytes(16);
-                    }
+                    byte[] unkHash = stream.ReadBytes(16);
+                    int size = stream.ReadInt32();
+                    byte[] unkData1 = stream.ReadBytes(2);
+                    byte[] unkData2 = stream.ReadBytes(8);
 
-                    for (int i = 0; i < numEntries; ++i)
-                    {
-                        ushort keysCount;
-
-                        while ((keysCount = br.ReadUInt16()) != 0)
-                        {
-                            int fileSize = br.ReadInt32BE();
-                            byte[] md5 = br.ReadBytes(16);
-
-                            var entry = new EncodingEntry();
-                            entry.Size = fileSize;
-                            entry.MD5 = md5;
-
-                            for (int ki = 0; ki < keysCount; ++ki)
-                            {
-                                byte[] key = br.ReadBytes(16);
-
-                                entry.Keys.Add(key);
-                            }
-
-                            //Encodings[md5] = entry;
-                            EncodingData.Add(md5, entry);
-                        }
-
-                        //br.ReadBytes(28);
-                        while (br.PeekChar() == 0)
-                            br.BaseStream.Position++;
-
-                        worker.ReportProgress((int)((float)br.BaseStream.Position / (float)br.BaseStream.Length * 100));
-                    }
-                    //var pos = br.BaseStream.Position;
-                    //for (int i = 0; i < i1; ++i)
-                    //{
-                    //    br.ReadBytes(16);
-                    //    br.ReadBytes(16);
-                    //}
+                    BLTEHandler blte = new BLTEHandler(stream, size);
+                    blte.ExtractData(".", "root");
                 }
             }
-            else
-            {
-                throw new FileNotFoundException("encoding file missing!");
-            }
+        }
+
+        private void ExtractEncodingFile()
+        {
+            var idxInfo = GetIndexInfo(BuildConfig.EncodingKey);
+
+            var stream = GetDataStream(idxInfo.DataIndex);
+
+            stream.BaseStream.Position = idxInfo.Offset;
+
+            BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size);
+            blte.ExtractData(".", "encoding");
         }
 
         ~CASCHandler()
