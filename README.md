@@ -7,5 +7,5 @@ Make sure to edit path to wow folder in config file before use.
 
 [Donate][Donate] to support developer!
 
-[Binaries]: http://fbe.am/slF
+[Binaries]: http://fbe.am/sm4
 [Donate]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=CFDMAA6ELV2G8

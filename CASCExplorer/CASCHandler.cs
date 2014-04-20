@@ -391,7 +391,7 @@ namespace CASCExplorer
             byte[] unkData2 = stream.ReadBytes(8);
 
             BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size);
-            blte.ExtractData(".", "encoding");
+            blte.ExtractData(path, name);
         }
 
         ~CASCHandler()
