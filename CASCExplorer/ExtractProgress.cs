@@ -33,11 +33,11 @@ namespace CASCExplorer
             progressBar1.Value = 0;
         }
 
-        private void ExtractFile(string name)
+        private void ExtractFile(CASCFile file)
         {
             backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)NumFiles * 100));
 
-            var rootInfos = cascHandler.GetRootInfo(CASCHandler.Hasher.ComputeHash(name));
+            var rootInfos = cascHandler.GetRootInfo(file.Hash);
 
             if (rootInfos == null)
                 return;
@@ -68,7 +68,7 @@ namespace CASCExplorer
                         byte[] unkData2 = stream.ReadBytes(8);
 
                         BLTEHandler blte = new BLTEHandler(stream, size);
-                        blte.ExtractData(ExtractPath, name);
+                        blte.ExtractData(ExtractPath, file.FullName);
                     }
                 }
             }
@@ -113,7 +113,7 @@ namespace CASCExplorer
                     ICASCEntry entry = folder.SubEntries.ElementAt(index).Value;
 
                     if (entry is CASCFile)
-                        ExtractFile((entry as CASCFile).FullName);
+                        ExtractFile(entry as CASCFile);
                     else
                         ExtractData(entry as CASCFolder, null);
                 }
@@ -123,7 +123,7 @@ namespace CASCExplorer
                 foreach (var entry in folder.SubEntries)
                 {
                     if (entry.Value is CASCFile)
-                        ExtractFile((entry.Value as CASCFile).FullName);
+                        ExtractFile(entry.Value as CASCFile);
                     else
                         ExtractData(entry.Value as CASCFolder, null);
                 }
