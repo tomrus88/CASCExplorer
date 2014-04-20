@@ -165,6 +165,9 @@ namespace CASCExplorer
                         block.Unk1 = br.ReadUInt32();
                         block.Flags = (LocaleFlags)br.ReadUInt32();
 
+                        if (block.Flags == LocaleFlags.None)
+                            throw new Exception("block.Flags == LocaleFlags.None");
+
                         RootEntry[] entries = new RootEntry[count];
 
                         for (var i = 0; i < count; ++i)
@@ -180,6 +183,10 @@ namespace CASCExplorer
 
                             ulong hash = br.ReadUInt64();
                             entries[i].Hash = hash;
+
+                            // don't load other locales
+                            //if (block.Flags != LocaleFlags.All && (block.Flags & LocaleFlags.enUS) == 0)
+                            //    continue;
 
                             if (!RootData.ContainsKey(hash))
                             {

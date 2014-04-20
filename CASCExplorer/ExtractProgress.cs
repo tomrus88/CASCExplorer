@@ -44,7 +44,8 @@ namespace CASCExplorer
 
             foreach (var rootInfo in rootInfos)
             {
-                if (rootInfo.Block.Flags != 0 && (rootInfo.Block.Flags & LocaleFlags.enUS) == 0)
+                // only enUS and All atm
+                if (rootInfo.Block.Flags != LocaleFlags.All && (rootInfo.Block.Flags & LocaleFlags.enUS) == 0)
                     continue;
 
                 var encInfo = cascHandler.GetEncodingInfo(rootInfo.MD5);
