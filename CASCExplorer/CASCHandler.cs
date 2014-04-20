@@ -132,7 +132,7 @@ namespace CASCExplorer
                         info.Offset = (indexLow & 0x3FFFFFFF);
                         info.Size = br.ReadInt32();
 
-                        IndexData[key] = info; // multiple keys...
+                        IndexData[key] = info; // duplicate keys wtf...
                         //if (!IndexData.ContainsKey(key))
                         //    IndexData.Add(key, info);
                     }
