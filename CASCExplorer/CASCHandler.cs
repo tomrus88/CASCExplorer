@@ -8,10 +8,34 @@ using System.Windows.Forms;
 
 namespace CASCExplorer
 {
+    [Flags]
+    public enum LocaleFlags
+    {
+        All = -1,
+        None = 0,
+        Unk_1 = 0x1,
+        enUS = 0x2,
+        koKR = 0x4,
+        Unk_8 = 0x8,
+        frFR = 0x10,
+        deDE = 0x20,
+        zhCN = 0x40,
+        esES = 0x80,
+        zhTW = 0x100,
+        enGB = 0x200,
+        enCN = 0x400,
+        enTW = 0x800,
+        esMX = 0x1000,
+        ruRU = 0x2000,
+        ptBR = 0x4000,
+        itIT = 0x8000,
+        ptPT = 0x10000
+    }
+
     public class RootBlock
     {
         public uint Unk1;
-        public uint LocaleFlags;
+        public LocaleFlags Flags;
     }
 
     public class RootEntry
@@ -23,7 +47,7 @@ namespace CASCExplorer
 
         public override string ToString()
         {
-            return String.Format("Block: {0:X8} {1:X8}, File: {2:X8} {3}", Block.Unk1, Block.LocaleFlags, Unk1, MD5.ToHexString());
+            return String.Format("Block: {0:X8} {1:X8}, File: {2:X8} {3}", Block.Unk1, Block.Flags, Unk1, MD5.ToHexString());
         }
     }
 
@@ -139,7 +163,7 @@ namespace CASCExplorer
 
                         RootBlock block = new RootBlock();
                         block.Unk1 = br.ReadUInt32();
-                        block.LocaleFlags = br.ReadUInt32();
+                        block.Flags = (LocaleFlags)br.ReadUInt32();
 
                         RootEntry[] entries = new RootEntry[count];
 

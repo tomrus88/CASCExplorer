@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.Linq;
 using System.Windows.Forms;
+using System.ComponentModel;
 
 namespace CASCExplorer
 {
@@ -26,7 +27,9 @@ namespace CASCExplorer
             selection = _selection.Cast<int>().ToArray();
 
             NumExtracted = 0;
+
             NumFiles = GetFilesCount(folder, selection);
+
             progressBar1.Value = 0;
         }
 
@@ -41,7 +44,7 @@ namespace CASCExplorer
 
             foreach (var rootInfo in rootInfos)
             {
-                if (rootInfo.Block.LocaleFlags != 0 && (rootInfo.Block.LocaleFlags & 0x2) == 0)
+                if (rootInfo.Block.Flags != 0 && (rootInfo.Block.Flags & LocaleFlags.enUS) == 0)
                     continue;
 
                 var encInfo = cascHandler.GetEncodingInfo(rootInfo.MD5);
@@ -148,17 +151,17 @@ namespace CASCExplorer
             backgroundWorker1.RunWorkerAsync();
         }
 
-        private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
+        private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
             ExtractData(folder, selection);
         }
 
-        private void backgroundWorker1_ProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
+        private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             progressBar1.Value = e.ProgressPercentage;
         }
 
-        private void backgroundWorker1_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
+        private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             Hide();
         }

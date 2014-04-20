@@ -151,7 +151,21 @@ namespace CASCExplorer
                 return;
 
             ICASCEntry entry = folder.SubEntries.ElementAt(e.ItemIndex).Value;
-            var item = new ListViewItem(new string[] { entry.Name, entry is CASCFolder ? "Folder" : "File" });
+
+            var flags = LocaleFlags.None;
+
+            if (entry is CASCFile)
+            {
+                var rootInfos = cascHandler.GetRootInfo(entry.Hash);
+
+                if (rootInfos == null)
+                    throw new Exception("root entry missing!");
+
+                foreach (var rootInfo in rootInfos)
+                    flags |= rootInfo.Block.Flags;
+            }
+
+            var item = new ListViewItem(new string[] { entry.Name, entry is CASCFolder ? "Folder" : "File", flags.ToString() });
             item.ImageIndex = entry is CASCFolder ? 0 : 2;
             e.Item = item;
         }
@@ -207,6 +221,7 @@ namespace CASCExplorer
 
             if (extractProgress == null)
                 extractProgress = new ExtractProgress();
+
             extractProgress.SetExtractData(cascHandler, folder, fileList.SelectedIndices);
             extractProgress.ShowDialog();
         }
