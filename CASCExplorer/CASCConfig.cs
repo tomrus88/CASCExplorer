@@ -87,9 +87,24 @@ namespace CASCExplorer
 
     class CASCConfig
     {
-        public static VerBarConfig BuildInfo;
-        public static KeyValueConfig BuildConfig;
-        public static KeyValueConfig CDNConfig;
+        static VerBarConfig _BuildInfo;
+        static KeyValueConfig _BuildConfig;
+        static KeyValueConfig _CDNConfig;
+
+        public static VerBarConfig BuildInfo
+        {
+            get { return _BuildInfo; }
+        }
+
+        public static KeyValueConfig BuildConfig
+        {
+            get { return _BuildConfig; }
+        }
+
+        public static KeyValueConfig CDNConfig
+        {
+            get { return _CDNConfig; }
+        }
 
         public static void Load()
         {
@@ -97,21 +112,21 @@ namespace CASCExplorer
 
             string buildInfoPath = Path.Combine(wowPath, ".build.info");
 
-            BuildInfo = new VerBarConfig(buildInfoPath);
+            _BuildInfo = new VerBarConfig(buildInfoPath);
 
             // Build Configuration
             string buildKey = BuildInfo["Build Key"][0];
 
             string buildCfgPath = Path.Combine(wowPath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
 
-            BuildConfig = new KeyValueConfig(buildCfgPath);
+            _BuildConfig = new KeyValueConfig(buildCfgPath);
 
             // CDN Configuration 
             string cdnKey = BuildInfo["CDN Key"][0];
 
             string cdnCfgPath = Path.Combine(wowPath, "Data\\config\\", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
 
-            CDNConfig = new KeyValueConfig(cdnCfgPath);
+            _CDNConfig = new KeyValueConfig(cdnCfgPath);
         }
 
         public static byte[] EncodingKey
