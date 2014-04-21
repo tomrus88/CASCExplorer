@@ -30,7 +30,29 @@ namespace CASCExplorer
             this.size = size;
         }
 
-        public void ExtractData(string path, string name)
+        public void ExtractToFile(string path, string name)
+        {
+            var fullPath = Path.Combine(path, name);
+            var dir = Path.GetDirectoryName(fullPath);
+
+            if (!Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+            using (var f = File.Open(fullPath, FileMode.Create))
+            {
+                ExtractData(f);
+            }
+        }
+
+        public MemoryStream OpenFile()
+        {
+            MemoryStream ms = new MemoryStream();
+            ExtractData(ms);
+            ms.Position = 0;
+            return ms;
+        }
+
+        public void ExtractData(Stream stream)
         {
             int magic = reader.ReadInt32(); // BLTE (raw)
 
@@ -38,7 +60,6 @@ namespace CASCExplorer
             {
                 throw new InvalidDataException("BLTEHandler: magic");
             }
-
             int frameHeaderSize = reader.ReadInt32BE();
             int chunkCount = 0;
             int totalSize = 0;
@@ -46,39 +67,40 @@ namespace CASCExplorer
             if (frameHeaderSize == 0)
             {
                 totalSize = size - 38;
+                chunkCount = 1;
 
-                long pos = reader.BaseStream.Position;
+                //long pos = reader.BaseStream.Position;
 
-                reader.BaseStream.Position += totalSize + 30;
+                //reader.BaseStream.Position += totalSize + 30;
 
-                if (reader.BaseStream.Position < reader.BaseStream.Length)
-                {
-                    magic = reader.ReadInt32();
-                    reader.BaseStream.Position = pos;
+                //if (reader.BaseStream.Position < reader.BaseStream.Length)
+                //{
+                //    magic = reader.ReadInt32();
+                //    reader.BaseStream.Position = pos;
 
-                    if (magic != 0x45544c42)
-                    {
-                        while (reader.BaseStream.Position < reader.BaseStream.Length - 4)
-                        {
-                            magic = reader.ReadInt32();
+                //    if (magic != 0x45544c42)
+                //    {
+                //        while (reader.BaseStream.Position < reader.BaseStream.Length - 4)
+                //        {
+                //            magic = reader.ReadInt32();
 
-                            if (magic != 0x45544c42)
-                            {
-                                reader.BaseStream.Position -= 3;
-                            }
-                            else
-                            {
-                                totalSize = (int)reader.BaseStream.Position - (int)pos - (4 + 4 + 10 + 16);
-                                reader.BaseStream.Position = pos;
-                                break;
-                            }
-                        }
-                    }
-                }
-                else
-                {
-                    reader.BaseStream.Position = pos;
-                }
+                //            if (magic != 0x45544c42)
+                //            {
+                //                reader.BaseStream.Position -= 3;
+                //            }
+                //            else
+                //            {
+                //                totalSize = (int)reader.BaseStream.Position - (int)pos - (4 + 4 + 10 + 16);
+                //                reader.BaseStream.Position = pos;
+                //                break;
+                //            }
+                //        }
+                //    }
+                //}
+                //else
+                //{
+                //    reader.BaseStream.Position = pos;
+                //}
             }
             else
             {
@@ -103,118 +125,72 @@ namespace CASCExplorer
             for (int i = 0; i < chunkCount; ++i)
             {
                 chunks[i] = new BLTEChunk();
-                chunks[i].compSize = reader.ReadInt32BE();
-                chunks[i].decompSize = reader.ReadInt32BE();
-                chunks[i].hash = reader.ReadBytes(16);
-            }
 
-            var fullPath = Path.Combine(path, name);
-            var dir = Path.GetDirectoryName(fullPath);
-
-            if (!Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
-
-            using (var f = File.Open(fullPath, FileMode.Create))
-            {
-                if (chunkCount == 0)
+                if (frameHeaderSize != 0)
                 {
-                    byte[] soloData = reader.ReadBytes(totalSize);
-
-                    switch (soloData[0])
-                    {
-                        //case 0x45: // E
-                        //    break;
-                        //case 0x46: // F
-                        //    break;
-                        case 0x4E: // N
-                            {
-                                f.Write(soloData, 1, totalSize);
-                            }
-                            break;
-                        case 0x5A: // Z
-                            {
-                                byte[] dec = Decompress(soloData);
-
-                                f.Write(dec, 0, dec.Length);
-                            }
-                            break;
-                        default:
-                            throw new InvalidDataException("Unknown byte at switch case!");
-                    }
+                    chunks[i].compSize = reader.ReadInt32BE();
+                    chunks[i].decompSize = reader.ReadInt32BE();
+                    chunks[i].hash = reader.ReadBytes(16);
                 }
                 else
                 {
-                    for (int i = 0; i < chunkCount; ++i)
+                    chunks[i].compSize = totalSize;
+                    chunks[i].decompSize = totalSize; // -1?
+                    chunks[i].hash = null;
+                }
+            }
+
+            for (int i = 0; i < chunkCount; ++i)
+            {
+                chunks[i].data = reader.ReadBytes(chunks[i].compSize);
+
+                if (frameHeaderSize != 0)
+                {
+                    byte[] hh = md5.ComputeHash(chunks[i].data);
+
+                    if (!hh.VerifyHash(chunks[i].hash))
                     {
-                        chunks[i].data = reader.ReadBytes(chunks[i].compSize);
-
-                        byte[] hh = md5.ComputeHash(chunks[i].data);
-
-                        if (!hh.VerifyHash(chunks[i].hash))
-                        {
-                            throw new InvalidDataException("MD5 missmatch!");
-                        }
-
-                        switch (chunks[i].data[0])
-                        {
-                            //case 0x45: // E
-                            //    break;
-                            //case 0x46: // F
-                            //    break;
-                            case 0x4E: // N
-                                {
-                                    if (chunks[i].data.Length - 1 != chunks[i].decompSize)
-                                    {
-                                        throw new InvalidDataException("Possible error (1) !");
-                                    }
-
-                                    f.Write(chunks[i].data, 1, chunks[i].decompSize);
-                                }
-                                break;
-                            case 0x5A: // Z
-                                {
-                                    byte[] dec = Decompress(chunks[i].decompSize, chunks[i].data);
-
-                                    f.Write(dec, 0, dec.Length);
-                                }
-                                break;
-                            default:
-                                throw new InvalidDataException("Unknown byte at switch case!");
-                        }
+                        throw new InvalidDataException("MD5 missmatch!");
                     }
+                }
+
+                switch (chunks[i].data[0])
+                {
+                    //case 0x45: // E
+                    //    break;
+                    //case 0x46: // F
+                    //    break;
+                    case 0x4E: // N
+                        {
+                            if (chunks[i].data.Length - 1 != chunks[i].decompSize)
+                            {
+                                throw new InvalidDataException("Possible error (1) !");
+                            }
+
+                            stream.Write(chunks[i].data, 1, chunks[i].decompSize);
+                        }
+                        break;
+                    case 0x5A: // Z
+                        {
+                            Decompress(stream, chunks[i].data);
+                        }
+                        break;
+                    default:
+                        throw new InvalidDataException("Unknown byte at switch case!");
                 }
             }
         }
 
-        private byte[] Decompress(int size, byte[] data)
+        private void Decompress(Stream outS, byte[] data)
         {
-            var output = new byte[size];
-
-            using (var dStream = new DeflateStream(new MemoryStream(data, 3, data.Length - 3), CompressionMode.Decompress))
-            {
-                dStream.Read(output, 0, output.Length);
-            }
-
-            return output;
-        }
-
-        private byte[] Decompress(byte[] data)
-        {
-            MemoryStream outS = new MemoryStream();
-
-            byte[] buf = new byte[512];
+            byte[] buf = new byte[0x80000];
 
             using (var dStream = new DeflateStream(new MemoryStream(data, 3, data.Length - 3), CompressionMode.Decompress))
             {
                 int len;
                 while ((len = dStream.Read(buf, 0, buf.Length)) > 0)
-                {
-                    // Write the data block to the decompressed output stream
                     outS.Write(buf, 0, len);
-                }
             }
-
-            return outS.ToArray();
         }
     }
 }

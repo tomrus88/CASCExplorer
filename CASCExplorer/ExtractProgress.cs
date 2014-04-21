@@ -25,11 +25,8 @@ namespace CASCExplorer
             cascHandler = _cascHandler;
             folder = _folder;
             selection = _selection.Cast<int>().ToArray();
-
             NumExtracted = 0;
-
             NumFiles = GetFilesCount(folder, selection);
-
             progressBar1.Value = 0;
         }
 
@@ -57,33 +54,33 @@ namespace CASCExplorer
                 {
                     var idxInfo = cascHandler.GetIndexInfo(key);
 
-                    if (idxInfo != null)
-                    {
-                        cascHandler.ExtractBLTE(idxInfo, ExtractPath, file.FullName);
-                    }
+                    if (idxInfo == null)
+                        continue;
+
+                    cascHandler.ExtractBLTE(idxInfo, ExtractPath, file.FullName);
                 }
             }
         }
 
-        private int GetFilesCount(CASCFolder folder, IEnumerable<int> selection)
+        private int GetFilesCount(CASCFolder _folder, IEnumerable<int> _selection)
         {
             int count = 0;
 
-            if (selection != null)
+            if (_selection != null)
             {
-                foreach (int index in selection)
+                foreach (int index in _selection)
                 {
-                    ICASCEntry entry = folder.SubEntries.ElementAt(index).Value;
+                    var entry = _folder.SubEntries.ElementAt(index);
 
-                    if (entry is CASCFile)
+                    if (entry.Value is CASCFile)
                         count++;
                     else
-                        count += GetFilesCount(entry as CASCFolder, null);
+                        count += GetFilesCount(entry.Value as CASCFolder, null);
                 }
             }
             else
             {
-                foreach (var entry in folder.SubEntries)
+                foreach (var entry in _folder.SubEntries)
                 {
                     if (entry.Value is CASCFile)
                         count++;
@@ -95,23 +92,23 @@ namespace CASCExplorer
             return count;
         }
 
-        private void ExtractData(CASCFolder folder, IEnumerable<int> selection)
+        private void ExtractData(CASCFolder _folder, IEnumerable<int> _selection)
         {
-            if (selection != null)
+            if (_selection != null)
             {
-                foreach (int index in selection)
+                foreach (int index in _selection)
                 {
-                    ICASCEntry entry = folder.SubEntries.ElementAt(index).Value;
+                    var entry = _folder.SubEntries.ElementAt(index);
 
-                    if (entry is CASCFile)
-                        ExtractFile(entry as CASCFile);
+                    if (entry.Value is CASCFile)
+                        ExtractFile(entry.Value as CASCFile);
                     else
-                        ExtractData(entry as CASCFolder, null);
+                        ExtractData(entry.Value as CASCFolder, null);
                 }
             }
             else
             {
-                foreach (var entry in folder.SubEntries)
+                foreach (var entry in _folder.SubEntries)
                 {
                     if (entry.Value is CASCFile)
                         ExtractFile(entry.Value as CASCFile);

@@ -73,8 +73,6 @@ namespace CASCExplorer
     public class CASCHandler
     {
         readonly string listFile = Path.Combine(Application.StartupPath, "listfile.txt");
-        readonly string rootFile = Path.Combine(Application.StartupPath, "root");
-        readonly string encodingFile = Path.Combine(Application.StartupPath, "encoding");
 
         static readonly ByteArrayComparer comparer = new ByteArrayComparer();
 
@@ -103,6 +101,10 @@ namespace CASCExplorer
 
             if (idxFiles.Count == 0)
                 throw new FileNotFoundException("idx files missing!");
+
+            worker.ReportProgress(0);
+
+            int idxIndex = 0;
 
             foreach (var idx in idxFiles)
             {
@@ -151,137 +153,121 @@ namespace CASCExplorer
                         throw new Exception("idx file under read");
                     }
                 }
+
+                worker.ReportProgress((int)((float)++idxIndex / (float)idxFiles.Count * 100));
             }
 
             BuildConfig.Load(wowPath);
 
-            ExtractEncodingFile();
+            worker.ReportProgress(0);
+
+            using (var fs = OpenEncodingFile())
+            using (var br = new BinaryReader(fs))
+            {
+                br.ReadBytes(2); // EN
+                byte b1 = br.ReadByte();
+                byte b2 = br.ReadByte();
+                byte b3 = br.ReadByte();
+                ushort s1 = br.ReadUInt16();
+                ushort s2 = br.ReadUInt16();
+                int numEntries = br.ReadInt32BE();
+                int i1 = br.ReadInt32BE();
+                byte b4 = br.ReadByte();
+                int entriesOfs = br.ReadInt32BE();
+
+                br.BaseStream.Position += entriesOfs; // skip strings
+
+                for (int i = 0; i < numEntries; ++i)
+                {
+                    br.ReadBytes(16);
+                    br.ReadBytes(16);
+                }
+
+                for (int i = 0; i < numEntries; ++i)
+                {
+                    ushort keysCount;
+
+                    while ((keysCount = br.ReadUInt16()) != 0)
+                    {
+                        int fileSize = br.ReadInt32BE();
+                        byte[] md5 = br.ReadBytes(16);
+
+                        var entry = new EncodingEntry();
+                        entry.Size = fileSize;
+                        entry.MD5 = md5;
+
+                        for (int ki = 0; ki < keysCount; ++ki)
+                        {
+                            byte[] key = br.ReadBytes(16);
+
+                            entry.Keys.Add(key);
+                        }
+
+                        //Encodings[md5] = entry;
+                        EncodingData.Add(md5, entry);
+                    }
+
+                    //br.ReadBytes(28);
+                    while (br.PeekChar() == 0)
+                        br.BaseStream.Position++;
+
+                    worker.ReportProgress((int)((float)br.BaseStream.Position / (float)br.BaseStream.Length * 100));
+                }
+                //var pos = br.BaseStream.Position;
+                //for (int i = 0; i < i1; ++i)
+                //{
+                //    br.ReadBytes(16);
+                //    br.ReadBytes(16);
+                //}
+            }
 
             worker.ReportProgress(0);
 
-            if (File.Exists(encodingFile))
+            using (var fs = OpenRootFile())
+            using (var br = new BinaryReader(fs))
             {
-                using (var fs = new FileStream(encodingFile, FileMode.Open))
-                using (var br = new BinaryReader(fs))
+                while (br.BaseStream.Position < br.BaseStream.Length)
                 {
-                    br.ReadBytes(2); // EN
-                    byte b1 = br.ReadByte();
-                    byte b2 = br.ReadByte();
-                    byte b3 = br.ReadByte();
-                    ushort s1 = br.ReadUInt16();
-                    ushort s2 = br.ReadUInt16();
-                    int numEntries = br.ReadInt32BE();
-                    int i1 = br.ReadInt32BE();
-                    byte b4 = br.ReadByte();
-                    int entriesOfs = br.ReadInt32BE();
+                    int count = br.ReadInt32();
 
-                    br.BaseStream.Position += entriesOfs; // skip strings
+                    RootBlock block = new RootBlock();
+                    block.Unk1 = br.ReadUInt32();
+                    block.Flags = (LocaleFlags)br.ReadUInt32();
 
-                    for (int i = 0; i < numEntries; ++i)
+                    if (block.Flags == LocaleFlags.None)
+                        throw new Exception("block.Flags == LocaleFlags.None");
+
+                    RootEntry[] entries = new RootEntry[count];
+
+                    for (var i = 0; i < count; ++i)
                     {
-                        br.ReadBytes(16);
-                        br.ReadBytes(16);
+                        entries[i] = new RootEntry();
+                        entries[i].Block = block;
+                        entries[i].Unk1 = br.ReadInt32();
                     }
 
-                    for (int i = 0; i < numEntries; ++i)
+                    for (var i = 0; i < count; ++i)
                     {
-                        ushort keysCount;
+                        entries[i].MD5 = br.ReadBytes(16);
 
-                        while ((keysCount = br.ReadUInt16()) != 0)
+                        ulong hash = br.ReadUInt64();
+                        entries[i].Hash = hash;
+
+                        // don't load other locales
+                        //if (block.Flags != LocaleFlags.All && (block.Flags & LocaleFlags.enUS) == 0)
+                        //    continue;
+
+                        if (!RootData.ContainsKey(hash))
                         {
-                            int fileSize = br.ReadInt32BE();
-                            byte[] md5 = br.ReadBytes(16);
-
-                            var entry = new EncodingEntry();
-                            entry.Size = fileSize;
-                            entry.MD5 = md5;
-
-                            for (int ki = 0; ki < keysCount; ++ki)
-                            {
-                                byte[] key = br.ReadBytes(16);
-
-                                entry.Keys.Add(key);
-                            }
-
-                            //Encodings[md5] = entry;
-                            EncodingData.Add(md5, entry);
+                            RootData[hash] = new List<RootEntry>();
+                            RootData[hash].Add(entries[i]);
                         }
-
-                        //br.ReadBytes(28);
-                        while (br.PeekChar() == 0)
-                            br.BaseStream.Position++;
-
-                        worker.ReportProgress((int)((float)br.BaseStream.Position / (float)br.BaseStream.Length * 100));
+                        else
+                            RootData[hash].Add(entries[i]);
                     }
-                    //var pos = br.BaseStream.Position;
-                    //for (int i = 0; i < i1; ++i)
-                    //{
-                    //    br.ReadBytes(16);
-                    //    br.ReadBytes(16);
-                    //}
+
+                    worker.ReportProgress((int)((float)br.BaseStream.Position / (float)br.BaseStream.Length * 100));
                 }
-            }
-            else
-            {
-                throw new FileNotFoundException("encoding file missing!");
-            }
-
-            ExtractRootFile();
-
-            worker.ReportProgress(0);
-
-            if (File.Exists(rootFile))
-            {
-                using (var fs = new FileStream(rootFile, FileMode.Open))
-                using (var br = new BinaryReader(fs))
-                {
-                    while (br.BaseStream.Position < br.BaseStream.Length)
-                    {
-                        int count = br.ReadInt32();
-
-                        RootBlock block = new RootBlock();
-                        block.Unk1 = br.ReadUInt32();
-                        block.Flags = (LocaleFlags)br.ReadUInt32();
-
-                        if (block.Flags == LocaleFlags.None)
-                            throw new Exception("block.Flags == LocaleFlags.None");
-
-                        RootEntry[] entries = new RootEntry[count];
-
-                        for (var i = 0; i < count; ++i)
-                        {
-                            entries[i] = new RootEntry();
-                            entries[i].Block = block;
-                            entries[i].Unk1 = br.ReadInt32();
-                        }
-
-                        for (var i = 0; i < count; ++i)
-                        {
-                            entries[i].MD5 = br.ReadBytes(16);
-
-                            ulong hash = br.ReadUInt64();
-                            entries[i].Hash = hash;
-
-                            // don't load other locales
-                            //if (block.Flags != LocaleFlags.All && (block.Flags & LocaleFlags.enUS) == 0)
-                            //    continue;
-
-                            if (!RootData.ContainsKey(hash))
-                            {
-                                RootData[hash] = new List<RootEntry>();
-                                RootData[hash].Add(entries[i]);
-                            }
-                            else
-                                RootData[hash].Add(entries[i]);
-                        }
-
-                        worker.ReportProgress((int)((float)br.BaseStream.Position / (float)br.BaseStream.Length * 100));
-                    }
-                }
-            }
-            else
-            {
-                throw new FileNotFoundException("root file missing!");
             }
 
             worker.ReportProgress(0);
@@ -351,7 +337,7 @@ namespace CASCExplorer
             }
         }
 
-        private void ExtractRootFile()
+        private MemoryStream OpenRootFile()
         {
             var encInfo = GetEncodingInfo(BuildConfig.RootMD5);
 
@@ -363,20 +349,20 @@ namespace CASCExplorer
 
             var idxInfo = GetIndexInfo(encInfo.Keys[0]);
 
-            if (idxInfo != null)
-            {
-                ExtractBLTE(idxInfo, ".", "root");
-            }
+            if (idxInfo == null)
+                return null;
+
+            return OpenBLTE(idxInfo);
         }
 
-        private void ExtractEncodingFile()
+        private MemoryStream OpenEncodingFile()
         {
             var idxInfo = GetIndexInfo(BuildConfig.EncodingKey);
 
-            if (idxInfo != null)
-            {
-                ExtractBLTE(idxInfo, ".", "encoding");
-            }
+            if (idxInfo == null)
+                return null;
+
+            return OpenBLTE(idxInfo);
         }
 
         public void ExtractBLTE(IndexEntry idxInfo, string path, string name)
@@ -391,7 +377,22 @@ namespace CASCExplorer
             byte[] unkData2 = stream.ReadBytes(8);
 
             BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size);
-            blte.ExtractData(path, name);
+            blte.ExtractToFile(path, name);
+        }
+
+        public MemoryStream OpenBLTE(IndexEntry idxInfo)
+        {
+            var stream = GetDataStream(idxInfo.DataIndex);
+
+            stream.BaseStream.Position = idxInfo.Offset;
+
+            byte[] unkHash = stream.ReadBytes(16);
+            int size = stream.ReadInt32();
+            byte[] unkData1 = stream.ReadBytes(2);
+            byte[] unkData2 = stream.ReadBytes(8);
+
+            BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size);
+            return blte.OpenFile();
         }
 
         ~CASCHandler()
