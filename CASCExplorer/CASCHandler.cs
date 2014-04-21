@@ -63,7 +63,7 @@ namespace CASCExplorer
         }
     }
 
-    public class IndexEntry
+    public class IdxEntry
     {
         public int DataIndex;
         public int Offset;
@@ -78,7 +78,7 @@ namespace CASCExplorer
 
         readonly Dictionary<ulong, List<RootEntry>> RootData = new Dictionary<ulong, List<RootEntry>>();
         readonly Dictionary<byte[], EncodingEntry> EncodingData = new Dictionary<byte[], EncodingEntry>(comparer);
-        readonly Dictionary<byte[], IndexEntry> IndexData = new Dictionary<byte[], IndexEntry>(comparer);
+        readonly Dictionary<byte[], IdxEntry> IdxData = new Dictionary<byte[], IdxEntry>(comparer);
 
         public static readonly Dictionary<ulong, string> FileNames = new Dictionary<ulong, string>();
         public static readonly Dictionary<ulong, string> FolderNames = new Dictionary<ulong, string>();
@@ -125,7 +125,7 @@ namespace CASCExplorer
 
                     for (int i = 0; i < numBlocks; i++)
                     {
-                        IndexEntry info = new IndexEntry();
+                        IdxEntry info = new IdxEntry();
                         byte[] key = br.ReadBytes(9);
                         int indexHigh = br.ReadByte();
                         int indexLow = br.ReadInt32BE();
@@ -136,8 +136,8 @@ namespace CASCExplorer
 
                         // duplicate keys wtf...
                         //IndexData[key] = info; // use last key
-                        if (!IndexData.ContainsKey(key)) // use first key
-                            IndexData.Add(key, info);
+                        if (!IdxData.ContainsKey(key)) // use first key
+                            IdxData.Add(key, info);
                     }
 
                     padPos = (dataLen + 0x0FFF) & 0xFFFFF000;
@@ -335,7 +335,7 @@ namespace CASCExplorer
             }
         }
 
-        private MemoryStream OpenRootFile()
+        private Stream OpenRootFile()
         {
             var encInfo = GetEncodingInfo(CASCConfig.RootMD5);
 
@@ -345,52 +345,96 @@ namespace CASCExplorer
             if (encInfo.Keys.Count > 1)
                 throw new FileNotFoundException("multiple encoding info for root file found!");
 
-            var idxInfo = GetIndexInfo(encInfo.Keys[0]);
+            return OpenFile(encInfo.Keys[0]);
+        }
+
+        private Stream OpenEncodingFile()
+        {
+            return OpenFile(CASCConfig.EncodingKey);
+        }
+
+        private Stream OpenFile(byte[] key)
+        {
+            var idxInfo = GetIdxInfo(key);
 
             if (idxInfo == null)
                 return null;
 
-            return OpenBLTE(idxInfo);
+            try
+            {
+                var stream = GetDataStream(idxInfo.DataIndex);
+
+                stream.BaseStream.Position = idxInfo.Offset;
+
+                byte[] unkHash = stream.ReadBytes(16);
+                int size = stream.ReadInt32();
+                byte[] unkData1 = stream.ReadBytes(2);
+                byte[] unkData2 = stream.ReadBytes(8);
+
+                BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size);
+                return blte.OpenFile();
+            }
+            catch
+            {
+                if (key.EqualsTo(CASCConfig.EncodingKey))
+                {
+                    using (Stream s = CDNHandler.OpenFileDirect(key))
+                    {
+                        BLTEHandler blte = new BLTEHandler(new BinaryReader(s), idxInfo.Size);
+                        return blte.OpenFile();
+                    }
+                }
+                else
+                {
+                    using (Stream s = CDNHandler.OpenFile(key))
+                    {
+                        BLTEHandler blte = new BLTEHandler(new BinaryReader(s), idxInfo.Size);
+                        return blte.OpenFile();
+                    }
+                }
+            }
         }
 
-        private MemoryStream OpenEncodingFile()
+        public void ExtractFile(byte[] key, string path, string name)
         {
-            var idxInfo = GetIndexInfo(CASCConfig.EncodingKey);
+            var idxInfo = GetIdxInfo(key);
 
             if (idxInfo == null)
-                return null;
+                return;
 
-            return OpenBLTE(idxInfo);
-        }
+            try
+            {
+                var stream = GetDataStream(idxInfo.DataIndex);
 
-        public void ExtractBLTE(IndexEntry idxInfo, string path, string name)
-        {
-            var stream = GetDataStream(idxInfo.DataIndex);
+                stream.BaseStream.Position = idxInfo.Offset;
 
-            stream.BaseStream.Position = idxInfo.Offset;
+                byte[] unkHash = stream.ReadBytes(16);
+                int size = stream.ReadInt32();
+                byte[] unkData1 = stream.ReadBytes(2);
+                byte[] unkData2 = stream.ReadBytes(8);
 
-            byte[] unkHash = stream.ReadBytes(16);
-            int size = stream.ReadInt32();
-            byte[] unkData1 = stream.ReadBytes(2);
-            byte[] unkData2 = stream.ReadBytes(8);
-
-            BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size);
-            blte.ExtractToFile(path, name);
-        }
-
-        public MemoryStream OpenBLTE(IndexEntry idxInfo)
-        {
-            var stream = GetDataStream(idxInfo.DataIndex);
-
-            stream.BaseStream.Position = idxInfo.Offset;
-
-            byte[] unkHash = stream.ReadBytes(16);
-            int size = stream.ReadInt32();
-            byte[] unkData1 = stream.ReadBytes(2);
-            byte[] unkData2 = stream.ReadBytes(8);
-
-            BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size);
-            return blte.OpenFile();
+                BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size);
+                blte.ExtractToFile(path, name);
+            }
+            catch
+            {
+                if (key.EqualsTo(CASCConfig.EncodingKey))
+                {
+                    using (Stream s = CDNHandler.OpenFileDirect(key))
+                    {
+                        BLTEHandler blte = new BLTEHandler(new BinaryReader(s), idxInfo.Size);
+                        blte.ExtractToFile(path, name);
+                    }
+                }
+                else
+                {
+                    using (Stream s = CDNHandler.OpenFile(key))
+                    {
+                        BLTEHandler blte = new BLTEHandler(new BinaryReader(s), idxInfo.Size);
+                        blte.ExtractToFile(path, name);
+                    }
+                }
+            }
         }
 
         ~CASCHandler()
@@ -428,11 +472,11 @@ namespace CASCExplorer
             return null;
         }
 
-        public IndexEntry GetIndexInfo(byte[] key)
+        public IdxEntry GetIdxInfo(byte[] key)
         {
             byte[] temp = key.Take(9).ToArray();
-            if (IndexData.ContainsKey(temp))
-                return IndexData[temp];
+            if (IdxData.ContainsKey(temp))
+                return IdxData[temp];
             return null;
         }
 

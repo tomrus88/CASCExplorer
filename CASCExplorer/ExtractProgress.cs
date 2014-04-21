@@ -55,12 +55,7 @@ namespace CASCExplorer
 
                 foreach (var key in encInfo.Keys)
                 {
-                    var idxInfo = cascHandler.GetIndexInfo(key);
-
-                    if (idxInfo == null)
-                        continue;
-
-                    cascHandler.ExtractBLTE(idxInfo, ExtractPath, file.FullName);
+                    cascHandler.ExtractFile(key, ExtractPath, file.FullName);
                 }
             }
         }

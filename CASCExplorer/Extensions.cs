@@ -28,11 +28,21 @@ namespace CASCExplorer
             return BitConverter.ToString(data).Replace("-", string.Empty);
         }
 
-        public static bool VerifyHash(this byte[] hash, byte[] other)
+        public static bool EqualsTo(this byte[] hash, byte[] other)
         {
             for (var i = 0; i < hash.Length; ++i)
             {
                 if (hash[i] != other[i])
+                    return false;
+            }
+            return true;
+        }
+
+        public static bool IsZeroed(this byte[] array)
+        {
+            for (var i = 0; i < array.Length; ++i)
+            {
+                if (array[i] != 0)
                     return false;
             }
             return true;

@@ -148,7 +148,7 @@ namespace CASCExplorer
                 {
                     byte[] hh = md5.ComputeHash(chunks[i].data);
 
-                    if (!hh.VerifyHash(chunks[i].hash))
+                    if (!hh.EqualsTo(chunks[i].hash))
                     {
                         throw new InvalidDataException("MD5 missmatch!");
                     }
