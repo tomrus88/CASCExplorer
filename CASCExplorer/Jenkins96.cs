@@ -118,10 +118,8 @@ namespace CASCExplorer
                             a += k[0] + (((uint)k[1]) << 16);
                             break;
                         case 11:
-                            c += k[4] + (((uint)k8[10]) << 16);
-                            b += k[2] + (((uint)k[3]) << 16);
-                            a += k[0] + (((uint)k[1]) << 16);
-                            break;
+                            c += ((uint)k8[10]) << 16;
+                            goto case 10;
                         case 10:
                             c += k[4];
                             b += k[2] + (((uint)k[3]) << 16);
@@ -129,31 +127,27 @@ namespace CASCExplorer
                             break;
                         case 9:
                             c += k8[8];
-                            b += k[2] + (((uint)k[3]) << 16);
-                            a += k[0] + (((uint)k[1]) << 16);
-                            break;
+                            goto case 8;
                         case 8:
                             b += k[2] + (((uint)k[3]) << 16);
                             a += k[0] + (((uint)k[1]) << 16);
                             break;
                         case 7:
-                            b += k[2] + (((uint)k8[6]) << 16);
-                            a += k[0] + (((uint)k[1]) << 16);
-                            break;
+                            b += ((uint)k8[6]) << 16;
+                            goto case 6;
                         case 6:
                             b += k[2];
                             a += k[0] + (((uint)k[1]) << 16);
                             break;
                         case 5:
                             b += k8[4];
-                            a += k[0] + (((uint)k[1]) << 16);
-                            break;
+                            goto case 4;
                         case 4:
                             a += k[0] + (((uint)k[1]) << 16);
                             break;
                         case 3:
-                            a += k[0] + (((uint)k8[2]) << 16);
-                            break;
+                            a += ((uint)k8[2]) << 16;
+                            goto case 2;
                         case 2:
                             a += k[0];
                             break;
@@ -191,53 +185,29 @@ namespace CASCExplorer
                     switch (length)
                     {
                         case 12:
-                            c += (((uint)k[11]) << 24) + (((uint)k[10]) << 16) + (((uint)k[9]) << 8) + k[8];
-                            b += (((uint)k[7]) << 24) + (((uint)k[6]) << 16) + (((uint)k[5]) << 8) + k[4];
-                            a += (((uint)k[3]) << 24) + (((uint)k[2]) << 16) + (((uint)k[1]) << 8) + k[0];
-                            break;
+                            c += (((uint)k[11]) << 24); goto case 11;
                         case 11:
-                            c += (((uint)k[10]) << 16) + (((uint)k[9]) << 8) + k[8];
-                            b += (((uint)k[7]) << 24) + (((uint)k[6]) << 16) + (((uint)k[5]) << 8) + k[4];
-                            a += (((uint)k[3]) << 24) + (((uint)k[2]) << 16) + (((uint)k[1]) << 8) + k[0];
-                            break;
+                            c += (((uint)k[10]) << 16); goto case 10;
                         case 10:
-                            c += (((uint)k[9]) << 8) + k[8];
-                            b += (((uint)k[7]) << 24) + (((uint)k[6]) << 16) + (((uint)k[5]) << 8) + k[4];
-                            a += (((uint)k[3]) << 24) + (((uint)k[2]) << 16) + (((uint)k[1]) << 8) + k[0];
-                            break;
+                            c += (((uint)k[9]) << 8); goto case 9;
                         case 9:
-                            c += k[8];
-                            b += (((uint)k[7]) << 24) + (((uint)k[6]) << 16) + (((uint)k[5]) << 8) + k[4];
-                            a += (((uint)k[3]) << 24) + (((uint)k[2]) << 16) + (((uint)k[1]) << 8) + k[0];
-                            break;
+                            c += k[8]; goto case 8;
                         case 8:
-                            b += (((uint)k[7]) << 24) + (((uint)k[6]) << 16) + (((uint)k[5]) << 8) + k[4];
-                            a += (((uint)k[3]) << 24) + (((uint)k[2]) << 16) + (((uint)k[1]) << 8) + k[0];
-                            break;
+                            b += (((uint)k[7]) << 24); goto case 7;
                         case 7:
-                            b += (((uint)k[6]) << 16) + (((uint)k[5]) << 8) + k[4];
-                            a += (((uint)k[3]) << 24) + (((uint)k[2]) << 16) + (((uint)k[1]) << 8) + k[0];
-                            break;
+                            b += (((uint)k[6]) << 16); goto case 6;
                         case 6:
-                            b += (((uint)k[5]) << 8) + k[4];
-                            a += (((uint)k[3]) << 24) + (((uint)k[2]) << 16) + (((uint)k[1]) << 8) + k[0];
-                            break;
+                            b += (((uint)k[5]) << 8); goto case 5;
                         case 5:
-                            b += k[4];
-                            a += (((uint)k[3]) << 24) + (((uint)k[2]) << 16) + (((uint)k[1]) << 8) + k[0];
-                            break;
+                            b += k[4]; goto case 4;
                         case 4:
-                            a += (((uint)k[3]) << 24) + (((uint)k[2]) << 16) + (((uint)k[1]) << 8) + k[0];
-                            break;
+                            a += (((uint)k[3]) << 24); goto case 3;
                         case 3:
-                            a += (((uint)k[2]) << 16) + (((uint)k[1]) << 8) + k[0];
-                            break;
+                            a += (((uint)k[2]) << 16); goto case 2;
                         case 2:
-                            a += (((uint)k[1]) << 8) + k[0];
-                            break;
+                            a += (((uint)k[1]) << 8); goto case 1;
                         case 1:
-                            a += k[0];
-                            break;
+                            a += k[0]; break;
                         case 0:
                             hash = BitConverter.GetBytes(((ulong)c << 32) | (ulong)b);
                             return;
