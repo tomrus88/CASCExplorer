@@ -32,6 +32,9 @@ namespace CASCExplorer
 
         private void ExtractFile(CASCFile file)
         {
+            if (backgroundWorker1.CancellationPending)
+                throw new OperationCanceledException();
+
             backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)NumFiles * 100));
 
             var rootInfos = cascHandler.GetRootInfo(file.Hash);
@@ -131,17 +134,31 @@ namespace CASCExplorer
 
         private void button3_Click(object sender, EventArgs e)
         {
+            if (backgroundWorker1.IsBusy)
+            {
+                backgroundWorker1.CancelAsync();
+                return;
+            }
+
             Close();
         }
 
         private void button2_Click(object sender, EventArgs e)
         {
+            button2.Enabled = false;
             backgroundWorker1.RunWorkerAsync();
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            ExtractData(folder, selection);
+            try
+            {
+                ExtractData(folder, selection);
+            }
+            catch (OperationCanceledException)
+            {
+                e.Cancel = true;
+            }
         }
 
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -151,6 +168,16 @@ namespace CASCExplorer
 
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
+            button2.Enabled = true;
+
+            if (e.Cancelled)
+            {
+                NumExtracted = 0;
+                progressBar1.Value = 0;
+                MessageBox.Show("Operation cancelled!");
+                return;
+            }
+
             Hide();
         }
     }
