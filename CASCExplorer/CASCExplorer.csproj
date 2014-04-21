@@ -59,6 +59,7 @@
     <Compile Include="CASCConfig.cs" />
     <Compile Include="ByteArrayComparer.cs" />
     <Compile Include="CASCEntry.cs" />
+    <Compile Include="CDNHandler.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="ExtractProgress.cs">
       <SubType>Form</SubType>

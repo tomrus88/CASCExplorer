@@ -26,6 +26,9 @@ namespace CASCExplorer
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            CASCConfig.Load();
+            //CDNHandler.Initialize();
+
             iconsList.Images.Add(Properties.Resources.folder);
             iconsList.Images.Add(Properties.Resources.openFolder);
             iconsList.Images.Add(SystemIcons.WinLogo);

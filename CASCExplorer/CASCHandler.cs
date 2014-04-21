@@ -157,8 +157,6 @@ namespace CASCExplorer
                 worker.ReportProgress((int)((float)++idxIndex / (float)idxFiles.Count * 100));
             }
 
-            CASCConfig.Load(wowPath);
-
             worker.ReportProgress(0);
 
             using (var fs = OpenEncodingFile())

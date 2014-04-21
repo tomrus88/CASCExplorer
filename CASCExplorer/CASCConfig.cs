@@ -87,24 +87,27 @@ namespace CASCExplorer
 
     class CASCConfig
     {
-        static KeyValueConfig BuildConfig;
-        static KeyValueConfig CDNConfig;
+        public static VerBarConfig BuildInfo;
+        public static KeyValueConfig BuildConfig;
+        public static KeyValueConfig CDNConfig;
 
-        public static void Load(string wowPath)
+        public static void Load()
         {
+            string wowPath = Properties.Settings.Default.WowPath;
+
             string buildInfoPath = Path.Combine(wowPath, ".build.info");
 
-            VerBarConfig buildInfo = new VerBarConfig(buildInfoPath);
+            BuildInfo = new VerBarConfig(buildInfoPath);
 
             // Build Configuration
-            string buildKey = buildInfo["Build Key"][0];
+            string buildKey = BuildInfo["Build Key"][0];
 
             string buildCfgPath = Path.Combine(wowPath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
 
             BuildConfig = new KeyValueConfig(buildCfgPath);
 
             // CDN Configuration 
-            string cdnKey = buildInfo["CDN Key"][0];
+            string cdnKey = BuildInfo["CDN Key"][0];
 
             string cdnCfgPath = Path.Combine(wowPath, "Data\\config\\", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
 
@@ -119,6 +122,11 @@ namespace CASCExplorer
         public static byte[] RootMD5
         {
             get { return BuildConfig["root"][0].ToByteArray(); }
+        }
+
+        public static string CDNUrl
+        {
+            get { return String.Format("http://{0}{1}", BuildInfo["CDN Hosts"][0], BuildInfo["CDN Path"][0]); }
         }
     }
 }
