@@ -85,33 +85,40 @@ namespace CASCExplorer
         }
     }
 
-    class BuildConfig
+    class CASCConfig
     {
-        static byte[] encodingKey;
-        static byte[] rootMD5;
+        static KeyValueConfig BuildConfig;
+        static KeyValueConfig CDNConfig;
 
         public static void Load(string wowPath)
         {
             string buildInfoPath = Path.Combine(wowPath, ".build.info");
 
             VerBarConfig buildInfo = new VerBarConfig(buildInfoPath);
+
+            // Build Configuration
             string buildKey = buildInfo["Build Key"][0];
 
             string buildCfgPath = Path.Combine(wowPath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
 
-            KeyValueConfig buildCfg = new KeyValueConfig(buildCfgPath);
-            encodingKey = buildCfg["encoding"][1].ToByteArray();
-            rootMD5 = buildCfg["root"][0].ToByteArray();
+            BuildConfig = new KeyValueConfig(buildCfgPath);
+
+            // CDN Configuration 
+            string cdnKey = buildInfo["CDN Key"][0];
+
+            string cdnCfgPath = Path.Combine(wowPath, "Data\\config\\", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
+
+            CDNConfig = new KeyValueConfig(cdnCfgPath);
         }
 
         public static byte[] EncodingKey
         {
-            get { return encodingKey; }
+            get { return BuildConfig["encoding"][1].ToByteArray(); }
         }
 
         public static byte[] RootMD5
         {
-            get { return rootMD5; }
+            get { return BuildConfig["root"][0].ToByteArray(); }
         }
     }
 }

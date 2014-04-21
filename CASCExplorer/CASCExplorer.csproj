@@ -56,7 +56,7 @@
       <DependentUpon>AboutBox.cs</DependentUpon>
     </Compile>
     <Compile Include="BLTEHandler.cs" />
-    <Compile Include="BuildConfig.cs" />
+    <Compile Include="CASCConfig.cs" />
     <Compile Include="ByteArrayComparer.cs" />
     <Compile Include="CASCEntry.cs" />
     <Compile Include="Extensions.cs" />

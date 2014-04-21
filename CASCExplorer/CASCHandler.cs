@@ -157,7 +157,7 @@ namespace CASCExplorer
                 worker.ReportProgress((int)((float)++idxIndex / (float)idxFiles.Count * 100));
             }
 
-            BuildConfig.Load(wowPath);
+            CASCConfig.Load(wowPath);
 
             worker.ReportProgress(0);
 
@@ -339,7 +339,7 @@ namespace CASCExplorer
 
         private MemoryStream OpenRootFile()
         {
-            var encInfo = GetEncodingInfo(BuildConfig.RootMD5);
+            var encInfo = GetEncodingInfo(CASCConfig.RootMD5);
 
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for root file missing!");
@@ -357,7 +357,7 @@ namespace CASCExplorer
 
         private MemoryStream OpenEncodingFile()
         {
-            var idxInfo = GetIndexInfo(BuildConfig.EncodingKey);
+            var idxInfo = GetIndexInfo(CASCConfig.EncodingKey);
 
             if (idxInfo == null)
                 return null;
