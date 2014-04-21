@@ -38,18 +38,18 @@ namespace CASCExplorer
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
-            using (var f = File.Open(fullPath, FileMode.Create))
+            using (var fileStream = File.Open(fullPath, FileMode.Create))
             {
-                ExtractData(f);
+                ExtractData(fileStream);
             }
         }
 
         public MemoryStream OpenFile()
         {
-            MemoryStream ms = new MemoryStream();
-            ExtractData(ms);
-            ms.Position = 0;
-            return ms;
+            MemoryStream memStream = new MemoryStream();
+            ExtractData(memStream);
+            memStream.Position = 0;
+            return memStream;
         }
 
         public void ExtractData(Stream stream)
