@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace CASCExplorer
 {
-    class KeyValueConfig
+    public class KeyValueConfig
     {
         Dictionary<string, List<string>> Data = new Dictionary<string, List<string>>();
 
@@ -85,7 +85,7 @@ namespace CASCExplorer
         }
     }
 
-    class CASCConfig
+    public class CASCConfig
     {
         static VerBarConfig _BuildInfo;
         static KeyValueConfig _BuildConfig;

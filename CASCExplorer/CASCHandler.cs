@@ -359,7 +359,7 @@ namespace CASCExplorer
             return OpenFile(CASCConfig.EncodingKey);
         }
 
-        private Stream OpenFile(byte[] key)
+        public Stream OpenFile(byte[] key)
         {
             try
             {
