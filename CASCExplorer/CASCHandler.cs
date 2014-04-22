@@ -102,7 +102,7 @@ namespace CASCExplorer
                 if (idxFiles.Count == 0)
                     throw new FileNotFoundException("idx files missing!");
 
-                worker.ReportProgress(0);
+                if (worker != null) worker.ReportProgress(0);
 
                 int idxIndex = 0;
 
@@ -153,13 +153,13 @@ namespace CASCExplorer
                             throw new Exception("idx file under read");
                     }
 
-                    worker.ReportProgress((int)((float)++idxIndex / (float)idxFiles.Count * 100));
+                    if (worker != null) worker.ReportProgress((int)((float)++idxIndex / (float)idxFiles.Count * 100));
                 }
 
                 Logger.WriteLine("CASCHandler: loaded {0} indexes", LocalIndexData.Count);
             }
 
-            worker.ReportProgress(0);
+            if (worker != null) worker.ReportProgress(0);
 
             using (var fs = OpenEncodingFile())
             using (var br = new BinaryReader(fs))
@@ -211,7 +211,7 @@ namespace CASCExplorer
                     while (br.PeekChar() == 0)
                         fs.Position++;
 
-                    worker.ReportProgress((int)((float)fs.Position / (float)fs.Length * 100));
+                    if (worker != null) worker.ReportProgress((int)((float)fs.Position / (float)fs.Length * 100));
                 }
                 //var pos = br.BaseStream.Position;
                 //for (int i = 0; i < i1; ++i)
@@ -222,7 +222,7 @@ namespace CASCExplorer
                 Logger.WriteLine("CASCHandler: loaded {0} encoding data", EncodingData.Count);
             }
 
-            worker.ReportProgress(0);
+            if (worker != null) worker.ReportProgress(0);
 
             using (var fs = OpenRootFile())
             using (var br = new BinaryReader(fs))
@@ -267,13 +267,13 @@ namespace CASCExplorer
                             RootData[hash].Add(entries[i]);
                     }
 
-                    worker.ReportProgress((int)((float)fs.Position / (float)fs.Length * 100));
+                    if (worker != null) worker.ReportProgress((int)((float)fs.Position / (float)fs.Length * 100));
                 }
 
                 Logger.WriteLine("CASCHandler: loaded {0} root data", RootData.Count);
             }
 
-            worker.ReportProgress(0);
+            if (worker != null) worker.ReportProgress(0);
 
             if (File.Exists(listFile))
             {
@@ -330,7 +330,7 @@ namespace CASCExplorer
                         }
 
                         if ((filesCount % 1000) == 0)
-                            worker.ReportProgress((int)((float)sr.BaseStream.Position / (float)sr.BaseStream.Length * 100));
+                            if (worker != null) worker.ReportProgress((int)((float)sr.BaseStream.Position / (float)sr.BaseStream.Length * 100));
                     }
 
                     Logger.WriteLine("CASCHandler: loaded {0} file names", FileNames.Count);
