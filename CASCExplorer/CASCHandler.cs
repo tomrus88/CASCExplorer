@@ -276,12 +276,16 @@ namespace CASCExplorer
             if (worker != null) worker.ReportProgress(0);
         }
 
-        public void LoadListFile(CASCFolder root, BackgroundWorker worker)
+        public CASCFolder LoadListFile(BackgroundWorker worker)
         {
             if (!File.Exists(listFile))
                 throw new FileNotFoundException("list file missing!");
 
-            FolderNames[Hasher.ComputeHash("root")] = "root";
+            var rootHash = Hasher.ComputeHash("root");
+
+            var root = new CASCFolder(rootHash);
+
+            FolderNames[rootHash] = "root";
 
             using (var sr = new StreamReader(listFile))
             {
@@ -336,6 +340,7 @@ namespace CASCExplorer
                     Logger.WriteLine("CASCHandler: loaded {0} file names", FileNames.Count);
                 }
             }
+            return root;
         }
 
         private Stream OpenRootFile()

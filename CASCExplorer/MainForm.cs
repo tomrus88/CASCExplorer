@@ -10,7 +10,7 @@ namespace CASCExplorer
 {
     public partial class MainForm : Form
     {
-        CASCFolder root = new CASCFolder(CASCHandler.Hasher.ComputeHash("root"));
+        CASCFolder root;
         CASCHandler cascHandler;
         ExtractProgress extractProgress;
 
@@ -76,7 +76,7 @@ namespace CASCExplorer
 
             var worker = sender as BackgroundWorker;
             cascHandler = new CASCHandler(worker);
-            cascHandler.LoadListFile(root, worker);
+            root = cascHandler.LoadListFile(worker);
             e.Result = CASCHandler.FileNames.Count;
         }
 
