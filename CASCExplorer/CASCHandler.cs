@@ -70,8 +70,6 @@ namespace CASCExplorer
 
     public class CASCHandler
     {
-        readonly string listFile = Path.Combine(Application.StartupPath, "listfile.txt");
-
         static readonly ByteArrayComparer comparer = new ByteArrayComparer();
 
         readonly Dictionary<ulong, List<RootEntry>> RootData = new Dictionary<ulong, List<RootEntry>>();
@@ -276,9 +274,9 @@ namespace CASCExplorer
             if (worker != null) worker.ReportProgress(0);
         }
 
-        public CASCFolder LoadListFile(BackgroundWorker worker)
+        public CASCFolder LoadListFile(string path, BackgroundWorker worker)
         {
-            if (!File.Exists(listFile))
+            if (!File.Exists(path))
                 throw new FileNotFoundException("list file missing!");
 
             var rootHash = Hasher.ComputeHash("root");
@@ -287,7 +285,7 @@ namespace CASCExplorer
 
             FolderNames[rootHash] = "root";
 
-            using (var sr = new StreamReader(listFile))
+            using (var sr = new StreamReader(path))
             {
                 string file;
                 int filesCount = 0;

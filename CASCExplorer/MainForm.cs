@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 
@@ -76,7 +77,7 @@ namespace CASCExplorer
 
             var worker = sender as BackgroundWorker;
             cascHandler = new CASCHandler(worker);
-            root = cascHandler.LoadListFile(worker);
+            root = cascHandler.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), worker);
             e.Result = CASCHandler.FileNames.Count;
         }
 
