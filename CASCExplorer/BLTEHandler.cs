@@ -24,10 +24,13 @@ namespace CASCExplorer
         BinaryReader reader;
         MD5 md5 = MD5.Create();
         int size;
+        bool raw;
 
-        public BLTEHandler(Stream stream, int _size, bool raw)
+        public BLTEHandler(Stream stream, int _size, bool _raw)
         {
             this.reader = new BinaryReader(stream, Encoding.ASCII, true);
+
+            raw = _raw;
 
             if (!raw)
             {
@@ -55,18 +58,18 @@ namespace CASCExplorer
 
             using (var fileStream = File.Open(fullPath, FileMode.Create))
             {
-                long oldPos = reader.BaseStream.Position;
+                //long oldPos = reader.BaseStream.Position;
                 ExtractData(fileStream);
-                reader.BaseStream.Position = oldPos;
+                //reader.BaseStream.Position = oldPos;
             }
         }
 
         public MemoryStream OpenFile()
         {
             MemoryStream memStream = new MemoryStream();
-            long oldPos = reader.BaseStream.Position;
+            //long oldPos = reader.BaseStream.Position;
             ExtractData(memStream);
-            reader.BaseStream.Position = oldPos;
+            //reader.BaseStream.Position = oldPos;
             memStream.Position = 0;
             return memStream;
         }
@@ -84,7 +87,11 @@ namespace CASCExplorer
 
             if (frameHeaderSize == 0)
             {
-                totalSize = size - 38;
+                if (!raw)
+                    totalSize = size - 38;
+                else
+                    totalSize = size;
+
                 chunkCount = 1;
             }
             else
@@ -126,6 +133,9 @@ namespace CASCExplorer
             for (int i = 0; i < chunkCount; ++i)
             {
                 chunks[i].data = reader.ReadBytes(chunks[i].compSize);
+
+                //if (chunks[i].data.Length != chunks[i].compSize)
+                //    throw new Exception("chunks[i].data.Length != chunks[i].compSize");
 
                 if (frameHeaderSize != 0)
                 {

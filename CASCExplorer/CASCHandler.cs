@@ -88,6 +88,8 @@ namespace CASCExplorer
         public int NumRootEntries { get { return RootData.Count; } }
         public int NumFileNames { get { return FileNames.Count; } }
 
+        public static bool OnlineMode = true;
+
         public CASCHandler(CASCFolder root, BackgroundWorker worker)
         {
             string wowPath = Properties.Settings.Default.WowPath;
@@ -97,7 +99,7 @@ namespace CASCExplorer
 
             var idxFiles = GetIdxFiles(wowPath);
 
-            if (idxFiles.Count == 0)
+            if (idxFiles.Count == 0 && !OnlineMode)
                 throw new FileNotFoundException("idx files missing!");
 
             worker.ReportProgress(0);
@@ -356,6 +358,9 @@ namespace CASCExplorer
         {
             try
             {
+                if (OnlineMode)
+                    throw new Exception();
+
                 var idxInfo = GetLocalIndexInfo(key);
 
                 if (idxInfo == null)
@@ -366,26 +371,26 @@ namespace CASCExplorer
                 stream.Position = idxInfo.Offset;
 
                 BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size, false);
-                blte.ExtractToFile(".", key.ToHexString());
+                //blte.ExtractToFile(".", key.ToHexString());
                 return blte.OpenFile();
             }
             catch (Exception e)
             {
-                var idxInfo = CDNHandler.GetCDNIndexInfo(key);
-
-                if (idxInfo == null)
-                    throw new Exception("CDN index missing");
-
                 if (key.EqualsTo(CASCConfig.EncodingKey))
                 {
                     using (Stream s = CDNHandler.OpenFileDirect(key))
                     {
-                        BLTEHandler blte = new BLTEHandler(s, idxInfo.Size, true);
+                        BLTEHandler blte = new BLTEHandler(s, int.MaxValue, true);
                         return blte.OpenFile();
                     }
                 }
                 else
                 {
+                    var idxInfo = CDNHandler.GetCDNIndexInfo(key);
+
+                    if (idxInfo == null)
+                        throw new Exception("CDN index missing");
+
                     using (Stream s = CDNHandler.OpenFile(key))
                     {
                         BLTEHandler blte = new BLTEHandler(s, idxInfo.Size, true);
@@ -399,6 +404,9 @@ namespace CASCExplorer
         {
             try
             {
+                if (OnlineMode)
+                    throw new Exception();
+
                 var idxInfo = GetLocalIndexInfo(key);
 
                 if (idxInfo == null)
@@ -413,21 +421,21 @@ namespace CASCExplorer
             }
             catch
             {
-                var idxInfo = CDNHandler.GetCDNIndexInfo(key);
-
-                if (idxInfo == null)
-                    throw new Exception("CDN index missing");
-
                 if (key.EqualsTo(CASCConfig.EncodingKey))
                 {
                     using (Stream s = CDNHandler.OpenFileDirect(key))
                     {
-                        BLTEHandler blte = new BLTEHandler(s, idxInfo.Size, true);
+                        BLTEHandler blte = new BLTEHandler(s, int.MaxValue, true);
                         blte.ExtractToFile(path, name);
                     }
                 }
                 else
                 {
+                    var idxInfo = CDNHandler.GetCDNIndexInfo(key);
+
+                    if (idxInfo == null)
+                        throw new Exception("CDN index missing");
+
                     using (Stream s = CDNHandler.OpenFile(key))
                     {
                         BLTEHandler blte = new BLTEHandler(s, idxInfo.Size, true);
