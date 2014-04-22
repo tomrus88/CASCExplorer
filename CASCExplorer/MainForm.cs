@@ -13,6 +13,7 @@ namespace CASCExplorer
         CASCFolder root = new CASCFolder(CASCHandler.Hasher.ComputeHash("root"));
         CASCHandler cascHandler;
         ExtractProgress extractProgress;
+        bool localMode = true;
 
         public MainForm()
         {
@@ -27,7 +28,7 @@ namespace CASCExplorer
         private void Form1_Load(object sender, EventArgs e)
         {
             CASCConfig.Load();
-            CDNHandler.Initialize(true);
+            CDNHandler.Initialize(localMode);
 
             iconsList.Images.Add(Properties.Resources.folder);
             iconsList.Images.Add(Properties.Resources.openFolder);

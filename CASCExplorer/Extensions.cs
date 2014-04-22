@@ -47,6 +47,14 @@ namespace CASCExplorer
             }
             return true;
         }
+
+        public static byte[] Copy(this byte[] array, int len)
+        {
+            byte[] ret = new byte[len];
+            for (int i = 0; i < len; ++i)
+                ret[i] = array[i];
+            return ret;
+        }
     }
 
     public static class CStringExtensions

@@ -2,6 +2,7 @@
 using System.IO;
 using System.IO.Compression;
 using System.Security.Cryptography;
+using System.Text;
 
 namespace CASCExplorer
 {
@@ -24,10 +25,24 @@ namespace CASCExplorer
         MD5 md5 = MD5.Create();
         int size;
 
-        public BLTEHandler(BinaryReader br, int size)
+        public BLTEHandler(Stream stream, int _size, bool raw)
         {
-            this.reader = br;
-            this.size = size;
+            this.reader = new BinaryReader(stream, Encoding.ASCII, true);
+
+            if (!raw)
+            {
+                byte[] unkHash = reader.ReadBytes(16);
+                int __size = reader.ReadInt32();
+                byte[] unkData1 = reader.ReadBytes(2);
+                byte[] unkData2 = reader.ReadBytes(8);
+            }
+
+            this.size = _size;
+        }
+
+        ~BLTEHandler()
+        {
+            reader.Close();
         }
 
         public void ExtractToFile(string path, string name)
@@ -40,14 +55,18 @@ namespace CASCExplorer
 
             using (var fileStream = File.Open(fullPath, FileMode.Create))
             {
+                long oldPos = reader.BaseStream.Position;
                 ExtractData(fileStream);
+                reader.BaseStream.Position = oldPos;
             }
         }
 
         public MemoryStream OpenFile()
         {
             MemoryStream memStream = new MemoryStream();
+            long oldPos = reader.BaseStream.Position;
             ExtractData(memStream);
+            reader.BaseStream.Position = oldPos;
             memStream.Position = 0;
             return memStream;
         }
@@ -57,9 +76,8 @@ namespace CASCExplorer
             int magic = reader.ReadInt32(); // BLTE (raw)
 
             if (magic != 0x45544c42)
-            {
                 throw new InvalidDataException("BLTEHandler: magic");
-            }
+
             int frameHeaderSize = reader.ReadInt32BE();
             int chunkCount = 0;
             int totalSize = 0;
@@ -68,39 +86,6 @@ namespace CASCExplorer
             {
                 totalSize = size - 38;
                 chunkCount = 1;
-
-                //long pos = reader.BaseStream.Position;
-
-                //reader.BaseStream.Position += totalSize + 30;
-
-                //if (reader.BaseStream.Position < reader.BaseStream.Length)
-                //{
-                //    magic = reader.ReadInt32();
-                //    reader.BaseStream.Position = pos;
-
-                //    if (magic != 0x45544c42)
-                //    {
-                //        while (reader.BaseStream.Position < reader.BaseStream.Length - 4)
-                //        {
-                //            magic = reader.ReadInt32();
-
-                //            if (magic != 0x45544c42)
-                //            {
-                //                reader.BaseStream.Position -= 3;
-                //            }
-                //            else
-                //            {
-                //                totalSize = (int)reader.BaseStream.Position - (int)pos - (4 + 4 + 10 + 16);
-                //                reader.BaseStream.Position = pos;
-                //                break;
-                //            }
-                //        }
-                //    }
-                //}
-                //else
-                //{
-                //    reader.BaseStream.Position = pos;
-                //}
             }
             else
             {
@@ -116,9 +101,7 @@ namespace CASCExplorer
             }
 
             if (chunkCount < 0)
-            {
                 throw new InvalidDataException(String.Format("Possible error ({0}) at offset: 0x" + reader.BaseStream.Position.ToString("X"), chunkCount));
-            }
 
             BLTEChunk[] chunks = new BLTEChunk[chunkCount];
 
@@ -149,9 +132,7 @@ namespace CASCExplorer
                     byte[] hh = md5.ComputeHash(chunks[i].data);
 
                     if (!hh.EqualsTo(chunks[i].hash))
-                    {
                         throw new InvalidDataException("MD5 missmatch!");
-                    }
                 }
 
                 switch (chunks[i].data[0])
@@ -163,9 +144,7 @@ namespace CASCExplorer
                     case 0x4E: // N
                         {
                             if (chunks[i].data.Length - 1 != chunks[i].decompSize)
-                            {
                                 throw new InvalidDataException("Possible error (1) !");
-                            }
 
                             stream.Write(chunks[i].data, 1, chunks[i].decompSize);
                         }
