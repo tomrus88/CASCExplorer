@@ -275,70 +275,68 @@ namespace CASCExplorer
 
             if (worker != null) worker.ReportProgress(0);
 
-            if (File.Exists(listFile))
+            LoadListFile(root, worker);
+        }
+
+        private void LoadListFile(CASCFolder root, BackgroundWorker worker)
+        {
+            if (!File.Exists(listFile))
+                throw new FileNotFoundException("list file missing!");
+
+            FolderNames[Hasher.ComputeHash("root")] = "root";
+
+            using (var sr = new StreamReader(listFile))
             {
-                FolderNames[Hasher.ComputeHash("root")] = "root";
+                string file;
+                int filesCount = 0;
 
-                using (StreamReader sr = new StreamReader(listFile))
+                CASCFolder folder = root;
+
+                while ((file = sr.ReadLine()) != null)
                 {
-                    string file;
-                    int filesCount = 0;
+                    filesCount++;
 
-                    CASCFolder folder = root;
+                    string[] parts = file.Split('\\');
 
-                    while ((file = sr.ReadLine()) != null)
+                    for (int i = 0; i < parts.Length; ++i)
                     {
-                        filesCount++;
+                        bool isFile = (i == parts.Length - 1);
 
-                        string[] parts = file.Split('\\');
+                        ulong hash = isFile ? Hasher.ComputeHash(file) : Hasher.ComputeHash(parts[i]);
 
-                        for (int i = 0; i < parts.Length; ++i)
+                        // skip invalid names
+                        if (isFile && !RootData.ContainsKey(hash))
+                            break;
+
+                        ICASCEntry entry = folder.GetEntry(hash);
+
+                        if (entry == null)
                         {
-                            bool isFile = (i == parts.Length - 1);
-
-                            ulong hash = isFile ? Hasher.ComputeHash(file) : Hasher.ComputeHash(parts[i]);
-
-                            // skip invalid names
-                            if (isFile && !RootData.ContainsKey(hash))
-                                break;
-
-                            ICASCEntry entry = folder.GetEntry(hash);
-
-                            if (entry == null)
+                            if (isFile)
                             {
-                                if (isFile)
-                                {
-                                    entry = new CASCFile(hash);
-                                    FileNames[hash] = file;
-                                }
-                                else
-                                {
-                                    entry = new CASCFolder(hash);
-                                    FolderNames[hash] = parts[i];
-                                }
-
-                                folder.SubEntries[hash] = entry;
-
-                                if (isFile)
-                                {
-                                    folder = root;
-                                    break;
-                                }
+                                entry = new CASCFile(hash);
+                                FileNames[hash] = file;
+                            }
+                            else
+                            {
+                                entry = new CASCFolder(hash);
+                                FolderNames[hash] = parts[i];
                             }
 
-                            folder = entry as CASCFolder;
+                            folder.SubEntries[hash] = entry;
+
+                            if (isFile)
+                            {
+                                folder = root;
+                                break;
+                            }
                         }
 
-                        if ((filesCount % 1000) == 0)
-                            if (worker != null) worker.ReportProgress((int)((float)sr.BaseStream.Position / (float)sr.BaseStream.Length * 100));
+                        folder = entry as CASCFolder;
                     }
 
                     Logger.WriteLine("CASCHandler: loaded {0} file names", FileNames.Count);
                 }
-            }
-            else
-            {
-                throw new FileNotFoundException("list file missing!");
             }
         }
 
@@ -377,7 +375,7 @@ namespace CASCExplorer
                 stream.Position = idxInfo.Offset;
 
                 stream.Position += 30;
-                //byte[] unkHash = reader.ReadBytes(16);
+                //blte.ExtractToFile(".", key.ToHexString());
                 //int __size = reader.ReadInt32();
                 //byte[] unkData1 = reader.ReadBytes(2);
                 //byte[] unkData2 = reader.ReadBytes(8);
