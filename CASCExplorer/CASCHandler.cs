@@ -97,12 +97,7 @@ namespace CASCExplorer
         {
             if (!OnlineMode)
             {
-                string wowPath = Properties.Settings.Default.WowPath;
-
-                if (!Directory.Exists(wowPath))
-                    throw new DirectoryNotFoundException(wowPath);
-
-                var idxFiles = GetIdxFiles(wowPath);
+                var idxFiles = GetIdxFiles(Properties.Settings.Default.WowPath);
 
                 if (idxFiles.Count == 0)
                     throw new FileNotFoundException("idx files missing!");

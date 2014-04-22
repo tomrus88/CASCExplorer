@@ -15,7 +15,7 @@ namespace CASCExplorer
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            if (!Directory.Exists(Properties.Settings.Default.WowPath))
+            if (!Properties.Settings.Default.OnlineMode && !Directory.Exists(Properties.Settings.Default.WowPath))
             {
                 var folderBrowser = new FolderBrowserDialog();
 
