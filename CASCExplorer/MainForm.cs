@@ -74,7 +74,9 @@ namespace CASCExplorer
             CASCConfig.Load(CASCHandler.OnlineMode);
             CDNHandler.Initialize(CASCHandler.OnlineMode);
 
-            cascHandler = new CASCHandler(root, sender as BackgroundWorker);
+            var worker = sender as BackgroundWorker;
+            cascHandler = new CASCHandler(worker);
+            cascHandler.LoadListFile(root, worker);
             e.Result = CASCHandler.FileNames.Count;
         }
 

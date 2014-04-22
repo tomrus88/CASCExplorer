@@ -93,7 +93,7 @@ namespace CASCExplorer
             get { return Properties.Settings.Default.OnlineMode; }
         }
 
-        public CASCHandler(CASCFolder root, BackgroundWorker worker)
+        public CASCHandler(BackgroundWorker worker)
         {
             if (!OnlineMode)
             {
@@ -274,11 +274,9 @@ namespace CASCExplorer
             }
 
             if (worker != null) worker.ReportProgress(0);
-
-            LoadListFile(root, worker);
         }
 
-        private void LoadListFile(CASCFolder root, BackgroundWorker worker)
+        public void LoadListFile(CASCFolder root, BackgroundWorker worker)
         {
             if (!File.Exists(listFile))
                 throw new FileNotFoundException("list file missing!");
