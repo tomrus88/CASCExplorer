@@ -88,7 +88,7 @@ namespace CASCExplorer
         public int NumRootEntries { get { return RootData.Count; } }
         public int NumFileNames { get { return FileNames.Count; } }
 
-        public static bool OnlineMode = true;
+        public static bool OnlineMode = false;
 
         public CASCHandler(CASCFolder root, BackgroundWorker worker)
         {
@@ -374,7 +374,7 @@ namespace CASCExplorer
                 //blte.ExtractToFile(".", key.ToHexString());
                 return blte.OpenFile();
             }
-            catch (Exception e)
+            catch
             {
                 if (key.EqualsTo(CASCConfig.EncodingKey))
                 {
