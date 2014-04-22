@@ -27,7 +27,7 @@ namespace CASCExplorer
 
         public BLTEHandler(Stream stream, int _size)
         {
-            this.reader = new BinaryReader(stream, Encoding.ASCII, true);
+            this.reader = new BinaryReader(stream, Encoding.ASCII);
             this.size = _size;
         }
 
