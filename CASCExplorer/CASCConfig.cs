@@ -9,9 +9,9 @@ namespace CASCExplorer
     {
         Dictionary<string, List<string>> Data = new Dictionary<string, List<string>>();
 
-        public KeyValueConfig(string config)
+        public KeyValueConfig(Stream stream)
         {
-            using (var sr = new StreamReader(config))
+            using (var sr = new StreamReader(stream))
             {
                 string line;
 
@@ -43,9 +43,9 @@ namespace CASCExplorer
     {
         Dictionary<string, List<string>> Data = new Dictionary<string, List<string>>();
 
-        public VerBarConfig(string config)
+        public VerBarConfig(Stream stream)
         {
-            using (var sr = new StreamReader(config))
+            using (var sr = new StreamReader(stream))
             {
                 string line;
 
@@ -65,8 +65,10 @@ namespace CASCExplorer
                     }
                     else // values
                     {
+                        //if (Data.Count != tokens.Length)
+                        //    throw new Exception("VerBarConfig: Data.Count != tokens.Length");
                         if (Data.Count != tokens.Length)
-                            throw new Exception("VerBarConfig: Data.Count != tokens.Length");
+                            continue;
 
                         for (int i = 0; i < Data.Count; ++i)
                         {
@@ -91,10 +93,8 @@ namespace CASCExplorer
         static KeyValueConfig _BuildConfig;
         static KeyValueConfig _CDNConfig;
 
-        public static VerBarConfig BuildInfo
-        {
-            get { return _BuildInfo; }
-        }
+        static VerBarConfig _CDNData;
+        static VerBarConfig _VersionsData;
 
         public static KeyValueConfig BuildConfig
         {
@@ -106,27 +106,50 @@ namespace CASCExplorer
             get { return _CDNConfig; }
         }
 
-        public static void Load()
+        public static void Load(bool online)
         {
             string wowPath = Properties.Settings.Default.WowPath;
 
-            string buildInfoPath = Path.Combine(wowPath, ".build.info");
+            if (online)
+            {
+                using(var cdnsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/cdns"))
+                {
+                    _CDNData = new VerBarConfig(cdnsStream);
+                }
+                using (var versionsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/versions"))
+                {
+                    _VersionsData = new VerBarConfig(versionsStream);
+                }
+            }
+            else
+            {
+                string buildInfoPath = Path.Combine(wowPath, ".build.info");
 
-            _BuildInfo = new VerBarConfig(buildInfoPath);
+                using (Stream buildInfoStream = new FileStream(buildInfoPath, FileMode.Open))
+                {
+                    _BuildInfo = new VerBarConfig(buildInfoStream);
+                }
+            }
 
             // Build Configuration
-            string buildKey = BuildInfo["Build Key"][0];
+            string buildKey = online ? _VersionsData["BuildConfig"][0] : _BuildInfo["Build Key"][0];
 
             string buildCfgPath = Path.Combine(wowPath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
 
-            _BuildConfig = new KeyValueConfig(buildCfgPath);
+            using (Stream buildConfigStream = online ? CDNHandler.OpenConfigFileDirect(buildKey) : new FileStream(buildCfgPath, FileMode.Open))
+            {
+                _BuildConfig = new KeyValueConfig(buildConfigStream);
+            }
 
             // CDN Configuration 
-            string cdnKey = BuildInfo["CDN Key"][0];
+            string cdnKey = online ? _VersionsData["CDNConfig"][0] : _BuildInfo["CDN Key"][0];
 
             string cdnCfgPath = Path.Combine(wowPath, "Data\\config\\", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
 
-            _CDNConfig = new KeyValueConfig(cdnCfgPath);
+            using (Stream CDNConfigStream = online ? CDNHandler.OpenConfigFileDirect(cdnKey) : new FileStream(cdnCfgPath, FileMode.Open))
+            {
+                _CDNConfig = new KeyValueConfig(CDNConfigStream);
+            }
         }
 
         public static byte[] EncodingKey
@@ -141,7 +164,13 @@ namespace CASCExplorer
 
         public static string CDNUrl
         {
-            get { return String.Format("http://{0}{1}", BuildInfo["CDN Hosts"][0], BuildInfo["CDN Path"][0]); }
+            get
+            {
+                if (CASCHandler.OnlineMode)
+                    return String.Format("http://{0}/{1}", _CDNData["Hosts"][0], _CDNData["Path"][0]);
+                else
+                    return String.Format("http://{0}{1}", _BuildInfo["CDN Hosts"][0], _BuildInfo["CDN Path"][0]);
+            }
         }
     }
 }

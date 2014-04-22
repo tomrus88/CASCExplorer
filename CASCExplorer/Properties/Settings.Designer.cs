@@ -34,5 +34,17 @@ namespace CASCExplorer.Properties {
                 this["WowPath"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
+        public bool OnlineMode {
+            get {
+                return ((bool)(this["OnlineMode"]));
+            }
+            set {
+                this["OnlineMode"] = value;
+            }
+        }
     }
 }

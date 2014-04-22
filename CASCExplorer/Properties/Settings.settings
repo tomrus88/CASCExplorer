@@ -5,5 +5,8 @@
     <Setting Name="WowPath" Type="System.String" Scope="User">
       <Value Profile="(Default)">c:\Games\World of Warcraft Beta\</Value>
     </Setting>
+    <Setting Name="OnlineMode" Type="System.Boolean" Scope="User">
+      <Value Profile="(Default)">False</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

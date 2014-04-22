@@ -26,9 +26,6 @@ namespace CASCExplorer
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            CASCConfig.Load();
-            CDNHandler.Initialize(CASCHandler.OnlineMode);
-
             iconsList.Images.Add(Properties.Resources.folder);
             iconsList.Images.Add(Properties.Resources.openFolder);
             iconsList.Images.Add(SystemIcons.WinLogo);
@@ -74,6 +71,9 @@ namespace CASCExplorer
 
         private void loadDataWorker_DoWork(object sender, DoWorkEventArgs e)
         {
+            CASCConfig.Load(CASCHandler.OnlineMode);
+            CDNHandler.Initialize(CASCHandler.OnlineMode);
+
             cascHandler = new CASCHandler(root, sender as BackgroundWorker);
             e.Result = CASCHandler.FileNames.Count;
         }

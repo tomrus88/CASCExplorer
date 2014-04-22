@@ -88,74 +88,80 @@ namespace CASCExplorer
         public int NumRootEntries { get { return RootData.Count; } }
         public int NumFileNames { get { return FileNames.Count; } }
 
-        public static bool OnlineMode = false;
-
+        public static bool OnlineMode
+        {
+            get { return Properties.Settings.Default.OnlineMode; }
+        }
+        
         public CASCHandler(CASCFolder root, BackgroundWorker worker)
         {
-            string wowPath = Properties.Settings.Default.WowPath;
-
-            if (!Directory.Exists(wowPath))
-                throw new DirectoryNotFoundException(wowPath);
-
-            var idxFiles = GetIdxFiles(wowPath);
-
-            if (idxFiles.Count == 0 && !OnlineMode)
-                throw new FileNotFoundException("idx files missing!");
-
-            worker.ReportProgress(0);
-
-            int idxIndex = 0;
-
-            foreach (var idx in idxFiles)
+            if (!OnlineMode)
             {
-                using (var fs = new FileStream(idx, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
-                using (var br = new BinaryReader(fs))
+                string wowPath = Properties.Settings.Default.WowPath;
+
+                if (!Directory.Exists(wowPath))
+                    throw new DirectoryNotFoundException(wowPath);
+
+                var idxFiles = GetIdxFiles(wowPath);
+
+                if (idxFiles.Count == 0)
+                    throw new FileNotFoundException("idx files missing!");
+
+                worker.ReportProgress(0);
+
+                int idxIndex = 0;
+
+                foreach (var idx in idxFiles)
                 {
-                    int h2Len = br.ReadInt32();
-                    int h2Check = br.ReadInt32();
-                    byte[] h2 = br.ReadBytes(h2Len);
-
-                    long padPos = (8 + h2Len + 0x0F) & 0xFFFFFFF0;
-                    fs.Position = padPos;
-
-                    int dataLen = br.ReadInt32();
-                    int dataCheck = br.ReadInt32();
-
-                    int numBlocks = dataLen / 18;
-
-                    for (int i = 0; i < numBlocks; i++)
+                    using (var fs = new FileStream(idx, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
+                    using (var br = new BinaryReader(fs))
                     {
-                        IndexEntry info = new IndexEntry();
-                        byte[] key = br.ReadBytes(9);
-                        int indexHigh = br.ReadByte();
-                        int indexLow = br.ReadInt32BE();
+                        int h2Len = br.ReadInt32();
+                        int h2Check = br.ReadInt32();
+                        byte[] h2 = br.ReadBytes(h2Len);
 
-                        info.Index = (int)((byte)(indexHigh << 2) | ((indexLow & 0xC0000000) >> 30));
-                        info.Offset = (indexLow & 0x3FFFFFFF);
-                        info.Size = br.ReadInt32();
+                        long padPos = (8 + h2Len + 0x0F) & 0xFFFFFFF0;
+                        fs.Position = padPos;
 
-                        // duplicate keys wtf...
-                        //IndexData[key] = info; // use last key
-                        if (!LocalIndexData.ContainsKey(key)) // use first key
-                            LocalIndexData.Add(key, info);
+                        int dataLen = br.ReadInt32();
+                        int dataCheck = br.ReadInt32();
+
+                        int numBlocks = dataLen / 18;
+
+                        for (int i = 0; i < numBlocks; i++)
+                        {
+                            IndexEntry info = new IndexEntry();
+                            byte[] key = br.ReadBytes(9);
+                            int indexHigh = br.ReadByte();
+                            int indexLow = br.ReadInt32BE();
+
+                            info.Index = (int)((byte)(indexHigh << 2) | ((indexLow & 0xC0000000) >> 30));
+                            info.Offset = (indexLow & 0x3FFFFFFF);
+                            info.Size = br.ReadInt32();
+
+                            // duplicate keys wtf...
+                            //IndexData[key] = info; // use last key
+                            if (!LocalIndexData.ContainsKey(key)) // use first key
+                                LocalIndexData.Add(key, info);
+                        }
+
+                        padPos = (dataLen + 0x0FFF) & 0xFFFFF000;
+                        fs.Position = padPos;
+
+                        fs.Position += numBlocks * 18;
+                        //for (int i = 0; i < numBlocks; i++)
+                        //{
+                        //    var bytes = br.ReadBytes(18); // unknown data
+                        //}
+
+                        if (fs.Position != fs.Position)
+                        {
+                            throw new Exception("idx file under read");
+                        }
                     }
 
-                    padPos = (dataLen + 0x0FFF) & 0xFFFFF000;
-                    fs.Position = padPos;
-
-                    fs.Position += numBlocks * 18;
-                    //for (int i = 0; i < numBlocks; i++)
-                    //{
-                    //    var bytes = br.ReadBytes(18); // unknown data
-                    //}
-
-                    if (fs.Position != fs.Position)
-                    {
-                        throw new Exception("idx file under read");
-                    }
+                    worker.ReportProgress((int)((float)++idxIndex / (float)idxFiles.Count * 100));
                 }
-
-                worker.ReportProgress((int)((float)++idxIndex / (float)idxFiles.Count * 100));
             }
 
             worker.ReportProgress(0);
@@ -378,9 +384,9 @@ namespace CASCExplorer
             {
                 if (key.EqualsTo(CASCConfig.EncodingKey))
                 {
-                    using (Stream s = CDNHandler.OpenFileDirect(key))
+                    using (Stream s = CDNHandler.OpenDataFileDirect(key, out int len))
                     {
-                        BLTEHandler blte = new BLTEHandler(s, int.MaxValue, true);
+                        BLTEHandler blte = new BLTEHandler(s, len, true);
                         return blte.OpenFile();
                     }
                 }
@@ -391,7 +397,7 @@ namespace CASCExplorer
                     if (idxInfo == null)
                         throw new Exception("CDN index missing");
 
-                    using (Stream s = CDNHandler.OpenFile(key))
+                    using (Stream s = CDNHandler.OpenDataFile(key))
                     {
                         BLTEHandler blte = new BLTEHandler(s, idxInfo.Size, true);
                         return blte.OpenFile();
@@ -423,9 +429,9 @@ namespace CASCExplorer
             {
                 if (key.EqualsTo(CASCConfig.EncodingKey))
                 {
-                    using (Stream s = CDNHandler.OpenFileDirect(key))
+                    using (Stream s = CDNHandler.OpenDataFileDirect(key, out int len))
                     {
-                        BLTEHandler blte = new BLTEHandler(s, int.MaxValue, true);
+                        BLTEHandler blte = new BLTEHandler(s, len, true);
                         blte.ExtractToFile(path, name);
                     }
                 }
@@ -436,7 +442,7 @@ namespace CASCExplorer
                     if (idxInfo == null)
                         throw new Exception("CDN index missing");
 
-                    using (Stream s = CDNHandler.OpenFile(key))
+                    using (Stream s = CDNHandler.OpenDataFile(key))
                     {
                         BLTEHandler blte = new BLTEHandler(s, idxInfo.Size, true);
                         blte.ExtractToFile(path, name);
