@@ -21,14 +21,14 @@ namespace CASCExplorer
         {
             var index = CASCConfig.CDNConfig["archives"][i];
             var url = CASCConfig.CDNUrl + "/data/" + index.Substring(0, 2) + "/" + index.Substring(2, 2) + "/" + index + ".index";
-            return new WebClient().OpenRead(url);
+            return new MemoryStream(new WebClient().DownloadData(url));
         };
 
-        public static void Initialize(bool local)
+        public static void Initialize(bool online)
         {
             for (int i = 0; i < CASCConfig.CDNConfig["archives"].Count; ++i)
             {
-                using (var stream = local ? localWorker(i) : cdnWorker(i))
+                using (var stream = online ? cdnWorker(i) : localWorker(i))
                 using (var br = new BinaryReader(stream))
                 {
                     stream.Seek(-12, SeekOrigin.End);
