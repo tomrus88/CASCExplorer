@@ -30,21 +30,20 @@ namespace CASCExplorer
 
         public static bool EqualsTo(this byte[] hash, byte[] other)
         {
+            if (hash.Length != other.Length)
+                return false;
+
             for (var i = 0; i < hash.Length; ++i)
-            {
                 if (hash[i] != other[i])
                     return false;
-            }
             return true;
         }
 
         public static bool IsZeroed(this byte[] array)
         {
             for (var i = 0; i < array.Length; ++i)
-            {
                 if (array[i] != 0)
                     return false;
-            }
             return true;
         }
 

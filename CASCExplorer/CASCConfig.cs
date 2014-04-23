@@ -112,13 +112,26 @@ namespace CASCExplorer
 
             if (online)
             {
-                using(var cdnsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/cdns"))
+                using (var cdnsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/cdns"))
                 {
                     _CDNData = new VerBarConfig(cdnsStream);
                 }
+
                 using (var versionsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/versions"))
                 {
                     _VersionsData = new VerBarConfig(versionsStream);
+                }
+
+                string buildKey = _VersionsData["BuildConfig"][0];
+                using (Stream buildConfigStream = CDNHandler.OpenConfigFileDirect(buildKey))
+                {
+                    _BuildConfig = new KeyValueConfig(buildConfigStream);
+                }
+
+                string cdnKey = _VersionsData["CDNConfig"][0];
+                using (Stream CDNConfigStream = CDNHandler.OpenConfigFileDirect(cdnKey))
+                {
+                    _CDNConfig = new KeyValueConfig(CDNConfigStream);
                 }
             }
             else
@@ -129,26 +142,20 @@ namespace CASCExplorer
                 {
                     _BuildInfo = new VerBarConfig(buildInfoStream);
                 }
-            }
 
-            // Build Configuration
-            string buildKey = online ? _VersionsData["BuildConfig"][0] : _BuildInfo["Build Key"][0];
+                string buildKey = _BuildInfo["Build Key"][0];
+                string buildCfgPath = Path.Combine(wowPath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
+                using (Stream buildConfigStream = new FileStream(buildCfgPath, FileMode.Open))
+                {
+                    _BuildConfig = new KeyValueConfig(buildConfigStream);
+                }
 
-            string buildCfgPath = Path.Combine(wowPath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
-
-            using (Stream buildConfigStream = online ? CDNHandler.OpenConfigFileDirect(buildKey) : new FileStream(buildCfgPath, FileMode.Open))
-            {
-                _BuildConfig = new KeyValueConfig(buildConfigStream);
-            }
-
-            // CDN Configuration 
-            string cdnKey = online ? _VersionsData["CDNConfig"][0] : _BuildInfo["CDN Key"][0];
-
-            string cdnCfgPath = Path.Combine(wowPath, "Data\\config\\", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
-
-            using (Stream CDNConfigStream = online ? CDNHandler.OpenConfigFileDirect(cdnKey) : new FileStream(cdnCfgPath, FileMode.Open))
-            {
-                _CDNConfig = new KeyValueConfig(CDNConfigStream);
+                string cdnKey = _BuildInfo["CDN Key"][0];
+                string cdnCfgPath = Path.Combine(wowPath, "Data\\config\\", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
+                using (Stream CDNConfigStream = new FileStream(cdnCfgPath, FileMode.Open))
+                {
+                    _CDNConfig = new KeyValueConfig(CDNConfigStream);
+                }
             }
         }
 

@@ -19,7 +19,7 @@ namespace CASCExplorer
         public byte[] data;
     }
 
-    class BLTEHandler
+    class BLTEHandler : IDisposable
     {
         BinaryReader reader;
         MD5 md5 = MD5.Create();
@@ -29,11 +29,6 @@ namespace CASCExplorer
         {
             this.reader = new BinaryReader(stream, Encoding.ASCII, true);
             this.size = _size;
-        }
-
-        ~BLTEHandler()
-        {
-            reader.Close();
         }
 
         public void ExtractToFile(string path, string name)
@@ -155,12 +150,18 @@ namespace CASCExplorer
         {
             byte[] buf = new byte[0x80000];
 
-            using (var dStream = new DeflateStream(new MemoryStream(data, 3, data.Length - 3), CompressionMode.Decompress))
+            using (var ms = new MemoryStream(data, 3, data.Length - 3))
+            using (var dStream = new DeflateStream(ms, CompressionMode.Decompress))
             {
                 int len;
                 while ((len = dStream.Read(buf, 0, buf.Length)) > 0)
                     outS.Write(buf, 0, len);
             }
+        }
+
+        public void Dispose()
+        {
+            reader.Close();
         }
     }
 }

@@ -92,7 +92,7 @@ namespace CASCExplorer
         {
             get { return Properties.Settings.Default.OnlineMode; }
         }
-        
+
         public CASCHandler(CASCFolder root, BackgroundWorker worker)
         {
             if (!OnlineMode)
@@ -211,7 +211,7 @@ namespace CASCExplorer
 
                     //br.ReadBytes(28);
                     while (br.PeekChar() == 0)
-                        br.BaseStream.Position++;
+                        fs.Position++;
 
                     worker.ReportProgress((int)((float)fs.Position / (float)fs.Length * 100));
                 }
@@ -221,6 +221,7 @@ namespace CASCExplorer
                 //    br.ReadBytes(16);
                 //    br.ReadBytes(16);
                 //}
+                Logger.WriteLine("CASCHandler: loaded {0} encoding data", EncodingData.Count);
             }
 
             worker.ReportProgress(0);
@@ -270,6 +271,8 @@ namespace CASCExplorer
 
                     worker.ReportProgress((int)((float)fs.Position / (float)fs.Length * 100));
                 }
+
+                Logger.WriteLine("CASCHandler: loaded {0} root data", RootData.Count);
             }
 
             worker.ReportProgress(0);
@@ -331,6 +334,8 @@ namespace CASCExplorer
                         if ((filesCount % 1000) == 0)
                             worker.ReportProgress((int)((float)sr.BaseStream.Position / (float)sr.BaseStream.Length * 100));
                     }
+
+                    Logger.WriteLine("CASCHandler: loaded {0} file names", FileNames.Count);
                 }
             }
             else
@@ -379,16 +384,18 @@ namespace CASCExplorer
                 //byte[] unkData1 = reader.ReadBytes(2);
                 //byte[] unkData2 = reader.ReadBytes(8);
 
-                BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size);
-                return blte.OpenFile();
+                using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size))
+                {
+                    return blte.OpenFile();
+                }
             }
             catch
             {
                 if (key.EqualsTo(CASCConfig.EncodingKey))
                 {
                     using (Stream s = CDNHandler.OpenDataFileDirect(key, out int len))
+                    using (BLTEHandler blte = new BLTEHandler(s, len))
                     {
-                        BLTEHandler blte = new BLTEHandler(s, len);
                         return blte.OpenFile();
                     }
                 }
@@ -400,8 +407,8 @@ namespace CASCExplorer
                         throw new Exception("CDN index missing");
 
                     using (Stream s = CDNHandler.OpenDataFile(key))
+                    using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
                     {
-                        BLTEHandler blte = new BLTEHandler(s, idxInfo.Size);
                         return blte.OpenFile();
                     }
                 }
@@ -430,16 +437,18 @@ namespace CASCExplorer
                 //byte[] unkData1 = reader.ReadBytes(2);
                 //byte[] unkData2 = reader.ReadBytes(8);
 
-                BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size);
-                blte.ExtractToFile(path, name);
+                using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size))
+                {
+                    blte.ExtractToFile(path, name);
+                }
             }
             catch
             {
                 if (key.EqualsTo(CASCConfig.EncodingKey))
                 {
                     using (Stream s = CDNHandler.OpenDataFileDirect(key, out int len))
+                    using (BLTEHandler blte = new BLTEHandler(s, len))
                     {
-                        BLTEHandler blte = new BLTEHandler(s, len);
                         blte.ExtractToFile(path, name);
                     }
                 }
@@ -451,8 +460,8 @@ namespace CASCExplorer
                         throw new Exception("CDN index missing");
 
                     using (Stream s = CDNHandler.OpenDataFile(key))
+                    using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
                     {
-                        BLTEHandler blte = new BLTEHandler(s, idxInfo.Size);
                         blte.ExtractToFile(path, name);
                     }
                 }

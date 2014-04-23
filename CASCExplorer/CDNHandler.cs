@@ -70,7 +70,7 @@ namespace CASCExplorer
             }
             catch
             {
-                throw new Exception("DownloadFileAsync failed!");
+                throw new Exception("DownloadFile failed!");
             }
         }
 
@@ -87,7 +87,7 @@ namespace CASCExplorer
             }
             catch
             {
-                throw new Exception("OpenFileAsync failed!");
+                throw new Exception("OpenFile failed!");
             }
         }
 
