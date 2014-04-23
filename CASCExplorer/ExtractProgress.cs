@@ -12,9 +12,8 @@ namespace CASCExplorer
         private int NumFiles;
         private int NumExtracted;
         private CASCHandler cascHandler;
-        private CASCFolder folder;
-        private IEnumerable<int> selection;
         private LocaleFlags locale;
+        private IEnumerable<CASCFile> files;
 
         public ExtractProgress()
         {
@@ -25,14 +24,13 @@ namespace CASCExplorer
             comboBox1.SelectedIndex = comboBox1.Items.Count - 1;
         }
 
-        public void SetExtractData(CASCHandler _cascHandler, CASCFolder _folder, ListView.SelectedIndexCollection _selection)
+        public void SetExtractData(CASCHandler cascHandler, ICollection<CASCFile> files)
         {
-            cascHandler = _cascHandler;
-            folder = _folder;
-            selection = _selection.Cast<int>().ToArray();
+            this.cascHandler = cascHandler;
             NumExtracted = 0;
-            NumFiles = GetFilesCount(folder, selection);
+            NumFiles = files.Count;
             progressBar1.Value = 0;
+            this.files = files;
         }
 
         private void ExtractFile(CASCFile file)
@@ -43,62 +41,6 @@ namespace CASCExplorer
             backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)NumFiles * 100));
 
             cascHandler.SaveFileTo(file.FullName, ExtractPath, locale);
-        }
-
-        private int GetFilesCount(CASCFolder _folder, IEnumerable<int> _selection)
-        {
-            int count = 0;
-
-            if (_selection != null)
-            {
-                foreach (int index in _selection)
-                {
-                    var entry = _folder.SubEntries.ElementAt(index);
-
-                    if (entry.Value is CASCFile)
-                        count++;
-                    else
-                        count += GetFilesCount(entry.Value as CASCFolder, null);
-                }
-            }
-            else
-            {
-                foreach (var entry in _folder.SubEntries)
-                {
-                    if (entry.Value is CASCFile)
-                        count++;
-                    else
-                        count += GetFilesCount(entry.Value as CASCFolder, null);
-                }
-            }
-
-            return count;
-        }
-
-        private void ExtractData(CASCFolder _folder, IEnumerable<int> _selection)
-        {
-            if (_selection != null)
-            {
-                foreach (int index in _selection)
-                {
-                    var entry = _folder.SubEntries.ElementAt(index);
-
-                    if (entry.Value is CASCFile)
-                        ExtractFile(entry.Value as CASCFile);
-                    else
-                        ExtractData(entry.Value as CASCFolder, null);
-                }
-            }
-            else
-            {
-                foreach (var entry in _folder.SubEntries)
-                {
-                    if (entry.Value is CASCFile)
-                        ExtractFile(entry.Value as CASCFile);
-                    else
-                        ExtractData(entry.Value as CASCFolder, null);
-                }
-            }
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -134,7 +76,10 @@ namespace CASCExplorer
         {
             try
             {
-                ExtractData(folder, selection);
+                foreach (var file in files)
+                {
+                    ExtractFile(file);
+                }
             }
             catch (OperationCanceledException)
             {

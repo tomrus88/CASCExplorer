@@ -228,16 +228,14 @@ namespace CASCExplorer
             if (extractProgress == null)
                 extractProgress = new ExtractProgress();
 
-            extractProgress.SetExtractData(cascHandler, folder, fileList.SelectedIndices);
+            var files = GetFiles(folder, fileList.SelectedIndices.Cast<int>()).ToList();
+            extractProgress.SetExtractData(cascHandler, files);
             extractProgress.ShowDialog();
         }
 
         private void contextMenuStrip1_Opening(object sender, CancelEventArgs e)
         {
-            if (fileList.SelectedIndices.Count == 0)
-                toolStripMenuItem1.Enabled = false;
-            else
-                toolStripMenuItem1.Enabled = true;
+            toolStripMenuItem1.Enabled = fileList.SelectedIndices.Count > 0;
         }
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -246,7 +244,7 @@ namespace CASCExplorer
             about.ShowDialog();
         }
 
-        public static CASCFolder LoadListFile(CASCHandler cascHandler, string path, BackgroundWorker worker)
+        private static CASCFolder LoadListFile(CASCHandler cascHandler, string path, BackgroundWorker worker)
         {
             if (!File.Exists(path))
                 throw new FileNotFoundException("list file missing!");
@@ -311,6 +309,46 @@ namespace CASCExplorer
                 }
             }
             return root;
+        }
+
+        private static IEnumerable<CASCFile> GetFiles(CASCFolder folder, IEnumerable<int> selection)
+        {
+            if (selection != null)
+            {
+                foreach (int index in selection)
+                {
+                    var entry = folder.SubEntries.ElementAt(index);
+
+                    if (entry.Value is CASCFile)
+                    {
+                        yield return entry.Value as CASCFile;
+                    }
+                    else
+                    {
+                        foreach (var file in GetFiles(entry.Value as CASCFolder, null))
+                        {
+                            yield return file;
+                        }
+                    }
+                }
+            }
+            else
+            {
+                foreach (var entry in folder.SubEntries)
+                {
+                    if (entry.Value is CASCFile)
+                    {
+                        yield return entry.Value as CASCFile;
+                    }
+                    else
+                    {
+                        foreach (var file in GetFiles(entry.Value as CASCFolder, null))
+                        {
+                            yield return file;
+                        }
+                    }
+                }
+            }
         }
     }
 }
