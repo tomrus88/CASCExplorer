@@ -157,6 +157,8 @@ namespace CASCExplorer
 
                     worker.ReportProgress((int)((float)++idxIndex / (float)idxFiles.Count * 100));
                 }
+
+                Logger.WriteLine("CASCHandler: loaded {0} indexes", LocalIndexData.Count);
             }
 
             worker.ReportProgress(0);
@@ -371,8 +373,13 @@ namespace CASCExplorer
 
                 stream.Position = idxInfo.Offset;
 
-                BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size, false);
-                //blte.ExtractToFile(".", key.ToHexString());
+                stream.Position += 30;
+                //byte[] unkHash = reader.ReadBytes(16);
+                //int __size = reader.ReadInt32();
+                //byte[] unkData1 = reader.ReadBytes(2);
+                //byte[] unkData2 = reader.ReadBytes(8);
+
+                BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size);
                 return blte.OpenFile();
             }
             catch
@@ -381,7 +388,7 @@ namespace CASCExplorer
                 {
                     using (Stream s = CDNHandler.OpenDataFileDirect(key, out int len))
                     {
-                        BLTEHandler blte = new BLTEHandler(s, len, true);
+                        BLTEHandler blte = new BLTEHandler(s, len);
                         return blte.OpenFile();
                     }
                 }
@@ -394,7 +401,7 @@ namespace CASCExplorer
 
                     using (Stream s = CDNHandler.OpenDataFile(key))
                     {
-                        BLTEHandler blte = new BLTEHandler(s, idxInfo.Size, true);
+                        BLTEHandler blte = new BLTEHandler(s, idxInfo.Size);
                         return blte.OpenFile();
                     }
                 }
@@ -417,7 +424,13 @@ namespace CASCExplorer
 
                 stream.Position = idxInfo.Offset;
 
-                BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size, false);
+                stream.Position += 30;
+                //byte[] unkHash = reader.ReadBytes(16);
+                //int __size = reader.ReadInt32();
+                //byte[] unkData1 = reader.ReadBytes(2);
+                //byte[] unkData2 = reader.ReadBytes(8);
+
+                BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size);
                 blte.ExtractToFile(path, name);
             }
             catch
@@ -426,7 +439,7 @@ namespace CASCExplorer
                 {
                     using (Stream s = CDNHandler.OpenDataFileDirect(key, out int len))
                     {
-                        BLTEHandler blte = new BLTEHandler(s, len, true);
+                        BLTEHandler blte = new BLTEHandler(s, len);
                         blte.ExtractToFile(path, name);
                     }
                 }
@@ -439,7 +452,7 @@ namespace CASCExplorer
 
                     using (Stream s = CDNHandler.OpenDataFile(key))
                     {
-                        BLTEHandler blte = new BLTEHandler(s, idxInfo.Size, true);
+                        BLTEHandler blte = new BLTEHandler(s, idxInfo.Size);
                         blte.ExtractToFile(path, name);
                     }
                 }
@@ -486,6 +499,9 @@ namespace CASCExplorer
             byte[] temp = key.Copy(9);
             if (LocalIndexData.ContainsKey(temp))
                 return LocalIndexData[temp];
+
+            Logger.WriteLine("CASCHandler: missing index: {0}", key.ToHexString());
+
             return null;
         }
 

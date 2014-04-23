@@ -24,22 +24,10 @@ namespace CASCExplorer
         BinaryReader reader;
         MD5 md5 = MD5.Create();
         int size;
-        bool raw;
 
-        public BLTEHandler(Stream stream, int _size, bool _raw)
+        public BLTEHandler(Stream stream, int _size)
         {
             this.reader = new BinaryReader(stream, Encoding.ASCII, true);
-
-            raw = _raw;
-
-            if (!raw)
-            {
-                byte[] unkHash = reader.ReadBytes(16);
-                int __size = reader.ReadInt32();
-                byte[] unkData1 = reader.ReadBytes(2);
-                byte[] unkData2 = reader.ReadBytes(8);
-            }
-
             this.size = _size;
         }
 
@@ -58,18 +46,14 @@ namespace CASCExplorer
 
             using (var fileStream = File.Open(fullPath, FileMode.Create))
             {
-                //long oldPos = reader.BaseStream.Position;
                 ExtractData(fileStream);
-                //reader.BaseStream.Position = oldPos;
             }
         }
 
         public MemoryStream OpenFile()
         {
             MemoryStream memStream = new MemoryStream();
-            //long oldPos = reader.BaseStream.Position;
             ExtractData(memStream);
-            //reader.BaseStream.Position = oldPos;
             memStream.Position = 0;
             return memStream;
         }
@@ -87,10 +71,7 @@ namespace CASCExplorer
 
             if (frameHeaderSize == 0)
             {
-                if (!raw)
-                    totalSize = size - 38;
-                else
-                    totalSize = size;
+                totalSize = size - 38;
 
                 chunkCount = 1;
             }
@@ -134,8 +115,8 @@ namespace CASCExplorer
             {
                 chunks[i].data = reader.ReadBytes(chunks[i].compSize);
 
-                //if (chunks[i].data.Length != chunks[i].compSize)
-                //    throw new Exception("chunks[i].data.Length != chunks[i].compSize");
+                if (chunks[i].data.Length != chunks[i].compSize)
+                    throw new Exception("chunks[i].data.Length != chunks[i].compSize");
 
                 if (frameHeaderSize != 0)
                 {

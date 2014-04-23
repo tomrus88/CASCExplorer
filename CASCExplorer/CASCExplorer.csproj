@@ -67,6 +67,7 @@
     <Compile Include="ExtractProgress.Designer.cs">
       <DependentUpon>ExtractProgress.cs</DependentUpon>
     </Compile>
+    <Compile Include="Logger.cs" />
     <Compile Include="MainForm.cs">
       <SubType>Form</SubType>
     </Compile>

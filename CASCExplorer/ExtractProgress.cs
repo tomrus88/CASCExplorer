@@ -56,6 +56,7 @@ namespace CASCExplorer
                 foreach (var key in encInfo.Keys)
                 {
                     cascHandler.ExtractFile(key, ExtractPath, file.FullName);
+                    break;
                 }
             }
         }

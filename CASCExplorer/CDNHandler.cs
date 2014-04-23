@@ -1,9 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Net;
-using System.Threading.Tasks;
 
 namespace CASCExplorer
 {
@@ -12,16 +10,19 @@ namespace CASCExplorer
         static readonly ByteArrayComparer comparer = new ByteArrayComparer();
         static Dictionary<byte[], IndexEntry> CDNIndexData = new Dictionary<byte[], IndexEntry>(comparer);
 
-        public static async void Initialize(bool online)
+        public static void Initialize(bool online)
         {
-            if (online)
+            for (int i = 0; i < CASCConfig.CDNConfig["archives"].Count; ++i)
             {
-                await Task.WhenAll(CASCConfig.CDNConfig["archives"].Select((index, i) => DownloadFileAsync(index, i)));
+                string index = CASCConfig.CDNConfig["archives"][i];
+
+                if (online)
+                    DownloadFile(index, i);
+                else
+                    OpenFile(index, i);
             }
-            else
-            {
-                await Task.WhenAll(CASCConfig.CDNConfig["archives"].Select((index, i) => OpenFileAsync(index, i)));
-            }
+
+            Logger.WriteLine("CDNHandler: loaded {0} indexes", CDNIndexData.Count);
         }
 
         private static void ParseIndex(Stream stream, int i)
@@ -52,17 +53,17 @@ namespace CASCExplorer
             }
         }
 
-        private static async Task DownloadFileAsync(string index, int i)
+        private static void DownloadFile(string index, int i)
         {
             try
             {
                 var url = CASCConfig.CDNUrl + "/data/" + index.Substring(0, 2) + "/" + index.Substring(2, 2) + "/" + index + ".index";
 
                 using (WebClient webClient = new WebClient())
-                using (Stream s = await webClient.OpenReadTaskAsync(url))
+                using (Stream s = webClient.OpenRead(url))
                 using (MemoryStream ms = new MemoryStream())
                 {
-                    await s.CopyToAsync(ms);
+                    s.CopyTo(ms);
 
                     ParseIndex(ms, i);
                 }
@@ -73,23 +74,16 @@ namespace CASCExplorer
             }
         }
 
-        private static async Task OpenFileAsync(string index, int i)
+        private static void OpenFile(string index, int i)
         {
             try
             {
                 var path = Path.Combine(Properties.Settings.Default.WowPath, "Data\\indices\\", index + ".index");
 
                 using (FileStream fs = new FileStream(path, FileMode.Open))
-                using (MemoryStream ms = new MemoryStream())
                 {
-                    await fs.CopyToAsync(ms);
-
-                    ParseIndex(ms, i);
+                    ParseIndex(fs, i);
                 }
-                //using (FileStream fs = new FileStream(path, FileMode.Open))
-                //{
-                //    ParseIndex(fs, i);
-                //}
             }
             catch
             {
@@ -139,6 +133,9 @@ namespace CASCExplorer
         {
             if (CDNIndexData.ContainsKey(key))
                 return CDNIndexData[key];
+
+            Logger.WriteLine("CDNHandler: missing index: {0}", key.ToHexString());
+
             return null;
         }
     }
