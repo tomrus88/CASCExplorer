@@ -55,7 +55,7 @@ namespace CASCExplorer
         }
     }
 
-    public static class CStringExtensions
+    internal static class CStringExtensions
     {
         /// <summary> Reads the NULL terminated string from 
         /// the current stream and advances the current position of the stream by string length + 1.
