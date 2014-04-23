@@ -72,8 +72,8 @@ namespace CASCExplorer
 
         private void loadDataWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            CASCConfig.Load(CASCHandler.OnlineMode);
-            CDNHandler.Initialize(CASCHandler.OnlineMode);
+            CASCConfig.Load();
+            CDNHandler.Initialize();
 
             var worker = sender as BackgroundWorker;
             cascHandler = new CASCHandler(worker);

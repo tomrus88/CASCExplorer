@@ -96,10 +96,16 @@ namespace CASCExplorer
 
         static KeyValueConfig _CDNData;
         static KeyValueConfig _VersionsData;
+        private static readonly Settings settings;
 
-        public static void Load(bool online)
+        static CASCConfig()
         {
-            string wowPath = Settings.Default.WowPath;
+            settings = Settings.Default;
+        }
+
+        public static void Load()
+        {
+            var online = OnlineMode;
 
             if (online)
             {
@@ -127,7 +133,9 @@ namespace CASCExplorer
             }
             else
             {
-                string buildInfoPath = Path.Combine(wowPath, ".build.info");
+                string basePath = BasePath;
+
+                string buildInfoPath = Path.Combine(basePath, ".build.info");
 
                 using (Stream buildInfoStream = new FileStream(buildInfoPath, FileMode.Open))
                 {
@@ -135,19 +143,29 @@ namespace CASCExplorer
                 }
 
                 string buildKey = _BuildInfo["Build Key"][0];
-                string buildCfgPath = Path.Combine(wowPath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
+                string buildCfgPath = Path.Combine(basePath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
                 using (Stream buildConfigStream = new FileStream(buildCfgPath, FileMode.Open))
                 {
                     _BuildConfig = KeyValueConfig.ReadKeyValueConfig(buildConfigStream);
                 }
 
                 string cdnKey = _BuildInfo["CDN Key"][0];
-                string cdnCfgPath = Path.Combine(wowPath, "Data\\config\\", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
+                string cdnCfgPath = Path.Combine(basePath, "Data\\config\\", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
                 using (Stream CDNConfigStream = new FileStream(cdnCfgPath, FileMode.Open))
                 {
                     _CDNConfig = KeyValueConfig.ReadKeyValueConfig(CDNConfigStream);
                 }
             }
+        }
+
+        public static string BasePath
+        {
+            get { return settings.WowPath; }
+        }
+
+        public static bool OnlineMode
+        {
+            get { return settings.OnlineMode; }
         }
 
         public static byte[] EncodingKey
@@ -164,7 +182,7 @@ namespace CASCExplorer
         {
             get
             {
-                if (CASCHandler.OnlineMode)
+                if (OnlineMode)
                     return String.Format("http://{0}/{1}", _CDNData["Hosts"][0], _CDNData["Path"][0]);
                 else
                     return String.Format("http://{0}{1}", _BuildInfo["CDN Hosts"][0], _BuildInfo["CDN Path"][0]);

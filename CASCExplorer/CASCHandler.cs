@@ -4,6 +4,7 @@ using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using CASCExplorer.Properties;
 
 namespace CASCExplorer
 {
@@ -82,20 +83,17 @@ namespace CASCExplorer
         public static readonly Jenkins96 Hasher = new Jenkins96();
 
         public readonly Dictionary<int, FileStream> DataStreams = new Dictionary<int, FileStream>();
+        private readonly Settings settings;
 
         public int NumRootEntries { get { return RootData.Count; } }
         public int NumFileNames { get { return FileNames.Count; } }
 
-        public static bool OnlineMode
-        {
-            get { return Properties.Settings.Default.OnlineMode; }
-        }
-
         public CASCHandler(BackgroundWorker worker)
         {
-            if (!OnlineMode)
+            settings = Settings.Default;
+            if (!CASCConfig.OnlineMode)
             {
-                var idxFiles = GetIdxFiles(Properties.Settings.Default.WowPath);
+                var idxFiles = GetIdxFiles(CASCConfig.BasePath);
 
                 if (idxFiles.Count == 0)
                     throw new FileNotFoundException("idx files missing!");
@@ -363,7 +361,7 @@ namespace CASCExplorer
         {
             try
             {
-                if (OnlineMode)
+                if (CASCConfig.OnlineMode)
                     throw new Exception();
 
                 var idxInfo = GetLocalIndexInfo(key);
@@ -417,7 +415,7 @@ namespace CASCExplorer
         {
             try
             {
-                if (OnlineMode)
+                if (CASCConfig.OnlineMode)
                     throw new Exception();
 
                 var idxInfo = GetLocalIndexInfo(key);
@@ -518,7 +516,7 @@ namespace CASCExplorer
             if (DataStreams.ContainsKey(index))
                 return DataStreams[index];
 
-            string dataFile = Path.Combine(Properties.Settings.Default.WowPath, String.Format("Data\\data\\data.{0:D3}", index));
+            string dataFile = Path.Combine(CASCConfig.BasePath, String.Format("Data\\data\\data.{0:D3}", index));
 
             var fs = new FileStream(dataFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             DataStreams[index] = fs;

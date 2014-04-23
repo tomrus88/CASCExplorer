@@ -2,16 +2,24 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using CASCExplorer.Properties;
 
 namespace CASCExplorer
 {
-    public class CDNHandler
+    public static class CDNHandler
     {
         static readonly ByteArrayComparer comparer = new ByteArrayComparer();
         static Dictionary<byte[], IndexEntry> CDNIndexData = new Dictionary<byte[], IndexEntry>(comparer);
+        private static readonly Settings settings;
 
-        public static void Initialize(bool online)
+        static CDNHandler()
         {
+            settings = Settings.Default;
+        }
+
+        public static void Initialize()
+        {
+            var online = CASCConfig.OnlineMode;
             for (int i = 0; i < CASCConfig.Archives.Count; i++)
             {
                 string index = CASCConfig.Archives[i];
@@ -78,7 +86,7 @@ namespace CASCExplorer
         {
             try
             {
-                var path = Path.Combine(Properties.Settings.Default.WowPath, "Data\\indices\\", index + ".index");
+                var path = Path.Combine(CASCConfig.BasePath, "Data\\indices\\", index + ".index");
 
                 using (FileStream fs = new FileStream(path, FileMode.Open))
                 {
