@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Security.Cryptography;
@@ -86,54 +87,54 @@ namespace CASCExplorer
             if (chunkCount < 0)
                 throw new InvalidDataException(String.Format("Possible error ({0}) at offset: 0x" + reader.BaseStream.Position.ToString("X"), chunkCount));
 
-            BLTEChunk[] chunks = new BLTEChunk[chunkCount];
+            var chunks = new List<BLTEChunk>(chunkCount);
 
             for (int i = 0; i < chunkCount; ++i)
             {
-                chunks[i] = new BLTEChunk();
-
+                var chunk = new BLTEChunk();
                 if (frameHeaderSize != 0)
                 {
-                    chunks[i].CompSize = reader.ReadInt32BE();
-                    chunks[i].DecompSize = reader.ReadInt32BE();
-                    chunks[i].Hash = reader.ReadBytes(16);
+                    chunk.CompSize = reader.ReadInt32BE();
+                    chunk.DecompSize = reader.ReadInt32BE();
+                    chunk.Hash = reader.ReadBytes(16);
                 }
                 else
                 {
-                    chunks[i].CompSize = totalSize;
-                    chunks[i].DecompSize = totalSize - 1;
-                    chunks[i].Hash = null;
+                    chunk.CompSize = totalSize;
+                    chunk.DecompSize = totalSize - 1;
+                    chunk.Hash = null;
                 }
+                chunks.Add(chunk);
             }
 
-            for (int i = 0; i < chunkCount; ++i)
+            foreach (var chunk in chunks)
             {
-                chunks[i].Data = reader.ReadBytes(chunks[i].CompSize);
+                chunk.Data = reader.ReadBytes(chunk.CompSize);
 
-                if (chunks[i].Data.Length != chunks[i].CompSize)
+                if (chunk.Data.Length != chunk.CompSize)
                     throw new Exception("chunks[i].data.Length != chunks[i].compSize");
 
                 if (frameHeaderSize != 0)
                 {
-                    byte[] hh = md5.ComputeHash(chunks[i].Data);
+                    byte[] hh = md5.ComputeHash(chunk.Data);
 
-                    if (!hh.EqualsTo(chunks[i].Hash))
+                    if (!hh.EqualsTo(chunk.Hash))
                         throw new InvalidDataException("MD5 missmatch!");
                 }
 
-                switch (chunks[i].Data[0])
+                switch (chunk.Data[0])
                 {
-                    //case 0x45: // E
-                    //    break;
-                    //case 0x46: // F
-                    //    break;
+                        //case 0x45: // E
+                        //    break;
+                        //case 0x46: // F
+                        //    break;
                     case 0x4E: // N
-                        if (chunks[i].Data.Length - 1 != chunks[i].DecompSize)
+                        if (chunk.Data.Length - 1 != chunk.DecompSize)
                             throw new InvalidDataException("Possible error (1) !");
-                        stream.Write(chunks[i].Data, 1, chunks[i].DecompSize);
+                        stream.Write(chunk.Data, 1, chunk.DecompSize);
                         break;
                     case 0x5A: // Z
-                        Decompress(stream, chunks[i].Data);
+                        Decompress(stream, chunk.Data);
                         break;
                     default:
                         throw new InvalidDataException("Unknown byte at switch case!");
@@ -141,16 +142,12 @@ namespace CASCExplorer
             }
         }
 
-        private void Decompress(Stream outS, byte[] data)
+        private static void Decompress(Stream outS, byte[] data)
         {
-            byte[] buf = new byte[0x80000];
-
             using (var ms = new MemoryStream(data, 3, data.Length - 3))
             using (var dStream = new DeflateStream(ms, CompressionMode.Decompress))
             {
-                int len;
-                while ((len = dStream.Read(buf, 0, buf.Length)) > 0)
-                    outS.Write(buf, 0, len);
+                dStream.CopyTo(outS, 0x80000);
             }
         }
 
