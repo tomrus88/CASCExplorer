@@ -2,38 +2,40 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using CASCExplorer.Properties;
 
 namespace CASCExplorer
 {
-    public static class CDNHandler
+    public class CDNHandler
     {
         static readonly ByteArrayComparer comparer = new ByteArrayComparer();
-        static Dictionary<byte[], IndexEntry> CDNIndexData = new Dictionary<byte[], IndexEntry>(comparer);
-        private static readonly Settings settings;
+        Dictionary<byte[], IndexEntry> CDNIndexData = new Dictionary<byte[], IndexEntry>(comparer);
 
-        static CDNHandler()
+        private CASCConfig CASCConfig;
+
+        public CDNHandler(CASCConfig cascConfig)
         {
-            settings = Settings.Default;
+            CASCConfig = cascConfig;
         }
 
-        public static void Initialize()
+        public static CDNHandler Initialize(CASCConfig config)
         {
-            var online = CASCConfig.OnlineMode;
-            for (int i = 0; i < CASCConfig.Archives.Count; i++)
-            {
-                string index = CASCConfig.Archives[i];
+            var handler = new CDNHandler(config);
 
-                if (online)
-                    DownloadFile(index, i);
+            for (int i = 0; i < config.Archives.Count; i++)
+            {
+                string index = config.Archives[i];
+
+                if (config.OnlineMode)
+                    handler.DownloadFile(index, i);
                 else
-                    OpenFile(index, i);
+                    handler.OpenFile(index, i);
             }
 
-            Logger.WriteLine("CDNHandler: loaded {0} indexes", CDNIndexData.Count);
+            Logger.WriteLine("CDNHandler: loaded {0} indexes", handler.CDNIndexData.Count);
+            return handler;
         }
 
-        private static void ParseIndex(Stream stream, int i)
+        private void ParseIndex(Stream stream, int i)
         {
             using (var br = new BinaryReader(stream))
             {
@@ -61,7 +63,7 @@ namespace CASCExplorer
             }
         }
 
-        private static void DownloadFile(string index, int i)
+        private void DownloadFile(string index, int i)
         {
             try
             {
@@ -82,7 +84,7 @@ namespace CASCExplorer
             }
         }
 
-        private static void OpenFile(string index, int i)
+        private void OpenFile(string index, int i)
         {
             try
             {
@@ -99,7 +101,7 @@ namespace CASCExplorer
             }
         }
 
-        public static Stream OpenDataFile(byte[] key)
+        public Stream OpenDataFile(byte[] key)
         {
             var indexEntry = CDNIndexData[key];
 
@@ -112,7 +114,7 @@ namespace CASCExplorer
             return resp.GetResponseStream();
         }
 
-        public static Stream OpenDataFileDirect(byte[] key, out int len)
+        public Stream OpenDataFileDirect(byte[] key, out int len)
         {
             var file = key.ToHexString().ToLower();
             var url = CASCConfig.CDNUrl + "/data/" + file.Substring(0, 2) + "/" + file.Substring(2, 2) + "/" + file;
@@ -123,9 +125,9 @@ namespace CASCExplorer
             return resp.GetResponseStream();
         }
 
-        public static Stream OpenConfigFileDirect(string key)
+        public static Stream OpenConfigFileDirect(string cdnUrl, string key)
         {
-            var url = CASCConfig.CDNUrl + "/config/" + key.Substring(0, 2) + "/" + key.Substring(2, 2) + "/" + key;
+            var url = cdnUrl + "/config/" + key.Substring(0, 2) + "/" + key.Substring(2, 2) + "/" + key;
 
             return OpenFileDirect(url);
         }
@@ -137,7 +139,7 @@ namespace CASCExplorer
             return resp.GetResponseStream();
         }
 
-        public static IndexEntry GetCDNIndexInfo(byte[] key)
+        public IndexEntry GetCDNIndexInfo(byte[] key)
         {
             if (CDNIndexData.ContainsKey(key))
                 return CDNIndexData[key];

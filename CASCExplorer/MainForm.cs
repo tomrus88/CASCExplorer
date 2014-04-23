@@ -6,6 +6,7 @@ using System.Drawing;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
+using CASCExplorer.Properties;
 
 namespace CASCExplorer
 {
@@ -72,11 +73,11 @@ namespace CASCExplorer
 
         private void loadDataWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            CASCConfig.Load();
-            CDNHandler.Initialize();
+            var config = CASCConfig.Load(Settings.Default.OnlineMode, Settings.Default.WowPath);
+            var cdn = CDNHandler.Initialize(config);
 
             var worker = sender as BackgroundWorker;
-            cascHandler = new CASCHandler(worker);
+            cascHandler = new CASCHandler(config, cdn, worker);
             root = cascHandler.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), worker);
             e.Result = CASCHandler.FileNames.Count;
         }

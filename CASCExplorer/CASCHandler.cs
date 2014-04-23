@@ -87,13 +87,18 @@ namespace CASCExplorer
 
         public int NumRootEntries { get { return RootData.Count; } }
         public int NumFileNames { get { return FileNames.Count; } }
-
-        public CASCHandler(BackgroundWorker worker)
+        
+        private readonly CASCConfig config;
+        private readonly CDNHandler cdn;
+        
+        public CASCHandler(CASCConfig config, CDNHandler cdn, BackgroundWorker worker)
         {
+            this.config = config;
+            this.cdn = cdn;
             settings = Settings.Default;
-            if (!CASCConfig.OnlineMode)
+            if (!config.OnlineMode)
             {
-                var idxFiles = GetIdxFiles(CASCConfig.BasePath);
+                var idxFiles = GetIdxFiles(this.config.BasePath);
 
                 if (idxFiles.Count == 0)
                     throw new FileNotFoundException("idx files missing!");
@@ -341,7 +346,7 @@ namespace CASCExplorer
 
         private Stream OpenRootFile()
         {
-            var encInfo = GetEncodingInfo(CASCConfig.RootMD5);
+            var encInfo = GetEncodingInfo(config.RootMD5);
 
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for root file missing!");
@@ -354,14 +359,14 @@ namespace CASCExplorer
 
         private Stream OpenEncodingFile()
         {
-            return OpenFile(CASCConfig.EncodingKey);
+            return OpenFile(config.EncodingKey);
         }
 
         public Stream OpenFile(byte[] key)
         {
             try
             {
-                if (CASCConfig.OnlineMode)
+                if (config.OnlineMode)
                     throw new Exception();
 
                 var idxInfo = GetLocalIndexInfo(key);
@@ -386,10 +391,10 @@ namespace CASCExplorer
             }
             catch
             {
-                if (key.EqualsTo(CASCConfig.EncodingKey))
+                if (key.EqualsTo(config.EncodingKey))
                 {
                     int len;
-                    using (Stream s = CDNHandler.OpenDataFileDirect(key, out len))
+                    using (Stream s = cdn.OpenDataFileDirect(key, out len))
                     using (BLTEHandler blte = new BLTEHandler(s, len))
                     {
                         return blte.OpenFile();
@@ -397,12 +402,12 @@ namespace CASCExplorer
                 }
                 else
                 {
-                    var idxInfo = CDNHandler.GetCDNIndexInfo(key);
+                    var idxInfo = cdn.GetCDNIndexInfo(key);
 
                     if (idxInfo == null)
                         throw new Exception("CDN index missing");
 
-                    using (Stream s = CDNHandler.OpenDataFile(key))
+                    using (Stream s = cdn.OpenDataFile(key))
                     using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
                     {
                         return blte.OpenFile();
@@ -415,7 +420,7 @@ namespace CASCExplorer
         {
             try
             {
-                if (CASCConfig.OnlineMode)
+                if (config.OnlineMode)
                     throw new Exception();
 
                 var idxInfo = GetLocalIndexInfo(key);
@@ -440,10 +445,10 @@ namespace CASCExplorer
             }
             catch
             {
-                if (key.EqualsTo(CASCConfig.EncodingKey))
+                if (key.EqualsTo(config.EncodingKey))
                 {
                     int len;
-                    using (Stream s = CDNHandler.OpenDataFileDirect(key, out len))
+                    using (Stream s = cdn.OpenDataFileDirect(key, out len))
                     using (BLTEHandler blte = new BLTEHandler(s, len))
                     {
                         blte.ExtractToFile(path, name);
@@ -451,12 +456,12 @@ namespace CASCExplorer
                 }
                 else
                 {
-                    var idxInfo = CDNHandler.GetCDNIndexInfo(key);
+                    var idxInfo = cdn.GetCDNIndexInfo(key);
 
                     if (idxInfo == null)
                         throw new Exception("CDN index missing");
 
-                    using (Stream s = CDNHandler.OpenDataFile(key))
+                    using (Stream s = cdn.OpenDataFile(key))
                     using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
                     {
                         blte.ExtractToFile(path, name);
@@ -516,7 +521,7 @@ namespace CASCExplorer
             if (DataStreams.ContainsKey(index))
                 return DataStreams[index];
 
-            string dataFile = Path.Combine(CASCConfig.BasePath, String.Format("Data\\data\\data.{0:D3}", index));
+            string dataFile = Path.Combine(config.BasePath, String.Format("Data\\data\\data.{0:D3}", index));
 
             var fs = new FileStream(dataFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             DataStreams[index] = fs;

@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
-using CASCExplorer.Properties;
 
 namespace CASCExplorer
 {
@@ -90,95 +89,82 @@ namespace CASCExplorer
 
     public class CASCConfig
     {
-        static KeyValueConfig _BuildInfo;
-        static KeyValueConfig _BuildConfig;
-        static KeyValueConfig _CDNConfig;
+        KeyValueConfig _BuildInfo;
+        KeyValueConfig _BuildConfig;
+        KeyValueConfig _CDNConfig;
 
-        static KeyValueConfig _CDNData;
-        static KeyValueConfig _VersionsData;
-        private static readonly Settings settings;
+        KeyValueConfig _CDNData;
+        KeyValueConfig _VersionsData;
 
-        static CASCConfig()
+        public static CASCConfig Load(bool online, string basePath)
         {
-            settings = Settings.Default;
-        }
-
-        public static void Load()
-        {
-            var online = OnlineMode;
+            var config = new CASCConfig { OnlineMode = online, BasePath = basePath };
 
             if (online)
             {
                 using (var cdnsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/cdns"))
                 {
-                    _CDNData = KeyValueConfig.ReadVerBarConfig(cdnsStream);
+                    config._CDNData = KeyValueConfig.ReadVerBarConfig(cdnsStream);
                 }
 
                 using (var versionsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/versions"))
                 {
-                    _VersionsData = KeyValueConfig.ReadVerBarConfig(versionsStream);
+                    config._VersionsData = KeyValueConfig.ReadVerBarConfig(versionsStream);
                 }
 
-                string buildKey = _VersionsData["BuildConfig"][0];
-                using (Stream buildConfigStream = CDNHandler.OpenConfigFileDirect(buildKey))
+                string buildKey = config._VersionsData["BuildConfig"][0];
+                using (Stream buildConfigStream = CDNHandler.OpenConfigFileDirect(config.CDNUrl, buildKey))
                 {
-                    _BuildConfig = KeyValueConfig.ReadKeyValueConfig(buildConfigStream);
+                    config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(buildConfigStream);
                 }
 
-                string cdnKey = _VersionsData["CDNConfig"][0];
-                using (Stream CDNConfigStream = CDNHandler.OpenConfigFileDirect(cdnKey))
+                string cdnKey = config._VersionsData["CDNConfig"][0];
+                using (Stream CDNConfigStream = CDNHandler.OpenConfigFileDirect(config.CDNUrl, cdnKey))
                 {
-                    _CDNConfig = KeyValueConfig.ReadKeyValueConfig(CDNConfigStream);
+                    config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(CDNConfigStream);
                 }
             }
             else
             {
-                string basePath = BasePath;
-
                 string buildInfoPath = Path.Combine(basePath, ".build.info");
 
                 using (Stream buildInfoStream = new FileStream(buildInfoPath, FileMode.Open))
                 {
-                    _BuildInfo = KeyValueConfig.ReadVerBarConfig(buildInfoStream);
+                    config._BuildInfo = KeyValueConfig.ReadVerBarConfig(buildInfoStream);
                 }
 
-                string buildKey = _BuildInfo["Build Key"][0];
+                string buildKey = config._BuildInfo["Build Key"][0];
                 string buildCfgPath = Path.Combine(basePath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
                 using (Stream buildConfigStream = new FileStream(buildCfgPath, FileMode.Open))
                 {
-                    _BuildConfig = KeyValueConfig.ReadKeyValueConfig(buildConfigStream);
+                    config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(buildConfigStream);
                 }
 
-                string cdnKey = _BuildInfo["CDN Key"][0];
+                string cdnKey = config._BuildInfo["CDN Key"][0];
                 string cdnCfgPath = Path.Combine(basePath, "Data\\config\\", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
                 using (Stream CDNConfigStream = new FileStream(cdnCfgPath, FileMode.Open))
                 {
-                    _CDNConfig = KeyValueConfig.ReadKeyValueConfig(CDNConfigStream);
+                    config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(CDNConfigStream);
                 }
             }
+            return config;
         }
 
-        public static string BasePath
-        {
-            get { return settings.WowPath; }
-        }
+        public string BasePath { get; set; }
 
-        public static bool OnlineMode
-        {
-            get { return settings.OnlineMode; }
-        }
+        public bool OnlineMode { get; set; }
 
-        public static byte[] EncodingKey
+        public byte[] EncodingKey
         {
             get { return _BuildConfig["encoding"][1].ToByteArray(); }
         }
 
-        public static byte[] RootMD5
+        public byte[] RootMD5
         {
             get { return _BuildConfig["root"][0].ToByteArray(); }
         }
 
-        public static string CDNUrl
+        public string CDNUrl
         {
             get
             {
@@ -189,7 +175,7 @@ namespace CASCExplorer
             }
         }
 
-        public static List<string> Archives
+        public List<string> Archives
         {
             get { return _CDNConfig["archives"]; }
         }
