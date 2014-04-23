@@ -49,7 +49,7 @@ namespace CASCExplorer
         }
     }
 
-    public class EncodingEntry
+    internal class EncodingEntry
     {
         public int Size;
         public List<byte[]> Keys;
@@ -60,7 +60,7 @@ namespace CASCExplorer
         }
     }
 
-    public class IndexEntry
+    internal class IndexEntry
     {
         public int Index;
         public int Offset;
@@ -80,7 +80,7 @@ namespace CASCExplorer
 
         public static readonly Jenkins96 Hasher = new Jenkins96();
 
-        public readonly Dictionary<int, FileStream> DataStreams = new Dictionary<int, FileStream>();
+        private readonly Dictionary<int, FileStream> DataStreams = new Dictionary<int, FileStream>();
 
         public int NumRootEntries { get { return RootData.Count; } }
         public int NumFileNames { get { return FileNames.Count; } }
@@ -405,7 +405,7 @@ namespace CASCExplorer
                 stream.Value.Close();
         }
 
-        private List<string> GetIdxFiles(string wowPath)
+        private static List<string> GetIdxFiles(string wowPath)
         {
             List<string> latestIdx = new List<string>();
 
@@ -427,14 +427,14 @@ namespace CASCExplorer
             return null;
         }
 
-        public EncodingEntry GetEncodingInfo(byte[] md5)
+        private EncodingEntry GetEncodingInfo(byte[] md5)
         {
             if (EncodingData.ContainsKey(md5))
                 return EncodingData[md5];
             return null;
         }
 
-        public IndexEntry GetLocalIndexInfo(byte[] key)
+        private IndexEntry GetLocalIndexInfo(byte[] key)
         {
             byte[] temp = key.Copy(9);
             if (LocalIndexData.ContainsKey(temp))
@@ -445,7 +445,7 @@ namespace CASCExplorer
             return null;
         }
 
-        public FileStream GetDataStream(int index)
+        private FileStream GetDataStream(int index)
         {
             if (DataStreams.ContainsKey(index))
                 return DataStreams[index];

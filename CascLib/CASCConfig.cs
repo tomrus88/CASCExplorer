@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace CASCExplorer
 {
-    public class KeyValueConfig
+    internal class KeyValueConfig
     {
         private readonly Dictionary<string, List<string>> Data = new Dictionary<string, List<string>>();
 
