@@ -5,7 +5,7 @@ using System.Net;
 
 namespace CASCExplorer
 {
-    public class CDNHandler
+    internal class CDNHandler
     {
         static readonly ByteArrayComparer comparer = new ByteArrayComparer();
         Dictionary<byte[], IndexEntry> CDNIndexData = new Dictionary<byte[], IndexEntry>(comparer);

@@ -88,7 +88,7 @@ namespace CASCExplorer
         private readonly CASCConfig config;
         private readonly CDNHandler cdn;
         
-        public CASCHandler(CASCConfig config, CDNHandler cdn, BackgroundWorker worker)
+        internal CASCHandler(CASCConfig config, CDNHandler cdn, BackgroundWorker worker)
         {
             this.config = config;
             this.cdn = cdn;
@@ -456,6 +456,13 @@ namespace CASCExplorer
             DataStreams[index] = fs;
 
             return fs;
+        }
+
+        public static CASCHandler Open(bool online, string basePath, BackgroundWorker worker)
+        {
+            var config = CASCConfig.Load(online, basePath);
+            var cdn = CDNHandler.Initialize(config);
+            return new CASCHandler(config, cdn, worker);
         }
     }
 }

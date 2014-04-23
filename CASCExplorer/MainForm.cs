@@ -73,11 +73,9 @@ namespace CASCExplorer
 
         private void loadDataWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            var config = CASCConfig.Load(Settings.Default.OnlineMode, Settings.Default.WowPath);
-            var cdn = CDNHandler.Initialize(config);
-
             var worker = sender as BackgroundWorker;
-            cascHandler = new CASCHandler(config, cdn, worker);
+
+            cascHandler = CASCHandler.Open(Settings.Default.OnlineMode, Settings.Default.WowPath, worker);
             root = LoadListFile(cascHandler, Path.Combine(Application.StartupPath, "listfile.txt"), worker);
             e.Result = CASCHandler.FileNames.Count;
         }
