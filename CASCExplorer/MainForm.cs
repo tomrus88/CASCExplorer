@@ -7,6 +7,7 @@ using System.IO;
 using System.Linq;
 using System.Windows.Forms;
 using CASCExplorer.Properties;
+using SereniaBLPLib;
 
 namespace CASCExplorer
 {
@@ -180,7 +181,74 @@ namespace CASCExplorer
 
         private void listView1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
-            NavigateFolder();
+            if (!NavigateFolder())
+            {
+                PreviewFile();
+            }
+        }
+
+        private void PreviewFile()
+        {
+            CASCFolder folder = fileList.Tag as CASCFolder;
+
+            if (folder == null)
+                return;
+
+            var files = GetFiles(folder, fileList.SelectedIndices.Cast<int>());
+
+            foreach (var file in files)
+            {
+                var extension = Path.GetExtension(file.Name);
+                if (extension != null)
+                {
+                    switch (extension.ToLower())
+                    {
+                        case ".blp":
+                        {
+                            PreviewBlp(file.FullName);
+                            break;
+                        }
+                        case ".txt":
+                        case ".htm":
+                        case ".html":
+                        {
+                            PreviewText(file.FullName);
+                            break;
+                        }
+                        default:
+                        {
+                            MessageBox.Show(string.Format("Preview of {0} is not supported yet", extension), "Not supported file");
+                            break;
+                        }
+                    }
+                }
+            }
+        }
+
+        private void PreviewText(string fullName)
+        {
+            var stream = cascHandler.OpenFile(fullName, LocaleFlags.All);
+            var text = new StreamReader(stream).ReadToEnd();
+            var form = new Form { FormBorderStyle = FormBorderStyle.SizableToolWindow };
+            form.Controls.Add(new TextBox
+            {
+                Multiline = true,
+                ReadOnly = true,
+                Dock = DockStyle.Fill,
+                Text = text,
+            });
+            form.Show();
+        }
+
+        private void PreviewBlp(string fullName)
+        {
+            var stream = cascHandler.OpenFile(fullName, LocaleFlags.All);
+            var blp = new BlpFile(stream);
+            var bitmap = blp.GetBitmap(0);
+            var form = new Form { Size = bitmap.Size, FormBorderStyle = FormBorderStyle.FixedToolWindow };
+            form.Show();
+            var graphics = form.CreateGraphics();
+            graphics.DrawImage(bitmap, 0, 0);
         }
 
         private void listView1_KeyDown(object sender, KeyEventArgs e)
@@ -195,19 +263,19 @@ namespace CASCExplorer
             }
         }
 
-        private void NavigateFolder()
+        private bool NavigateFolder()
         {
             // Current folder
             CASCFolder folder = fileList.Tag as CASCFolder;
 
             if (folder == null)
-                return;
+                return false;
 
             // Selected folder
             CASCFolder baseEntry = folder.SubEntries.ElementAt(fileList.SelectedIndices[0]).Value as CASCFolder;
 
             if (baseEntry == null)
-                return;
+                return false;
 
             folderTree.SelectedNode.Expand();
             folderTree.SelectedNode.Nodes[baseEntry.Name].Expand();
@@ -216,6 +284,7 @@ namespace CASCExplorer
             UpdateListView(baseEntry);
 
             statusLabel.Text = folderTree.SelectedNode.FullPath;
+            return true;
         }
 
         private void toolStripMenuItem1_Click(object sender, EventArgs e)

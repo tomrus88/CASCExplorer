@@ -1,0 +1,3 @@
+[submodule "SereniaBLPLib"]
+	path = SereniaBLPLib
+	url = https://github.com/WoW-Tools/SereniaBLPLib.git

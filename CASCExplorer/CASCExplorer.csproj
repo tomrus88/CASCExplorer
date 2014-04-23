@@ -117,6 +117,10 @@
     <None Include="Icons\openFolder.ico" />
   </ItemGroup>
   <ItemGroup>
+    <ProjectReference Include="..\..\SereniaBLPLib\SereniaBLPLib\SereniaBLPLib.csproj">
+      <Project>{4ED9F877-A9BB-470F-B35C-694147472080}</Project>
+      <Name>SereniaBLPLib</Name>
+    </ProjectReference>
     <ProjectReference Include="..\CascLib\CascLib.csproj">
       <Project>{E08E1E48-6585-4137-8405-661C62C10713}</Project>
       <Name>CascLib</Name>
