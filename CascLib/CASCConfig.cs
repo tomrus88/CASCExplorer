@@ -96,63 +96,64 @@ namespace CASCExplorer
         KeyValueConfig _CDNData;
         KeyValueConfig _VersionsData;
 
-        public static CASCConfig Load(bool online, string basePath)
+        public static CASCConfig LoadOnlineStorageConfig()
         {
-            var config = new CASCConfig { OnlineMode = online, BasePath = basePath };
-
-            if (online)
+            var config = new CASCConfig {OnlineMode = true};
+            using (var cdnsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/cdns"))
             {
-                using (var cdnsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/cdns"))
-                {
-                    config._CDNData = KeyValueConfig.ReadVerBarConfig(cdnsStream);
-                }
-
-                using (var versionsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/versions"))
-                {
-                    config._VersionsData = KeyValueConfig.ReadVerBarConfig(versionsStream);
-                }
-
-                string buildKey = config._VersionsData["BuildConfig"][0];
-                using (Stream buildConfigStream = CDNHandler.OpenConfigFileDirect(config.CDNUrl, buildKey))
-                {
-                    config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(buildConfigStream);
-                }
-
-                string cdnKey = config._VersionsData["CDNConfig"][0];
-                using (Stream CDNConfigStream = CDNHandler.OpenConfigFileDirect(config.CDNUrl, cdnKey))
-                {
-                    config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(CDNConfigStream);
-                }
+                config._CDNData = KeyValueConfig.ReadVerBarConfig(cdnsStream);
             }
-            else
+
+            using (var versionsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/versions"))
             {
-                string buildInfoPath = Path.Combine(basePath, ".build.info");
+                config._VersionsData = KeyValueConfig.ReadVerBarConfig(versionsStream);
+            }
 
-                using (Stream buildInfoStream = new FileStream(buildInfoPath, FileMode.Open))
-                {
-                    config._BuildInfo = KeyValueConfig.ReadVerBarConfig(buildInfoStream);
-                }
+            string buildKey = config._VersionsData["BuildConfig"][0];
+            using (Stream stream = CDNHandler.OpenConfigFileDirect(config.CDNUrl, buildKey))
+            {
+                config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(stream);
+            }
 
-                string buildKey = config._BuildInfo["Build Key"][0];
-                string buildCfgPath = Path.Combine(basePath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
-                using (Stream buildConfigStream = new FileStream(buildCfgPath, FileMode.Open))
-                {
-                    config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(buildConfigStream);
-                }
-
-                string cdnKey = config._BuildInfo["CDN Key"][0];
-                string cdnCfgPath = Path.Combine(basePath, "Data\\config\\", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
-                using (Stream CDNConfigStream = new FileStream(cdnCfgPath, FileMode.Open))
-                {
-                    config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(CDNConfigStream);
-                }
+            string cdnKey = config._VersionsData["CDNConfig"][0];
+            using (Stream stream = CDNHandler.OpenConfigFileDirect(config.CDNUrl, cdnKey))
+            {
+                config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
             }
             return config;
         }
 
-        public string BasePath { get; set; }
+        public static CASCConfig LoadLocalStorageConfig(string basePath)
+        {
+            var config = new CASCConfig {OnlineMode = false, BasePath = basePath};
+            
+            string buildInfoPath = Path.Combine(basePath, ".build.info");
 
-        public bool OnlineMode { get; set; }
+            using (Stream buildInfoStream = new FileStream(buildInfoPath, FileMode.Open))
+            {
+                config._BuildInfo = KeyValueConfig.ReadVerBarConfig(buildInfoStream);
+            }
+
+            string buildKey = config._BuildInfo["Build Key"][0];
+            string buildCfgPath = Path.Combine(basePath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
+            using (Stream stream = new FileStream(buildCfgPath, FileMode.Open))
+            {
+                config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(stream);
+            }
+
+            string cdnKey = config._BuildInfo["CDN Key"][0];
+            string cdnCfgPath = Path.Combine(basePath, "Data\\config\\", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
+            using (Stream stream = new FileStream(cdnCfgPath, FileMode.Open))
+            {
+                config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
+            }
+            
+            return config;
+        }
+
+        public string BasePath { get; private set; }
+
+        public bool OnlineMode { get; private set; }
 
         public byte[] EncodingKey
         {

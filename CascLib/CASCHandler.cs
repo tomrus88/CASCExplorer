@@ -458,9 +458,22 @@ namespace CASCExplorer
             return fs;
         }
 
-        public static CASCHandler Open(bool online, string basePath, BackgroundWorker worker)
+        public static CASCHandler OpenLocalStorage(string basePath, BackgroundWorker worker)
         {
-            var config = CASCConfig.Load(online, basePath);
+            CASCConfig config = CASCConfig.LoadLocalStorageConfig(basePath);
+
+            return Open(worker, config);
+        }
+
+        public static CASCHandler OpenOnlineStorage(BackgroundWorker worker)
+        {
+            CASCConfig config = CASCConfig.LoadOnlineStorageConfig();
+
+            return Open(worker, config);
+        }
+
+        private static CASCHandler Open(BackgroundWorker worker, CASCConfig config)
+        {
             var cdn = CDNHandler.Initialize(config);
             return new CASCHandler(config, cdn, worker);
         }

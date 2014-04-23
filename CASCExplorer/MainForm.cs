@@ -75,7 +75,10 @@ namespace CASCExplorer
         {
             var worker = sender as BackgroundWorker;
 
-            cascHandler = CASCHandler.Open(Settings.Default.OnlineMode, Settings.Default.WowPath, worker);
+            cascHandler = Settings.Default.OnlineMode
+                ? CASCHandler.OpenOnlineStorage(worker)
+                : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, worker);
+
             root = LoadListFile(cascHandler, Path.Combine(Application.StartupPath, "listfile.txt"), worker);
             e.Result = CASCHandler.FileNames.Count;
         }

@@ -12,7 +12,7 @@ namespace CASCExplorer
 
         private CASCConfig CASCConfig;
 
-        public CDNHandler(CASCConfig cascConfig)
+        private CDNHandler(CASCConfig cascConfig)
         {
             CASCConfig = cascConfig;
         }
