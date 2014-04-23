@@ -12,9 +12,9 @@ namespace CASCExplorer
 
         public static void Initialize(bool online)
         {
-            for (int i = 0; i < CASCConfig.CDNConfig["archives"].Count; ++i)
+            for (int i = 0; i < CASCConfig.Archives.Count; i++)
             {
-                string index = CASCConfig.CDNConfig["archives"][i];
+                string index = CASCConfig.Archives[i];
 
                 if (online)
                     DownloadFile(index, i);
@@ -95,7 +95,7 @@ namespace CASCExplorer
         {
             var indexEntry = CDNIndexData[key];
 
-            var index = CASCConfig.CDNConfig["archives"][indexEntry.Index];
+            var index = CASCConfig.Archives[indexEntry.Index];
             var url = CASCConfig.CDNUrl + "/data/" + index.Substring(0, 2) + "/" + index.Substring(2, 2) + "/" + index;
 
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);

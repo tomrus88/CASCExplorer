@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using CASCExplorer.Properties;
 
 namespace CASCExplorer
 {
@@ -96,19 +97,9 @@ namespace CASCExplorer
         static KeyValueConfig _CDNData;
         static KeyValueConfig _VersionsData;
 
-        public static KeyValueConfig BuildConfig
-        {
-            get { return _BuildConfig; }
-        }
-
-        public static KeyValueConfig CDNConfig
-        {
-            get { return _CDNConfig; }
-        }
-
         public static void Load(bool online)
         {
-            string wowPath = Properties.Settings.Default.WowPath;
+            string wowPath = Settings.Default.WowPath;
 
             if (online)
             {
@@ -161,12 +152,12 @@ namespace CASCExplorer
 
         public static byte[] EncodingKey
         {
-            get { return BuildConfig["encoding"][1].ToByteArray(); }
+            get { return _BuildConfig["encoding"][1].ToByteArray(); }
         }
 
         public static byte[] RootMD5
         {
-            get { return BuildConfig["root"][0].ToByteArray(); }
+            get { return _BuildConfig["root"][0].ToByteArray(); }
         }
 
         public static string CDNUrl
@@ -178,6 +169,11 @@ namespace CASCExplorer
                 else
                     return String.Format("http://{0}{1}", _BuildInfo["CDN Hosts"][0], _BuildInfo["CDN Path"][0]);
             }
+        }
+
+        public static List<string> Archives
+        {
+            get { return _CDNConfig["archives"]; }
         }
     }
 }
