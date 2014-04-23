@@ -42,28 +42,7 @@ namespace CASCExplorer
 
             backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)NumFiles * 100));
 
-            var rootInfos = cascHandler.GetRootInfo(file.Hash);
-
-            if (rootInfos == null)
-                return;
-
-            foreach (var rootInfo in rootInfos)
-            {
-                // only enUS atm
-                if ((rootInfo.Block.Flags & locale) == 0)
-                    continue;
-
-                var encInfo = cascHandler.GetEncodingInfo(rootInfo.MD5);
-
-                if (encInfo == null)
-                    continue;
-
-                foreach (var key in encInfo.Keys)
-                {
-                    cascHandler.ExtractFile(key, ExtractPath, file.FullName);
-                    return;
-                }
-            }
+            cascHandler.SaveFileTo(file.FullName, ExtractPath, locale);
         }
 
         private int GetFilesCount(CASCFolder _folder, IEnumerable<int> _selection)

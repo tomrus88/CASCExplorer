@@ -87,8 +87,8 @@ namespace CASCExplorer
         
         private readonly CASCConfig config;
         private readonly CDNHandler cdn;
-        
-        internal CASCHandler(CASCConfig config, CDNHandler cdn, BackgroundWorker worker)
+
+        private CASCHandler(CASCConfig config, CDNHandler cdn, BackgroundWorker worker)
         {
             this.config = config;
             this.cdn = cdn;
@@ -291,7 +291,7 @@ namespace CASCExplorer
             return OpenFile(config.EncodingKey);
         }
 
-        public Stream OpenFile(byte[] key)
+        private Stream OpenFile(byte[] key)
         {
             try
             {
@@ -345,7 +345,7 @@ namespace CASCExplorer
             }
         }
 
-        public void ExtractFile(byte[] key, string path, string name)
+        private void ExtractFile(byte[] key, string path, string name)
         {
             try
             {
@@ -463,6 +463,59 @@ namespace CASCExplorer
             var config = CASCConfig.Load(online, basePath);
             var cdn = CDNHandler.Initialize(config);
             return new CASCHandler(config, cdn, worker);
+        }
+
+        public bool FileExis(string file)
+        {
+            var hash = Hasher.ComputeHash(file);
+            var rootInfos = GetRootInfo(hash);
+            return rootInfos != null && rootInfos.Count > 0;
+        }
+
+        public Stream OpenFile(string file, LocaleFlags locale)
+        {
+            var hash = Hasher.ComputeHash(file);
+            var rootInfos = GetRootInfo(hash);
+
+            foreach (var rootInfo in rootInfos)
+            {
+                if ((rootInfo.Block.Flags & locale) != 0)
+                {
+                    var encInfo = GetEncodingInfo(rootInfo.MD5);
+
+                    if (encInfo == null)
+                        continue;
+
+                    foreach (var key in encInfo.Keys)
+                        return OpenFile(key);
+                }
+            }
+
+            throw new NotSupportedException();
+        }
+
+        public void SaveFileTo(string fullName, string extractPath, LocaleFlags locale)
+        {
+            var hash = Hasher.ComputeHash(fullName);
+            var rootInfos = GetRootInfo(hash);
+
+            foreach (var rootInfo in rootInfos)
+            {
+                if ((rootInfo.Block.Flags & locale) != 0)
+                {
+                    var encInfo = GetEncodingInfo(rootInfo.MD5);
+
+                    if (encInfo == null)
+                        continue;
+
+                    foreach (var key in encInfo.Keys)
+                    {
+                        ExtractFile(key, extractPath, fullName);
+                        return;
+                    }
+                }
+            }
+            throw new NotSupportedException();
         }
     }
 }
