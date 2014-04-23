@@ -2,7 +2,7 @@
 
 namespace CASCExplorer
 {
-    class Logger
+    public class Logger
     {
         static StreamWriter logger = new StreamWriter("debug.log") { AutoFlush = true };
 

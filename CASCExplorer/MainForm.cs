@@ -28,8 +28,8 @@ namespace CASCExplorer
 
         private void Form1_Load(object sender, EventArgs e)
         {
-            iconsList.Images.Add(Properties.Resources.folder);
-            iconsList.Images.Add(Properties.Resources.openFolder);
+            iconsList.Images.Add(Resources.folder);
+            iconsList.Images.Add(Resources.openFolder);
             iconsList.Images.Add(SystemIcons.WinLogo);
 
             folderTree.SelectedImageIndex = 1;
@@ -78,7 +78,7 @@ namespace CASCExplorer
 
             var worker = sender as BackgroundWorker;
             cascHandler = new CASCHandler(config, cdn, worker);
-            root = cascHandler.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), worker);
+            root = LoadListFile(cascHandler, Path.Combine(Application.StartupPath, "listfile.txt"), worker);
             e.Result = CASCHandler.FileNames.Count;
         }
 
@@ -243,6 +243,73 @@ namespace CASCExplorer
         {
             AboutBox about = new AboutBox();
             about.ShowDialog();
+        }
+
+        public static CASCFolder LoadListFile(CASCHandler cascHandler, string path, BackgroundWorker worker)
+        {
+            if (!File.Exists(path))
+                throw new FileNotFoundException("list file missing!");
+
+            var rootHash = CASCHandler.Hasher.ComputeHash("root");
+
+            var root = new CASCFolder(rootHash);
+
+            CASCHandler.FolderNames[rootHash] = "root";
+
+            using (var sr = new StreamReader(path))
+            {
+                string file;
+                int filesCount = 0;
+
+                CASCFolder folder = root;
+
+                while ((file = sr.ReadLine()) != null)
+                {
+                    filesCount++;
+
+                    string[] parts = file.Split('\\');
+
+                    for (int i = 0; i < parts.Length; ++i)
+                    {
+                        bool isFile = (i == parts.Length - 1);
+
+                        ulong hash = isFile ? CASCHandler.Hasher.ComputeHash(file) : CASCHandler.Hasher.ComputeHash(parts[i]);
+
+                        // skip invalid names
+                        if (isFile && !cascHandler.RootData.ContainsKey(hash))
+                            break;
+
+                        ICASCEntry entry = folder.GetEntry(hash);
+
+                        if (entry == null)
+                        {
+                            if (isFile)
+                            {
+                                entry = new CASCFile(hash);
+                                CASCHandler.FileNames[hash] = file;
+                            }
+                            else
+                            {
+                                entry = new CASCFolder(hash);
+                                CASCHandler.FolderNames[hash] = parts[i];
+                            }
+
+                            folder.SubEntries[hash] = entry;
+
+                            if (isFile)
+                            {
+                                folder = root;
+                                break;
+                            }
+                        }
+
+                        folder = entry as CASCFolder;
+                    }
+
+                    Logger.WriteLine("CASCHandler: loaded {0} file names", CASCHandler.FileNames.Count);
+                }
+            }
+            return root;
         }
     }
 }

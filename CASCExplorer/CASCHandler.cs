@@ -3,8 +3,6 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
-using System.Windows.Forms;
-using CASCExplorer.Properties;
 
 namespace CASCExplorer
 {
@@ -73,7 +71,7 @@ namespace CASCExplorer
     {
         static readonly ByteArrayComparer comparer = new ByteArrayComparer();
 
-        readonly Dictionary<ulong, List<RootEntry>> RootData = new Dictionary<ulong, List<RootEntry>>();
+        public readonly Dictionary<ulong, List<RootEntry>> RootData = new Dictionary<ulong, List<RootEntry>>();
         readonly Dictionary<byte[], EncodingEntry> EncodingData = new Dictionary<byte[], EncodingEntry>(comparer);
         readonly Dictionary<byte[], IndexEntry> LocalIndexData = new Dictionary<byte[], IndexEntry>(comparer);
 
@@ -83,7 +81,6 @@ namespace CASCExplorer
         public static readonly Jenkins96 Hasher = new Jenkins96();
 
         public readonly Dictionary<int, FileStream> DataStreams = new Dictionary<int, FileStream>();
-        private readonly Settings settings;
 
         public int NumRootEntries { get { return RootData.Count; } }
         public int NumFileNames { get { return FileNames.Count; } }
@@ -95,7 +92,6 @@ namespace CASCExplorer
         {
             this.config = config;
             this.cdn = cdn;
-            settings = Settings.Default;
             if (!config.OnlineMode)
             {
                 var idxFiles = GetIdxFiles(this.config.BasePath);
@@ -275,73 +271,6 @@ namespace CASCExplorer
             }
 
             if (worker != null) worker.ReportProgress(0);
-        }
-
-        public CASCFolder LoadListFile(string path, BackgroundWorker worker)
-        {
-            if (!File.Exists(path))
-                throw new FileNotFoundException("list file missing!");
-
-            var rootHash = Hasher.ComputeHash("root");
-
-            var root = new CASCFolder(rootHash);
-
-            FolderNames[rootHash] = "root";
-
-            using (var sr = new StreamReader(path))
-            {
-                string file;
-                int filesCount = 0;
-
-                CASCFolder folder = root;
-
-                while ((file = sr.ReadLine()) != null)
-                {
-                    filesCount++;
-
-                    string[] parts = file.Split('\\');
-
-                    for (int i = 0; i < parts.Length; ++i)
-                    {
-                        bool isFile = (i == parts.Length - 1);
-
-                        ulong hash = isFile ? Hasher.ComputeHash(file) : Hasher.ComputeHash(parts[i]);
-
-                        // skip invalid names
-                        if (isFile && !RootData.ContainsKey(hash))
-                            break;
-
-                        ICASCEntry entry = folder.GetEntry(hash);
-
-                        if (entry == null)
-                        {
-                            if (isFile)
-                            {
-                                entry = new CASCFile(hash);
-                                FileNames[hash] = file;
-                            }
-                            else
-                            {
-                                entry = new CASCFolder(hash);
-                                FolderNames[hash] = parts[i];
-                            }
-
-                            folder.SubEntries[hash] = entry;
-
-                            if (isFile)
-                            {
-                                folder = root;
-                                break;
-                            }
-                        }
-
-                        folder = entry as CASCFolder;
-                    }
-
-                    Logger.WriteLine("CASCHandler: loaded {0} file names", FileNames.Count);
-                }
-            }
-            return root;
         }
 
         private Stream OpenRootFile()
