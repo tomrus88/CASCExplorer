@@ -32,7 +32,6 @@ namespace CASCExplorer
         {
             if (hash.Length != other.Length)
                 return false;
-
             for (var i = 0; i < hash.Length; ++i)
                 if (hash[i] != other[i])
                     return false;

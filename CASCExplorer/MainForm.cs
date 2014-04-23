@@ -186,9 +186,7 @@ namespace CASCExplorer
             {
                 TreeNode node = folderTree.SelectedNode;
                 if (node != null && node != folderTree.Nodes["root"])
-                {
                     folderTree.SelectedNode = node.Parent;
-                }
             }
         }
 

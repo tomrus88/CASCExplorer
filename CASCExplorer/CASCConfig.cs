@@ -71,9 +71,7 @@ namespace CASCExplorer
                             continue;
 
                         for (int i = 0; i < Data.Count; ++i)
-                        {
                             Data.ElementAt(i).Value.Add(tokens[i]);
-                        }
                     }
 
                     lineNum++;

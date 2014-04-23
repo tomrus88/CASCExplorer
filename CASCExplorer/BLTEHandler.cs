@@ -13,10 +13,10 @@ namespace CASCExplorer
 
     class BLTEChunk
     {
-        public int compSize;
-        public int decompSize;
-        public byte[] hash;
-        public byte[] data;
+        public int CompSize;
+        public int DecompSize;
+        public byte[] Hash;
+        public byte[] Data;
     }
 
     class BLTEHandler : IDisposable
@@ -94,51 +94,46 @@ namespace CASCExplorer
 
                 if (frameHeaderSize != 0)
                 {
-                    chunks[i].compSize = reader.ReadInt32BE();
-                    chunks[i].decompSize = reader.ReadInt32BE();
-                    chunks[i].hash = reader.ReadBytes(16);
+                    chunks[i].CompSize = reader.ReadInt32BE();
+                    chunks[i].DecompSize = reader.ReadInt32BE();
+                    chunks[i].Hash = reader.ReadBytes(16);
                 }
                 else
                 {
-                    chunks[i].compSize = totalSize;
-                    chunks[i].decompSize = totalSize; // -1?
-                    chunks[i].hash = null;
+                    chunks[i].CompSize = totalSize;
+                    chunks[i].DecompSize = totalSize; // -1?
+                    chunks[i].Hash = null;
                 }
             }
 
             for (int i = 0; i < chunkCount; ++i)
             {
-                chunks[i].data = reader.ReadBytes(chunks[i].compSize);
+                chunks[i].Data = reader.ReadBytes(chunks[i].CompSize);
 
-                if (chunks[i].data.Length != chunks[i].compSize)
+                if (chunks[i].Data.Length != chunks[i].CompSize)
                     throw new Exception("chunks[i].data.Length != chunks[i].compSize");
 
                 if (frameHeaderSize != 0)
                 {
-                    byte[] hh = md5.ComputeHash(chunks[i].data);
+                    byte[] hh = md5.ComputeHash(chunks[i].Data);
 
-                    if (!hh.EqualsTo(chunks[i].hash))
+                    if (!hh.EqualsTo(chunks[i].Hash))
                         throw new InvalidDataException("MD5 missmatch!");
                 }
 
-                switch (chunks[i].data[0])
+                switch (chunks[i].Data[0])
                 {
                     //case 0x45: // E
                     //    break;
                     //case 0x46: // F
                     //    break;
                     case 0x4E: // N
-                        {
-                            if (chunks[i].data.Length - 1 != chunks[i].decompSize)
-                                throw new InvalidDataException("Possible error (1) !");
-
-                            stream.Write(chunks[i].data, 1, chunks[i].decompSize);
-                        }
+                        if (chunks[i].Data.Length - 1 != chunks[i].DecompSize)
+                            throw new InvalidDataException("Possible error (1) !");
+                        stream.Write(chunks[i].Data, 1, chunks[i].DecompSize);
                         break;
                     case 0x5A: // Z
-                        {
-                            Decompress(stream, chunks[i].data);
-                        }
+                        Decompress(stream, chunks[i].Data);
                         break;
                     default:
                         throw new InvalidDataException("Unknown byte at switch case!");

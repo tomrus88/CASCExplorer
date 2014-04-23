@@ -150,9 +150,7 @@ namespace CASCExplorer
                         //}
 
                         if (fs.Position != fs.Position)
-                        {
                             throw new Exception("idx file under read");
-                        }
                     }
 
                     worker.ReportProgress((int)((float)++idxIndex / (float)idxFiles.Count * 100));

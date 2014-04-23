@@ -6,7 +6,7 @@ namespace CASCExplorer
     {
         public NoFlickerListView()
         {
-            SetStyle(ControlStyles.OptimizedDoubleBuffer | ControlStyles.AllPaintingInWmPaint, true);
+            DoubleBuffered = true;
         }
     }
 }

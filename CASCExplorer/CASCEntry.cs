@@ -23,18 +23,12 @@ namespace CASCExplorer
 
         public string Name
         {
-            get
-            {
-                return CASCHandler.FolderNames[hash];
-            }
+            get { return CASCHandler.FolderNames[hash]; }
         }
 
         public ulong Hash
         {
-            get
-            {
-                return hash;
-            }
+            get { return hash; }
         }
 
         public ICASCEntry GetEntry(ulong hash)
@@ -47,13 +41,9 @@ namespace CASCExplorer
         public int CompareTo(ICASCEntry other)
         {
             if (other is CASCFolder)
-            {
                 return Name.CompareTo(other.Name);
-            }
             else
-            {
                 return this is CASCFolder ? -1 : 1;
-            }
         }
     }
 
@@ -68,38 +58,25 @@ namespace CASCExplorer
 
         public string Name
         {
-            get
-            {
-                return Path.GetFileName(FullName);
-            }
+            get { return Path.GetFileName(FullName); }
         }
 
         public string FullName
         {
-            get
-            {
-                return CASCHandler.FileNames[hash];
-            }
+            get { return CASCHandler.FileNames[hash]; }
         }
 
         public ulong Hash
         {
-            get
-            {
-                return hash;
-            }
+            get { return hash; }
         }
 
         public int CompareTo(ICASCEntry other)
         {
             if (other is CASCFile)
-            {
                 return Name.CompareTo(other.Name);
-            }
             else
-            {
                 return this is CASCFile ? 1 : -1;
-            }
         }
     }
 }
