@@ -66,7 +66,7 @@ namespace CASCExplorer
 
             if (frameHeaderSize == 0)
             {
-                totalSize = size - 38;
+                totalSize = size - 8;// - 38;
 
                 chunkCount = 1;
             }
@@ -101,7 +101,7 @@ namespace CASCExplorer
                 else
                 {
                     chunks[i].CompSize = totalSize;
-                    chunks[i].DecompSize = totalSize; // -1?
+                    chunks[i].DecompSize = totalSize - 1;
                     chunks[i].Hash = null;
                 }
             }

@@ -382,7 +382,7 @@ namespace CASCExplorer
                 //byte[] unkData1 = reader.ReadBytes(2);
                 //byte[] unkData2 = reader.ReadBytes(8);
 
-                using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size))
+                using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30))
                 {
                     return blte.OpenFile();
                 }
@@ -435,7 +435,7 @@ namespace CASCExplorer
                 //byte[] unkData1 = reader.ReadBytes(2);
                 //byte[] unkData2 = reader.ReadBytes(8);
 
-                using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size))
+                using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30))
                 {
                     blte.ExtractToFile(path, name);
                 }
