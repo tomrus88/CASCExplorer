@@ -182,9 +182,7 @@ namespace CASCExplorer
         private void listView1_MouseDoubleClick(object sender, MouseEventArgs e)
         {
             if (!NavigateFolder())
-            {
                 PreviewFile();
-            }
         }
 
         private void PreviewFile()
@@ -245,10 +243,8 @@ namespace CASCExplorer
             var stream = cascHandler.OpenFile(fullName, LocaleFlags.All);
             var blp = new BlpFile(stream);
             var bitmap = blp.GetBitmap(0);
-            var form = new Form { Size = bitmap.Size, FormBorderStyle = FormBorderStyle.FixedToolWindow };
+            var form = new ImagePreviewForm(bitmap);
             form.Show();
-            var graphics = form.CreateGraphics();
-            graphics.DrawImage(bitmap, 0, 0);
         }
 
         private void listView1_KeyDown(object sender, KeyEventArgs e)
