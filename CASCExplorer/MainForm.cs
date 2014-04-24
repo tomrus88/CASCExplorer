@@ -202,22 +202,27 @@ namespace CASCExplorer
                     switch (extension.ToLower())
                     {
                         case ".blp":
-                        {
-                            PreviewBlp(file.FullName);
-                            break;
-                        }
+                            {
+                                PreviewBlp(file.FullName);
+                                break;
+                            }
                         case ".txt":
+                        case ".ini":
+                        case ".wtf":
+                        case ".lua":
+                        case ".toc":
+                        case ".xml":
                         case ".htm":
                         case ".html":
-                        {
-                            PreviewText(file.FullName);
-                            break;
-                        }
+                            {
+                                PreviewText(file.FullName);
+                                break;
+                            }
                         default:
-                        {
-                            MessageBox.Show(string.Format("Preview of {0} is not supported yet", extension), "Not supported file");
-                            break;
-                        }
+                            {
+                                MessageBox.Show(string.Format("Preview of {0} is not supported yet", extension), "Not supported file");
+                                break;
+                            }
                     }
                 }
             }
@@ -234,6 +239,7 @@ namespace CASCExplorer
                 ReadOnly = true,
                 Dock = DockStyle.Fill,
                 Text = text,
+                ScrollBars = ScrollBars.Both
             });
             form.Show();
         }
@@ -369,9 +375,8 @@ namespace CASCExplorer
 
                         folder = entry as CASCFolder;
                     }
-
-                    Logger.WriteLine("CASCHandler: loaded {0} file names", CASCHandler.FileNames.Count);
                 }
+                Logger.WriteLine("CASCHandler: loaded {0} file names", CASCHandler.FileNames.Count);
             }
             return root;
         }

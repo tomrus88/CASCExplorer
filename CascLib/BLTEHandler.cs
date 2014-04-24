@@ -124,10 +124,10 @@ namespace CASCExplorer
 
                 switch (chunk.Data[0])
                 {
-                        //case 0x45: // E
-                        //    break;
-                        //case 0x46: // F
-                        //    break;
+                    //case 0x45: // E
+                    //    break;
+                    //case 0x46: // F
+                    //    break;
                     case 0x4E: // N
                         if (chunk.Data.Length - 1 != chunk.DecompSize)
                             throw new InvalidDataException("Possible error (1) !");

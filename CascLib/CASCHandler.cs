@@ -84,7 +84,7 @@ namespace CASCExplorer
 
         public int NumRootEntries { get { return RootData.Count; } }
         public int NumFileNames { get { return FileNames.Count; } }
-        
+
         private readonly CASCConfig config;
         private readonly CDNHandler cdn;
 
