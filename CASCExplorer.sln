@@ -5,7 +5,7 @@ Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CASCExplorer", "CASCExplore
 EndProject
 Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "CascLib", "CascLib\CascLib.csproj", "{E08E1E48-6585-4137-8405-661C62C10713}"
 EndProject
-Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SereniaBLPLib", "..\SereniaBLPLib\SereniaBLPLib\SereniaBLPLib.csproj", "{4ED9F877-A9BB-470F-B35C-694147472080}"
+Project("{FAE04EC0-301F-11D3-BF4B-00C04F79EFBC}") = "SereniaBLPLib", "SereniaBLPLib\SereniaBLPLib\SereniaBLPLib.csproj", "{4ED9F877-A9BB-470F-B35C-694147472080}"
 EndProject
 Global
 	GlobalSection(SolutionConfigurationPlatforms) = preSolution
