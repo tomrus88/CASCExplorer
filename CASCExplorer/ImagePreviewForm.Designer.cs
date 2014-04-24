@@ -39,11 +39,13 @@
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Name = "ImagePreviewForm";
             this.Text = "Preview";
+            this.Load += new System.EventHandler(this.FormLoad);
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.FormPaint);
             this.ResumeLayout(false);
 
         }
 
         #endregion
+
     }
 }

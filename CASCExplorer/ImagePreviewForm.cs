@@ -11,12 +11,18 @@ namespace CASCExplorer
         {
             _bitmap = bitmap;
             InitializeComponent();
-            Size = bitmap.Size;
+            ClientSize = bitmap.Size;
+            CreateGraphics().DrawImage(_bitmap, 0, 0);
         }
 
         private void FormPaint(object sender, PaintEventArgs e)
         {
             e.Graphics.DrawImage(_bitmap, 0, 0);
+        }
+
+        private void FormLoad(object sender, System.EventArgs e)
+        {
+            ClientSize = _bitmap.Size;
         }
     }
 }
