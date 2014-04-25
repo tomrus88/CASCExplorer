@@ -81,9 +81,7 @@ namespace CASCExplorer
                 var path = Path.Combine(Properties.Settings.Default.WowPath, "Data\\indices\\", index + ".index");
 
                 using (FileStream fs = new FileStream(path, FileMode.Open))
-                {
                     ParseIndex(fs, i);
-                }
             }
             catch
             {

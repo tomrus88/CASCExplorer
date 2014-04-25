@@ -288,6 +288,15 @@ namespace CASCExplorer
 
                     while ((file = sr.ReadLine()) != null)
                     {
+                        ulong fileHash = Hasher.ComputeHash(file);
+
+                        // skip invalid names
+                        if (!RootData.ContainsKey(fileHash))
+                        {
+                            Logger.WriteLine("Invalid file name: {0}", file);
+                            continue;
+                        }
+
                         filesCount++;
 
                         string[] parts = file.Split('\\');
@@ -296,11 +305,7 @@ namespace CASCExplorer
                         {
                             bool isFile = (i == parts.Length - 1);
 
-                            ulong hash = isFile ? Hasher.ComputeHash(file) : Hasher.ComputeHash(parts[i]);
-
-                            // skip invalid names
-                            if (isFile && !RootData.ContainsKey(hash))
-                                break;
+                            ulong hash = isFile ? fileHash : Hasher.ComputeHash(parts[i]);
 
                             ICASCEntry entry = folder.GetEntry(hash);
 
@@ -352,6 +357,8 @@ namespace CASCExplorer
             if (encInfo.Keys.Count > 1)
                 throw new FileNotFoundException("multiple encoding info for root file found!");
 
+            //ExtractFile(encInfo.Keys[0], ".", "root");
+
             return OpenFile(encInfo.Keys[0]);
         }
 
@@ -383,9 +390,7 @@ namespace CASCExplorer
                 //byte[] unkData2 = reader.ReadBytes(8);
 
                 using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30))
-                {
                     return blte.OpenFile();
-                }
             }
             catch
             {
@@ -393,9 +398,7 @@ namespace CASCExplorer
                 {
                     using (Stream s = CDNHandler.OpenDataFileDirect(key, out int len))
                     using (BLTEHandler blte = new BLTEHandler(s, len))
-                    {
                         return blte.OpenFile();
-                    }
                 }
                 else
                 {
@@ -406,9 +409,7 @@ namespace CASCExplorer
 
                     using (Stream s = CDNHandler.OpenDataFile(key))
                     using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
-                    {
                         return blte.OpenFile();
-                    }
                 }
             }
         }
@@ -436,9 +437,7 @@ namespace CASCExplorer
                 //byte[] unkData2 = reader.ReadBytes(8);
 
                 using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30))
-                {
                     blte.ExtractToFile(path, name);
-                }
             }
             catch
             {
@@ -446,9 +445,7 @@ namespace CASCExplorer
                 {
                     using (Stream s = CDNHandler.OpenDataFileDirect(key, out int len))
                     using (BLTEHandler blte = new BLTEHandler(s, len))
-                    {
                         blte.ExtractToFile(path, name);
-                    }
                 }
                 else
                 {
@@ -459,9 +456,7 @@ namespace CASCExplorer
 
                     using (Stream s = CDNHandler.OpenDataFile(key))
                     using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
-                    {
                         blte.ExtractToFile(path, name);
-                    }
                 }
             }
         }

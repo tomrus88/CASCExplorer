@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Text;
 
 namespace CASCExplorer
@@ -10,17 +9,8 @@ namespace CASCExplorer
     {
         public static int ReadInt32BE(this BinaryReader reader)
         {
-            return BitConverter.ToInt32(reader.ReadBytes(4).Reverse().ToArray(), 0);
-        }
-
-        public static uint ReadUInt32BE(this BinaryReader reader)
-        {
-            return BitConverter.ToUInt32(reader.ReadBytes(4).Reverse().ToArray(), 0);
-        }
-
-        public static short ReadInt16BE(this BinaryReader reader)
-        {
-            return BitConverter.ToInt16(reader.ReadBytes(2).Reverse().ToArray(), 0);
+            var bytes = reader.ReadBytes(4);
+            return bytes[3] | (bytes[2] << 8) | (bytes[1] << 16) | (bytes[0] << 24);
         }
 
         public static string ToHexString(this byte[] data)

@@ -111,49 +111,35 @@ namespace CASCExplorer
             if (online)
             {
                 using (var cdnsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/cdns"))
-                {
                     _CDNData = new VerBarConfig(cdnsStream);
-                }
 
                 using (var versionsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/versions"))
-                {
                     _VersionsData = new VerBarConfig(versionsStream);
-                }
 
                 string buildKey = _VersionsData["BuildConfig"][0];
                 using (Stream buildConfigStream = CDNHandler.OpenConfigFileDirect(buildKey))
-                {
                     _BuildConfig = new KeyValueConfig(buildConfigStream);
-                }
 
                 string cdnKey = _VersionsData["CDNConfig"][0];
                 using (Stream CDNConfigStream = CDNHandler.OpenConfigFileDirect(cdnKey))
-                {
                     _CDNConfig = new KeyValueConfig(CDNConfigStream);
-                }
             }
             else
             {
                 string buildInfoPath = Path.Combine(wowPath, ".build.info");
 
                 using (Stream buildInfoStream = new FileStream(buildInfoPath, FileMode.Open))
-                {
                     _BuildInfo = new VerBarConfig(buildInfoStream);
-                }
 
                 string buildKey = _BuildInfo["Build Key"][0];
                 string buildCfgPath = Path.Combine(wowPath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
                 using (Stream buildConfigStream = new FileStream(buildCfgPath, FileMode.Open))
-                {
                     _BuildConfig = new KeyValueConfig(buildConfigStream);
-                }
 
                 string cdnKey = _BuildInfo["CDN Key"][0];
                 string cdnCfgPath = Path.Combine(wowPath, "Data\\config\\", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
                 using (Stream CDNConfigStream = new FileStream(cdnCfgPath, FileMode.Open))
-                {
                     _CDNConfig = new KeyValueConfig(CDNConfigStream);
-                }
             }
         }
 

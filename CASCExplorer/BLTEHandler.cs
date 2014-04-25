@@ -6,11 +6,6 @@ using System.Text;
 
 namespace CASCExplorer
 {
-    class FileExistsException : Exception
-    {
-        public FileExistsException(string message) : base(message) { }
-    }
-
     class BLTEChunk
     {
         public int CompSize;
@@ -40,9 +35,7 @@ namespace CASCExplorer
                 Directory.CreateDirectory(dir);
 
             using (var fileStream = File.Open(fullPath, FileMode.Create))
-            {
                 ExtractData(fileStream);
-            }
         }
 
         public MemoryStream OpenFile()
@@ -66,8 +59,7 @@ namespace CASCExplorer
 
             if (frameHeaderSize == 0)
             {
-                totalSize = size - 8;// - 38;
-
+                totalSize = size - 8;
                 chunkCount = 1;
             }
             else
@@ -84,7 +76,7 @@ namespace CASCExplorer
             }
 
             if (chunkCount < 0)
-                throw new InvalidDataException(String.Format("Possible error ({0}) at offset: 0x" + reader.BaseStream.Position.ToString("X"), chunkCount));
+                throw new InvalidDataException(String.Format("Possible error ({0}) at offset: {1:X8}", chunkCount, reader.BaseStream.Position));
 
             BLTEChunk[] chunks = new BLTEChunk[chunkCount];
 
@@ -147,11 +139,7 @@ namespace CASCExplorer
 
             using (var ms = new MemoryStream(data, 3, data.Length - 3))
             using (var dStream = new DeflateStream(ms, CompressionMode.Decompress))
-            {
-                int len;
-                while ((len = dStream.Read(buf, 0, buf.Length)) > 0)
-                    outS.Write(buf, 0, len);
-            }
+                dStream.CopyTo(outS);
         }
 
         public void Dispose()
