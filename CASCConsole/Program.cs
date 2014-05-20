@@ -16,7 +16,7 @@ namespace CASCConsole
             if (args.Length != 3)
             {
                 Console.WriteLine("Invalid arguments count!");
-                Console.WriteLine("Usage: CASCConsole <pattern (regex)> <destination> <locale>");
+                Console.WriteLine("Usage: CASCConsole <pattern> <destination> <locale>");
                 return;
             }
 
