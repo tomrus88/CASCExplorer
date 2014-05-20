@@ -75,15 +75,11 @@ namespace CASCExplorer
         readonly Dictionary<byte[], EncodingEntry> EncodingData = new Dictionary<byte[], EncodingEntry>(comparer);
         readonly Dictionary<byte[], IndexEntry> LocalIndexData = new Dictionary<byte[], IndexEntry>(comparer);
 
-        public static readonly Dictionary<ulong, string> FileNames = new Dictionary<ulong, string>();
-        public static readonly Dictionary<ulong, string> FolderNames = new Dictionary<ulong, string>();
-
         public static readonly Jenkins96 Hasher = new Jenkins96();
 
         private readonly Dictionary<int, FileStream> DataStreams = new Dictionary<int, FileStream>();
 
         public int NumRootEntries { get { return RootData.Count; } }
-        public int NumFileNames { get { return FileNames.Count; } }
 
         private readonly CASCConfig config;
         private readonly CDNHandler cdn;
@@ -422,50 +418,51 @@ namespace CASCExplorer
 
         public List<RootEntry> GetRootInfo(ulong hash)
         {
-            if (RootData.ContainsKey(hash))
-                return RootData[hash];
-            return null;
+            List<RootEntry> result;
+            RootData.TryGetValue(hash, out result);
+            return result;
         }
 
         private EncodingEntry GetEncodingInfo(byte[] md5)
         {
-            if (EncodingData.ContainsKey(md5))
-                return EncodingData[md5];
-            return null;
+            EncodingEntry result;
+            EncodingData.TryGetValue(md5, out result);
+            return result;
         }
 
         private IndexEntry GetLocalIndexInfo(byte[] key)
         {
             byte[] temp = key.Copy(9);
-            if (LocalIndexData.ContainsKey(temp))
-                return LocalIndexData[temp];
 
-            Logger.WriteLine("CASCHandler: missing index: {0}", key.ToHexString());
+            IndexEntry result;
+            if (!LocalIndexData.TryGetValue(temp, out result))
+                Logger.WriteLine("CASCHandler: missing index: {0}", key.ToHexString());
 
-            return null;
+            return result;
         }
 
         private FileStream GetDataStream(int index)
         {
-            if (DataStreams.ContainsKey(index))
-                return DataStreams[index];
+            FileStream stream;
+            if (DataStreams.TryGetValue(index, out stream))
+                return stream;
 
             string dataFile = Path.Combine(config.BasePath, String.Format("Data\\data\\data.{0:D3}", index));
 
-            var fs = new FileStream(dataFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
-            DataStreams[index] = fs;
+            stream = new FileStream(dataFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            DataStreams[index] = stream;
 
-            return fs;
+            return stream;
         }
 
-        public static CASCHandler OpenLocalStorage(string basePath, BackgroundWorker worker)
+        public static CASCHandler OpenLocalStorage(string basePath, BackgroundWorker worker = null)
         {
             CASCConfig config = CASCConfig.LoadLocalStorageConfig(basePath);
 
             return Open(worker, config);
         }
 
-        public static CASCHandler OpenOnlineStorage(BackgroundWorker worker)
+        public static CASCHandler OpenOnlineStorage(BackgroundWorker worker = null)
         {
             CASCConfig config = CASCConfig.LoadOnlineStorageConfig();
 
@@ -478,7 +475,73 @@ namespace CASCExplorer
             return new CASCHandler(config, cdn, worker);
         }
 
-        public bool FileExis(string file)
+        public CASCFolder LoadListFile(string path)
+        {
+            if (!File.Exists(path))
+                throw new FileNotFoundException("list file missing!");
+
+            var rootHash = Hasher.ComputeHash("root");
+
+            var root = new CASCFolder(rootHash);
+
+            CASCFolder.FolderNames[rootHash] = "root";
+
+            using (var sr = new StreamReader(path))
+            {
+                string file;
+                int filesCount = 0;
+
+                CASCFolder folder = root;
+
+                while ((file = sr.ReadLine()) != null)
+                {
+                    filesCount++;
+
+                    string[] parts = file.Split('\\');
+
+                    for (int i = 0; i < parts.Length; ++i)
+                    {
+                        bool isFile = (i == parts.Length - 1);
+
+                        ulong hash = isFile ? Hasher.ComputeHash(file) : Hasher.ComputeHash(parts[i]);
+
+                        // skip invalid names
+                        if (isFile && !RootData.ContainsKey(hash))
+                            break;
+
+                        ICASCEntry entry = folder.GetEntry(hash);
+
+                        if (entry == null)
+                        {
+                            if (isFile)
+                            {
+                                entry = new CASCFile(hash);
+                                CASCFile.FileNames[hash] = file;
+                            }
+                            else
+                            {
+                                entry = new CASCFolder(hash);
+                                CASCFolder.FolderNames[hash] = parts[i];
+                            }
+
+                            folder.SubEntries[hash] = entry;
+
+                            if (isFile)
+                            {
+                                folder = root;
+                                break;
+                            }
+                        }
+
+                        folder = entry as CASCFolder;
+                    }
+                }
+                Logger.WriteLine("CASCHandler: loaded {0} file names", CASCFile.FileNames.Count);
+            }
+            return root;
+        }
+
+        public bool FileExist(string file)
         {
             var hash = Hasher.ComputeHash(file);
             var rootInfos = GetRootInfo(hash);
@@ -528,7 +591,7 @@ namespace CASCExplorer
                     }
                 }
             }
-            throw new NotSupportedException();
+            //throw new NotSupportedException();
         }
     }
 }

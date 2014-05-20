@@ -141,12 +141,11 @@ namespace CASCExplorer
 
         public IndexEntry GetCDNIndexInfo(byte[] key)
         {
-            if (CDNIndexData.ContainsKey(key))
-                return CDNIndexData[key];
+            IndexEntry result;
+            if (!CDNIndexData.TryGetValue(key, out result))
+                Logger.WriteLine("CDNHandler: missing index: {0}", key.ToHexString());
 
-            Logger.WriteLine("CDNHandler: missing index: {0}", key.ToHexString());
-
-            return null;
+            return result;
         }
     }
 }

@@ -80,8 +80,8 @@ namespace CASCExplorer
                 ? CASCHandler.OpenOnlineStorage(worker)
                 : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, worker);
 
-            root = LoadListFile(cascHandler, Path.Combine(Application.StartupPath, "listfile.txt"), worker);
-            e.Result = CASCHandler.FileNames.Count;
+            root = cascHandler.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"));
+            e.Result = CASCFile.FileNames.Count;
         }
 
         private void treeView1_BeforeSelect(object sender, TreeViewCancelEventArgs e)
@@ -192,7 +192,7 @@ namespace CASCExplorer
             if (folder == null)
                 return;
 
-            var files = GetFiles(folder, fileList.SelectedIndices.Cast<int>());
+            var files = folder.GetFiles(fileList.SelectedIndices.Cast<int>());
 
             foreach (var file in files)
             {
@@ -214,6 +214,7 @@ namespace CASCExplorer
                         case ".xml":
                         case ".htm":
                         case ".html":
+                        case ".lst":
                             {
                                 PreviewText(file.FullName);
                                 break;
@@ -249,8 +250,11 @@ namespace CASCExplorer
             var stream = cascHandler.OpenFile(fullName, LocaleFlags.All);
             var blp = new BlpFile(stream);
             var bitmap = blp.GetBitmap(0);
-            var form = new ImagePreviewForm(bitmap);
-            form.Show();
+            var form = new ImagePreviewForm(bitmap)
+            {
+                StartPosition = FormStartPosition.CenterParent
+            };
+            form.Show(this);
         }
 
         private void listView1_KeyDown(object sender, KeyEventArgs e)
@@ -299,7 +303,7 @@ namespace CASCExplorer
             if (extractProgress == null)
                 extractProgress = new ExtractProgress();
 
-            var files = GetFiles(folder, fileList.SelectedIndices.Cast<int>()).ToList();
+            var files = folder.GetFiles(fileList.SelectedIndices.Cast<int>()).ToList();
             extractProgress.SetExtractData(cascHandler, files);
             extractProgress.ShowDialog();
         }
@@ -313,112 +317,6 @@ namespace CASCExplorer
         {
             AboutBox about = new AboutBox();
             about.ShowDialog();
-        }
-
-        private static CASCFolder LoadListFile(CASCHandler cascHandler, string path, BackgroundWorker worker)
-        {
-            if (!File.Exists(path))
-                throw new FileNotFoundException("list file missing!");
-
-            var rootHash = CASCHandler.Hasher.ComputeHash("root");
-
-            var root = new CASCFolder(rootHash);
-
-            CASCHandler.FolderNames[rootHash] = "root";
-
-            using (var sr = new StreamReader(path))
-            {
-                string file;
-                int filesCount = 0;
-
-                CASCFolder folder = root;
-
-                while ((file = sr.ReadLine()) != null)
-                {
-                    filesCount++;
-
-                    string[] parts = file.Split('\\');
-
-                    for (int i = 0; i < parts.Length; ++i)
-                    {
-                        bool isFile = (i == parts.Length - 1);
-
-                        ulong hash = isFile ? CASCHandler.Hasher.ComputeHash(file) : CASCHandler.Hasher.ComputeHash(parts[i]);
-
-                        // skip invalid names
-                        if (isFile && !cascHandler.RootData.ContainsKey(hash))
-                            break;
-
-                        ICASCEntry entry = folder.GetEntry(hash);
-
-                        if (entry == null)
-                        {
-                            if (isFile)
-                            {
-                                entry = new CASCFile(hash);
-                                CASCHandler.FileNames[hash] = file;
-                            }
-                            else
-                            {
-                                entry = new CASCFolder(hash);
-                                CASCHandler.FolderNames[hash] = parts[i];
-                            }
-
-                            folder.SubEntries[hash] = entry;
-
-                            if (isFile)
-                            {
-                                folder = root;
-                                break;
-                            }
-                        }
-
-                        folder = entry as CASCFolder;
-                    }
-                }
-                Logger.WriteLine("CASCHandler: loaded {0} file names", CASCHandler.FileNames.Count);
-            }
-            return root;
-        }
-
-        private static IEnumerable<CASCFile> GetFiles(CASCFolder folder, IEnumerable<int> selection)
-        {
-            if (selection != null)
-            {
-                foreach (int index in selection)
-                {
-                    var entry = folder.SubEntries.ElementAt(index);
-
-                    if (entry.Value is CASCFile)
-                    {
-                        yield return entry.Value as CASCFile;
-                    }
-                    else
-                    {
-                        foreach (var file in GetFiles(entry.Value as CASCFolder, null))
-                        {
-                            yield return file;
-                        }
-                    }
-                }
-            }
-            else
-            {
-                foreach (var entry in folder.SubEntries)
-                {
-                    if (entry.Value is CASCFile)
-                    {
-                        yield return entry.Value as CASCFile;
-                    }
-                    else
-                    {
-                        foreach (var file in GetFiles(entry.Value as CASCFolder, null))
-                        {
-                            yield return file;
-                        }
-                    }
-                }
-            }
         }
     }
 }

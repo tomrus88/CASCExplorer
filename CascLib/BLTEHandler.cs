@@ -7,11 +7,6 @@ using System.Text;
 
 namespace CASCExplorer
 {
-    class FileExistsException : Exception
-    {
-        public FileExistsException(string message) : base(message) { }
-    }
-
     class BLTEChunk
     {
         public int CompSize;
@@ -28,7 +23,7 @@ namespace CASCExplorer
 
         public BLTEHandler(Stream stream, int _size)
         {
-            this.reader = new BinaryReader(stream, Encoding.ASCII);
+            this.reader = new BinaryReader(stream, Encoding.ASCII, true);
             this.size = _size;
         }
 
