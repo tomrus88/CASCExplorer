@@ -155,6 +155,11 @@ namespace CASCExplorer
 
         public bool OnlineMode { get; private set; }
 
+        public byte[] EncodingMD5
+        {
+            get { return _BuildConfig["encoding"][0].ToByteArray(); }
+        }
+
         public byte[] EncodingKey
         {
             get { return _BuildConfig["encoding"][1].ToByteArray(); }

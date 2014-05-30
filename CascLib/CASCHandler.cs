@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Linq;
+using System.Security.Cryptography;
 
 namespace CASCExplorer
 {
@@ -279,11 +280,49 @@ namespace CASCExplorer
             if (encInfo.Keys.Count > 1)
                 throw new FileNotFoundException("multiple encoding info for root file found!");
 
+            if (File.Exists("root"))
+            {
+                var fs = File.OpenRead("root");
+
+                var md5 = MD5.Create().ComputeHash(fs);
+
+                if (md5.EqualsTo(config.RootMD5))
+                {
+                    fs.Position = 0;
+                    return fs;
+                }
+
+                fs.Close();
+
+                File.Delete("root");
+            }
+
+            ExtractFile(encInfo.Keys[0], ".", "root");
+
             return OpenFile(encInfo.Keys[0]);
         }
 
         private Stream OpenEncodingFile()
         {
+            if (File.Exists("encoding"))
+            {
+                var fs = File.OpenRead("encoding");
+
+                var md5 = MD5.Create().ComputeHash(fs);
+
+                if (md5.EqualsTo(config.EncodingMD5))
+                {
+                    fs.Position = 0;
+                    return fs;
+                }
+
+                fs.Close();
+
+                File.Delete("encoding");
+            }
+
+            ExtractFile(config.EncodingKey, ".", "encoding");
+
             return OpenFile(config.EncodingKey);
         }
 
@@ -489,13 +528,19 @@ namespace CASCExplorer
             using (var sr = new StreamReader(path))
             {
                 string file;
-                int filesCount = 0;
 
                 CASCFolder folder = root;
 
                 while ((file = sr.ReadLine()) != null)
                 {
-                    filesCount++;
+                    ulong fileHash = Hasher.ComputeHash(file);
+
+                    // skip invalid names
+                    if (!RootData.ContainsKey(fileHash))
+                    {
+                        Logger.WriteLine("Invalid file name: {0}", file);
+                        continue;
+                    }
 
                     string[] parts = file.Split('\\');
 
@@ -503,11 +548,7 @@ namespace CASCExplorer
                     {
                         bool isFile = (i == parts.Length - 1);
 
-                        ulong hash = isFile ? Hasher.ComputeHash(file) : Hasher.ComputeHash(parts[i]);
-
-                        // skip invalid names
-                        if (isFile && !RootData.ContainsKey(hash))
-                            break;
+                        ulong hash = isFile ? fileHash : Hasher.ComputeHash(parts[i]);
 
                         ICASCEntry entry = folder.GetEntry(hash);
 
