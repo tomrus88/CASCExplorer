@@ -6,7 +6,7 @@
       <Value Profile="(Default)">c:\Games\World of Warcraft Beta\</Value>
     </Setting>
     <Setting Name="OnlineMode" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
+      <Value Profile="(Default)">True</Value>
     </Setting>
   </Settings>
 </SettingsFile>

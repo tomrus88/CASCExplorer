@@ -89,6 +89,7 @@ namespace CASCExplorer
         {
             this.config = config;
             this.cdn = cdn;
+
             if (!config.OnlineMode)
             {
                 var idxFiles = GetIdxFiles(this.config.BasePath);
@@ -280,37 +281,31 @@ namespace CASCExplorer
             if (encInfo.Keys.Count > 1)
                 throw new FileNotFoundException("multiple encoding info for root file found!");
 
-            if (File.Exists("root"))
-            {
-                var fs = File.OpenRead("root");
+            Stream s = TryLocalCache(encInfo.Keys[0], config.RootMD5,"data\\root");
 
-                var md5 = MD5.Create().ComputeHash(fs);
-
-                if (md5.EqualsTo(config.RootMD5))
-                {
-                    fs.Position = 0;
-                    return fs;
-                }
-
-                fs.Close();
-
-                File.Delete("root");
-            }
-
-            ExtractFile(encInfo.Keys[0], ".", "root");
+            if (s != null)
+                return s;
 
             return OpenFile(encInfo.Keys[0]);
         }
 
         private Stream OpenEncodingFile()
         {
-            if (File.Exists("encoding"))
+            Stream s = TryLocalCache(config.EncodingKey, config.EncodingMD5, "data\\encoding");
+
+            if (s != null)
+                return s;
+
+            return OpenFile(config.EncodingKey);
+        }
+
+        private Stream TryLocalCache(byte[] key, byte[] md5, string name)
+        {
+            if (File.Exists(name))
             {
-                var fs = File.OpenRead("encoding");
+                var fs = File.OpenRead(name);
 
-                var md5 = MD5.Create().ComputeHash(fs);
-
-                if (md5.EqualsTo(config.EncodingMD5))
+                if (MD5.Create().ComputeHash(fs).EqualsTo(md5))
                 {
                     fs.Position = 0;
                     return fs;
@@ -318,12 +313,12 @@ namespace CASCExplorer
 
                 fs.Close();
 
-                File.Delete("encoding");
+                File.Delete(name);
             }
 
-            ExtractFile(config.EncodingKey, ".", "encoding");
+            ExtractFile(key, ".", name);
 
-            return OpenFile(config.EncodingKey);
+            return null;
         }
 
         private Stream OpenFile(byte[] key)

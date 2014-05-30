@@ -65,6 +65,20 @@ namespace CASCExplorer
 
         private void DownloadFile(string index, int i)
         {
+            if (!Directory.Exists("data\\indices\\"))
+                Directory.CreateDirectory("data\\indices\\");
+
+            var path = "data\\indices\\" + index + ".index";
+
+            if (File.Exists(path))
+            {
+                using (FileStream fs = new FileStream(path, FileMode.Open))
+                {
+                    ParseIndex(fs, i);
+                }
+                return;
+            }
+
             try
             {
                 var url = CASCConfig.CDNUrl + "/data/" + index.Substring(0, 2) + "/" + index.Substring(2, 2) + "/" + index + ".index";
@@ -72,8 +86,11 @@ namespace CASCExplorer
                 using (WebClient webClient = new WebClient())
                 using (Stream s = webClient.OpenRead(url))
                 using (MemoryStream ms = new MemoryStream())
+                using (FileStream fs = File.Create(path))
                 {
                     s.CopyTo(ms);
+                    ms.Position = 0;
+                    ms.CopyTo(fs);
 
                     ParseIndex(ms, i);
                 }
