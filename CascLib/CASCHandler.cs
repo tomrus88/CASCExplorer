@@ -281,7 +281,7 @@ namespace CASCExplorer
             if (encInfo.Keys.Count > 1)
                 throw new FileNotFoundException("multiple encoding info for root file found!");
 
-            Stream s = TryLocalCache(encInfo.Keys[0], config.RootMD5,"data\\root");
+            Stream s = TryLocalCache(encInfo.Keys[0], config.RootMD5, "data\\root");
 
             if (s != null)
                 return s;
