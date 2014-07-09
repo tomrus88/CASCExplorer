@@ -350,26 +350,30 @@ namespace CASCExplorer
             }
             catch
             {
-                if (key.EqualsTo(config.EncodingKey))
+                var idxInfo = cdn.GetCDNIndexInfo(key);
+
+                if (idxInfo != null)
                 {
-                    int len;
-                    using (Stream s = cdn.OpenDataFileDirect(key, out len))
-                    using (BLTEHandler blte = new BLTEHandler(s, len))
+                    using (Stream s = cdn.OpenDataFile(key))
+                    using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
                     {
                         return blte.OpenFile();
                     }
                 }
                 else
                 {
-                    var idxInfo = cdn.GetCDNIndexInfo(key);
-
-                    if (idxInfo == null)
-                        throw new Exception("CDN index missing");
-
-                    using (Stream s = cdn.OpenDataFile(key))
-                    using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
+                    try
                     {
-                        return blte.OpenFile();
+                        int len;
+                        using (Stream s = cdn.OpenDataFileDirect(key, out len))
+                        using (BLTEHandler blte = new BLTEHandler(s, len))
+                        {
+                            return blte.OpenFile();
+                        }
+                    }
+                    catch
+                    {
+                        throw new Exception("CDN index missing");
                     }
                 }
             }
@@ -404,26 +408,30 @@ namespace CASCExplorer
             }
             catch
             {
-                if (key.EqualsTo(config.EncodingKey))
+                var idxInfo = cdn.GetCDNIndexInfo(key);
+
+                if (idxInfo != null)
                 {
-                    int len;
-                    using (Stream s = cdn.OpenDataFileDirect(key, out len))
-                    using (BLTEHandler blte = new BLTEHandler(s, len))
+                    using (Stream s = cdn.OpenDataFile(key))
+                    using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
                     {
                         blte.ExtractToFile(path, name);
                     }
                 }
                 else
                 {
-                    var idxInfo = cdn.GetCDNIndexInfo(key);
-
-                    if (idxInfo == null)
-                        throw new Exception("CDN index missing");
-
-                    using (Stream s = cdn.OpenDataFile(key))
-                    using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
+                    try
                     {
-                        blte.ExtractToFile(path, name);
+                        int len;
+                        using (Stream s = cdn.OpenDataFileDirect(key, out len))
+                        using (BLTEHandler blte = new BLTEHandler(s, len))
+                        {
+                            blte.ExtractToFile(path, name);
+                        }
+                    }
+                    catch
+                    {
+                        throw new Exception("CDN index missing");
                     }
                 }
             }
