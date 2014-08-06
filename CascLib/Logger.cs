@@ -4,7 +4,8 @@ namespace CASCExplorer
 {
     public class Logger
     {
-        static StreamWriter logger = new StreamWriter("debug.log") { AutoFlush = true };
+        static FileStream fs = new FileStream("debug.log", FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+        static StreamWriter logger = new StreamWriter(fs) { AutoFlush = true };
 
         public static void WriteLine(string format, params object[] args)
         {
