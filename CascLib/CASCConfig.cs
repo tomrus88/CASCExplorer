@@ -109,13 +109,25 @@ namespace CASCExplorer
                 config._VersionsData = KeyValueConfig.ReadVerBarConfig(versionsStream);
             }
 
-            string buildKey = config._VersionsData["BuildConfig"][0];
+            int index = 0;
+            int build = 0;
+            for (int i = 0; i < config._VersionsData["BuildId"].Count; ++i)
+            {
+                int build2 = Convert.ToInt32(config._VersionsData["BuildId"][i]);
+                if (build2 > build)
+                {
+                    build = build2;
+                    index = i;
+                }
+            }
+
+            string buildKey = config._VersionsData["BuildConfig"][index];
             using (Stream stream = CDNHandler.OpenConfigFileDirect(config.CDNUrl, buildKey))
             {
                 config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(stream);
             }
 
-            string cdnKey = config._VersionsData["CDNConfig"][0];
+            string cdnKey = config._VersionsData["CDNConfig"][index];
             using (Stream stream = CDNHandler.OpenConfigFileDirect(config.CDNUrl, cdnKey))
             {
                 config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
