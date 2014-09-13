@@ -64,7 +64,7 @@ namespace CASCExplorer
                 folderTree.SelectedNode = node;
 
                 statusProgress.Visible = false;
-                statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.Handler.NumRootEntries, CASC.Handler.NumUnknownFiles);
+                statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.Handler.NumRootEntries - CASC.Handler.NumUnknownFiles, CASC.Handler.NumUnknownFiles);
             }
         }
 
