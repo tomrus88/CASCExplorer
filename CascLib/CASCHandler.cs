@@ -576,6 +576,14 @@ namespace CASCExplorer
                                 break;
                             }
                         }
+                        else // prevent crash on duplicate files
+                        {
+                            if (isFile)
+                            {
+                                folder = root;
+                                break;
+                            }
+                        }
 
                         folder = entry as CASCFolder;
                     }
