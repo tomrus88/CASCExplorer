@@ -40,7 +40,7 @@ namespace CASCExplorer
 
             backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)NumFiles * 100));
 
-            cascHandler.SaveFileTo(file.FullName, ExtractPath, locale);
+            cascHandler.SaveFileTo(file.Hash, file.FullName, ExtractPath, locale);
         }
 
         private void button1_Click(object sender, EventArgs e)

@@ -262,7 +262,8 @@ namespace CASCExplorer
                             RootData[hash].Add(entries[i]);
                     }
 
-                    if (worker != null) worker.ReportProgress((int)((float)fs.Position / (float)fs.Length * 100));
+                    if (worker != null)
+                        worker.ReportProgress((int)((float)fs.Position / (float)fs.Length * 100));
                 }
 
                 Logger.WriteLine("CASCHandler: loaded {0} root data", RootData.Count);
@@ -532,7 +533,40 @@ namespace CASCExplorer
             {
                 string file;
 
-                CASCFolder folder = root;
+                while ((file = sr.ReadLine()) != null)
+                {
+                    ulong fileHash = Hasher.ComputeHash(file);
+
+                    // skip invalid names
+                    if (!RootData.ContainsKey(fileHash))
+                    {
+                        Logger.WriteLine("Invalid file name: {0}", file);
+                        continue;
+                    }
+
+                    CreateTree(root, fileHash, file);
+                }
+                Logger.WriteLine("CASCHandler: loaded {0} file names", CASCFile.FileNames.Count);
+            }
+            return root;
+        }
+
+        public CASCFolder LoadListFile2(string path)
+        {
+            if (!File.Exists(path))
+                throw new FileNotFoundException("list file missing!");
+
+            var rootHash = Hasher.ComputeHash("root");
+
+            var root = new CASCFolder(rootHash);
+
+            CASCFolder.FolderNames[rootHash] = "root";
+
+            Dictionary<ulong, string> FileNames = new Dictionary<ulong, string>();
+
+            using (var sr = new StreamReader(path))
+            {
+                string file;
 
                 while ((file = sr.ReadLine()) != null)
                 {
@@ -545,44 +579,63 @@ namespace CASCExplorer
                         continue;
                     }
 
-                    string[] parts = file.Split('\\');
-
-                    for (int i = 0; i < parts.Length; ++i)
-                    {
-                        bool isFile = (i == parts.Length - 1);
-
-                        ulong hash = isFile ? fileHash : Hasher.ComputeHash(parts[i]);
-
-                        ICASCEntry entry = folder.GetEntry(hash);
-
-                        if (entry == null)
-                        {
-                            if (isFile)
-                            {
-                                entry = new CASCFile(hash);
-                                CASCFile.FileNames[hash] = file;
-                            }
-                            else
-                            {
-                                entry = new CASCFolder(hash);
-                                CASCFolder.FolderNames[hash] = parts[i];
-                            }
-
-                            folder.SubEntries[hash] = entry;
-                        }
-
-                        if (isFile)
-                        {
-                            folder = root;
-                            break;
-                        }
-
-                        folder = entry as CASCFolder;
-                    }
+                    FileNames[fileHash] = file;
                 }
-                Logger.WriteLine("CASCHandler: loaded {0} file names", CASCFile.FileNames.Count);
+
+                Logger.WriteLine("CASCHandler: loaded {0} file names", FileNames.Count);
             }
+
+            foreach (var rootEntry in RootData)
+            {
+                if (FileNames.ContainsKey(rootEntry.Key))
+                {
+                    string file = FileNames[rootEntry.Key];
+
+                    CreateTree(root, rootEntry.Key, file);
+                }
+                else // unknown files
+                {
+                    string file = "unknown\\" + rootEntry.Key.ToString("X8");
+
+                    CreateTree(root, rootEntry.Key, file);
+                }
+            }
+
             return root;
+        }
+
+        private static void CreateTree(CASCFolder root, ulong filehash, string file)
+        {
+            string[] parts = file.Split('\\');
+
+            CASCFolder folder = root;
+
+            for (int i = 0; i < parts.Length; ++i)
+            {
+                bool isFile = (i == parts.Length - 1);
+
+                ulong hash = isFile ? filehash : Hasher.ComputeHash(parts[i]);
+
+                ICASCEntry entry = folder.GetEntry(hash);
+
+                if (entry == null)
+                {
+                    if (isFile)
+                    {
+                        entry = new CASCFile(hash);
+                        CASCFile.FileNames[hash] = file;
+                    }
+                    else
+                    {
+                        entry = new CASCFolder(hash);
+                        CASCFolder.FolderNames[hash] = parts[i];
+                    }
+
+                    folder.SubEntries[hash] = entry;
+                }
+
+                folder = entry as CASCFolder;
+            }
         }
 
         public bool FileExist(string file)
@@ -617,6 +670,29 @@ namespace CASCExplorer
         public void SaveFileTo(string fullName, string extractPath, LocaleFlags locale)
         {
             var hash = Hasher.ComputeHash(fullName);
+            var rootInfos = GetRootInfo(hash);
+
+            foreach (var rootInfo in rootInfos)
+            {
+                if ((rootInfo.Block.Flags & locale) != 0)
+                {
+                    var encInfo = GetEncodingInfo(rootInfo.MD5);
+
+                    if (encInfo == null)
+                        continue;
+
+                    foreach (var key in encInfo.Keys)
+                    {
+                        ExtractFile(key, extractPath, fullName);
+                        return;
+                    }
+                }
+            }
+            //throw new NotSupportedException();
+        }
+
+        public void SaveFileTo(ulong hash, string fullName, string extractPath, LocaleFlags locale)
+        {
             var rootInfos = GetRootInfo(hash);
 
             foreach (var rootInfo in rootInfos)
