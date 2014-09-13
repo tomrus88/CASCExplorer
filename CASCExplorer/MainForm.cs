@@ -80,7 +80,7 @@ namespace CASCExplorer
                 ? CASCHandler.OpenOnlineStorage(worker)
                 : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, worker);
 
-            root = cascHandler.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"));
+            root = cascHandler.LoadListFile2(Path.Combine(Application.StartupPath, "listfile.txt"));
             e.Result = CASCFile.FileNames.Count;
         }
 
