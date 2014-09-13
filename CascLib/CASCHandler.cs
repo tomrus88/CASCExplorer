@@ -81,6 +81,7 @@ namespace CASCExplorer
         private readonly Dictionary<int, FileStream> DataStreams = new Dictionary<int, FileStream>();
 
         public int NumRootEntries { get { return RootData.Count; } }
+        public int NumUnknownFiles { get; private set; }
 
         private readonly CASCConfig config;
         private readonly CDNHandler cdn;
@@ -582,7 +583,7 @@ namespace CASCExplorer
                     FileNames[fileHash] = file;
                 }
 
-                Logger.WriteLine("CASCHandler: loaded {0} file names", FileNames.Count);
+                Logger.WriteLine("CASCHandler: loaded {0} valid file names", FileNames.Count);
             }
 
             foreach (var rootEntry in RootData)
@@ -591,11 +592,16 @@ namespace CASCExplorer
 
                 if (FileNames.ContainsKey(rootEntry.Key))
                     file = FileNames[rootEntry.Key];
-                else // unknown files
+                else
+                {
                     file = "unknown\\" + rootEntry.Key.ToString("X8");
+                    NumUnknownFiles++;
+                }
 
                 CreateTree(root, rootEntry.Key, file);
             }
+
+            Logger.WriteLine("CASCHandler: {0} file names missing", NumUnknownFiles);
 
             return root;
         }
