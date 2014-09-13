@@ -96,15 +96,15 @@ namespace CASCExplorer
         KeyValueConfig _CDNData;
         KeyValueConfig _VersionsData;
 
-        public static CASCConfig LoadOnlineStorageConfig()
+        public static CASCConfig LoadOnlineStorageConfig(string product)
         {
             var config = new CASCConfig {OnlineMode = true};
-            using (var cdnsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/cdns"))
+            using (var cdnsStream = CDNHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/cdns", product)))
             {
                 config._CDNData = KeyValueConfig.ReadVerBarConfig(cdnsStream);
             }
 
-            using (var versionsStream = CDNHandler.OpenFileDirect("http://us.patch.battle.net/wow_beta/versions"))
+            using (var versionsStream = CDNHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/versions", product)))
             {
                 config._VersionsData = KeyValueConfig.ReadVerBarConfig(versionsStream);
             }
