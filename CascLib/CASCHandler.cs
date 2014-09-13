@@ -587,18 +587,14 @@ namespace CASCExplorer
 
             foreach (var rootEntry in RootData)
             {
+                string file;
+
                 if (FileNames.ContainsKey(rootEntry.Key))
-                {
-                    string file = FileNames[rootEntry.Key];
-
-                    CreateTree(root, rootEntry.Key, file);
-                }
+                    file = FileNames[rootEntry.Key];
                 else // unknown files
-                {
-                    string file = "unknown\\" + rootEntry.Key.ToString("X8");
+                    file = "unknown\\" + rootEntry.Key.ToString("X8");
 
-                    CreateTree(root, rootEntry.Key, file);
-                }
+                CreateTree(root, rootEntry.Key, file);
             }
 
             return root;
