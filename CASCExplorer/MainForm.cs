@@ -13,8 +13,6 @@ namespace CASCExplorer
 {
     public partial class MainForm : Form
     {
-        CASCFolder root;
-        CASCHandler cascHandler;
         ExtractProgress extractProgress;
 
         public MainForm()
@@ -59,29 +57,20 @@ namespace CASCExplorer
             else
             {
                 TreeNode node = folderTree.Nodes.Add("Root [Read only]");
-                node.Tag = root;
-                node.Name = root.Name;
+                node.Tag = CASC.Root;
+                node.Name = CASC.Root.Name;
                 node.Nodes.Add(new TreeNode() { Name = "tempnode" });
                 node.Expand();
                 folderTree.SelectedNode = node;
 
-                int numFileNames = (int)e.Result;
-
                 statusProgress.Visible = false;
-                statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", numFileNames, cascHandler.NumRootEntries - numFileNames);
+                statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.Handler.NumRootEntries, CASC.Handler.NumUnknownFiles);
             }
         }
 
         private void loadDataWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            var worker = sender as BackgroundWorker;
-
-            cascHandler = Settings.Default.OnlineMode
-                ? CASCHandler.OpenOnlineStorage(worker)
-                : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, worker);
-
-            root = cascHandler.LoadListFile2(Path.Combine(Application.StartupPath, "listfile.txt"));
-            e.Result = CASCFile.FileNames.Count;
+            CASC.Load(sender as BackgroundWorker);
         }
 
         private void treeView1_BeforeSelect(object sender, TreeViewCancelEventArgs e)
@@ -165,7 +154,7 @@ namespace CASCExplorer
 
             if (entry is CASCFile)
             {
-                var rootInfos = cascHandler.GetRootInfo(entry.Hash);
+                var rootInfos = CASC.Handler.GetRootInfo(entry.Hash);
 
                 if (rootInfos == null)
                     throw new Exception("root entry missing!");
@@ -231,7 +220,7 @@ namespace CASCExplorer
 
         private void PreviewText(string fullName)
         {
-            var stream = cascHandler.OpenFile(fullName, LocaleFlags.All);
+            var stream = CASC.Handler.OpenFile(fullName, LocaleFlags.All);
             var text = new StreamReader(stream).ReadToEnd();
             var form = new Form { FormBorderStyle = FormBorderStyle.SizableToolWindow };
             form.Controls.Add(new TextBox
@@ -247,7 +236,7 @@ namespace CASCExplorer
 
         private void PreviewBlp(string fullName)
         {
-            var stream = cascHandler.OpenFile(fullName, LocaleFlags.All);
+            var stream = CASC.Handler.OpenFile(fullName, LocaleFlags.All);
             var blp = new BlpFile(stream);
             var bitmap = blp.GetBitmap(0);
             var form = new ImagePreviewForm(bitmap)
@@ -304,7 +293,7 @@ namespace CASCExplorer
                 extractProgress = new ExtractProgress();
 
             var files = folder.GetFiles(fileList.SelectedIndices.Cast<int>()).ToList();
-            extractProgress.SetExtractData(cascHandler, files);
+            extractProgress.SetExtractData(files);
             extractProgress.ShowDialog();
         }
 

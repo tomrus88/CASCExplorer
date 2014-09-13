@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace CASCExplorer
@@ -11,7 +10,6 @@ namespace CASCExplorer
         private string ExtractPath;
         private int NumFiles;
         private int NumExtracted;
-        private CASCHandler cascHandler;
         private LocaleFlags locale;
         private IEnumerable<CASCFile> files;
 
@@ -24,9 +22,8 @@ namespace CASCExplorer
             comboBox1.SelectedIndex = comboBox1.Items.Count - 1;
         }
 
-        public void SetExtractData(CASCHandler cascHandler, ICollection<CASCFile> files)
+        public void SetExtractData(ICollection<CASCFile> files)
         {
-            this.cascHandler = cascHandler;
             NumExtracted = 0;
             NumFiles = files.Count;
             progressBar1.Value = 0;
@@ -40,7 +37,7 @@ namespace CASCExplorer
 
             backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)NumFiles * 100));
 
-            cascHandler.SaveFileTo(file.Hash, file.FullName, ExtractPath, locale);
+            CASC.Handler.SaveFileTo(file.Hash, file.FullName, ExtractPath, locale);
         }
 
         private void button1_Click(object sender, EventArgs e)
