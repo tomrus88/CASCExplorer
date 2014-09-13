@@ -569,12 +569,12 @@ namespace CASCExplorer
                             }
 
                             folder.SubEntries[hash] = entry;
+                        }
 
-                            if (isFile)
-                            {
-                                folder = root;
-                                break;
-                            }
+                        if (isFile)
+                        {
+                            folder = root;
+                            break;
                         }
 
                         folder = entry as CASCFolder;
