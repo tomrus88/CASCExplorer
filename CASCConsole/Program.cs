@@ -27,7 +27,7 @@ namespace CASCConsole
             Console.WriteLine("Loading...");
 
             cascHandler = Settings.Default.OnlineMode
-                ? CASCHandler.OpenOnlineStorage()
+                ? CASCHandler.OpenOnlineStorage(Settings.Default.Product)
                 : CASCHandler.OpenLocalStorage(Settings.Default.WowPath);
 
             root = cascHandler.LoadListFile(Path.Combine(Environment.CurrentDirectory, "listfile.txt"));

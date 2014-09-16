@@ -46,5 +46,17 @@ namespace CASCExplorer.Properties {
                 this["OnlineMode"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("wow_beta")]
+        public string Product {
+            get {
+                return ((string)(this["Product"]));
+            }
+            set {
+                this["Product"] = value;
+            }
+        }
     }
 }

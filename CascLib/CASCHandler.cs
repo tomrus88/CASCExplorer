@@ -506,9 +506,9 @@ namespace CASCExplorer
             return Open(worker, config);
         }
 
-        public static CASCHandler OpenOnlineStorage(BackgroundWorker worker = null)
+        public static CASCHandler OpenOnlineStorage(string product, BackgroundWorker worker = null)
         {
-            CASCConfig config = CASCConfig.LoadOnlineStorageConfig("wow_beta");
+            CASCConfig config = CASCConfig.LoadOnlineStorageConfig(product);
 
             return Open(worker, config);
         }

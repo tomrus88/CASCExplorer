@@ -23,7 +23,7 @@ namespace CASCExplorer
         public static void Load(BackgroundWorker worker = null)
         {
             cascHandler = Settings.Default.OnlineMode
-                ? CASCHandler.OpenOnlineStorage(worker)
+                ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, worker)
                 : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, worker);
 
             root = cascHandler.LoadListFile2(Path.Combine(Application.StartupPath, "listfile.txt"));
