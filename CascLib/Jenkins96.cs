@@ -7,15 +7,15 @@ namespace CASCExplorer
     // Implementation of Bob Jenkins' hash function in C# (96 bit internal state)
     public class Jenkins96 : HashAlgorithm
     {
-        uint a, b, c;
-        byte[] hash;
+        private uint a, b, c;
+        private uint pc, pb;
 
-        uint rot(uint x, int k)
+        private uint rot(uint x, int k)
         {
             return (x << k) | (x >> (32 - k));
         }
 
-        void Mix()
+        private void Mix()
         {
             a -= c; a ^= rot(c, 4); c += b;
             b -= a; b ^= rot(a, 6); a += c;
@@ -25,7 +25,7 @@ namespace CASCExplorer
             c -= b; c ^= rot(b, 4); b += a;
         }
 
-        void Final()
+        private void Final()
         {
             c ^= b; c -= rot(b, 14);
             a ^= c; a -= rot(c, 11);
@@ -36,26 +36,34 @@ namespace CASCExplorer
             c ^= b; c -= rot(b, 24);
         }
 
-        public ulong ComputeHash(string str)
+        public unsafe ulong ComputeHash(string str, bool fix = true)
         {
-            var tempstr = str.Replace('/', '\\').ToUpper();
-            byte[] data = Encoding.ASCII.GetBytes(tempstr);
-            return BitConverter.ToUInt64(ComputeHash(data), 0);
+            if (fix)
+            {
+                var tempstr = str.Replace('/', '\\').ToUpper();
+                byte[] data = Encoding.ASCII.GetBytes(tempstr);
+                return BitConverter.ToUInt64(ComputeHash(data), 0);
+            }
+            else
+            {
+                byte[] data = Encoding.ASCII.GetBytes(str);
+                fixed (byte* pData = ComputeHash(data))
+                {
+                    return *(ulong*)pData;
+                }
+            }
         }
 
         public override void Initialize()
         {
-            a = 0;
-            b = 0;
-            c = 0;
-            hash = null;
+
         }
 
         protected override unsafe void HashCore(byte[] array, int ibStart, int cbSize)
         {
-            int length = array.Length;
-            a = b = c = 0xdeadbeef + (uint)length;
-            //a = b = c = (uint)length - 0x21524111;
+            uint length = (uint)array.Length;
+            a = b = c = 0xdeadbeef + length;
+            //a = b = c = length - 0x21524111;
 
             fixed (byte* bb = array)
             {
@@ -90,7 +98,8 @@ namespace CASCExplorer
                         case 2: a += k[0] & 0xffff; break;
                         case 1: a += k[0] & 0xff; break;
                         case 0:
-                            hash = BitConverter.GetBytes(((ulong)c << 32) | (ulong)c);
+                            pc = c;
+                            pb = b;
                             return;
                     }
                 }
@@ -155,7 +164,8 @@ namespace CASCExplorer
                             a += k8[0];
                             break;
                         case 0:
-                            hash = BitConverter.GetBytes(((ulong)c << 32) | (ulong)b);
+                            pc = c;
+                            pb = b;
                             return;
                     }
                 }
@@ -209,19 +219,21 @@ namespace CASCExplorer
                         case 1:
                             a += k[0]; break;
                         case 0:
-                            hash = BitConverter.GetBytes(((ulong)c << 32) | (ulong)b);
+                            pc = c;
+                            pb = b;
                             return;
                     }
                 }
 
                 Final();
-                hash = BitConverter.GetBytes(((ulong)c << 32) | (ulong)b);
+                pc = c;
+                pb = b;
             }
         }
 
         protected override byte[] HashFinal()
         {
-            return hash;
+            return BitConverter.GetBytes(((ulong)pc << 32) | pb);
         }
     }
 }

@@ -29,7 +29,7 @@ namespace CASCExplorer
 
             while ((line = reader.ReadLine()) != null)
             {
-                if (line.StartsWith("#")) // skip comments
+                if (String.IsNullOrWhiteSpace(line) || line.StartsWith("#")) // skip empty lines and comments
                     continue;
 
                 string[] tokens = line.Split(new char[] {'='}, StringSplitOptions.RemoveEmptyEntries);
@@ -59,6 +59,9 @@ namespace CASCExplorer
 
             while ((line = reader.ReadLine()) != null)
             {
+                if (String.IsNullOrWhiteSpace(line) || line.StartsWith("#")) // skip empty lines and comments
+                    continue;
+
                 string[] tokens = line.Split(new char[] {'|'});
 
                 if (lineNum == 0) // keys
