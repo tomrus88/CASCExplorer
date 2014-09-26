@@ -124,6 +124,8 @@ namespace CASCExplorer
                 }
             }
 
+            config.Build = build;
+
             string buildKey = config._VersionsData["BuildConfig"][index];
             using (Stream stream = CDNHandler.OpenConfigFileDirect(config.CDNUrl, buildKey))
             {
@@ -149,6 +151,8 @@ namespace CASCExplorer
                 config._BuildInfo = KeyValueConfig.ReadVerBarConfig(buildInfoStream);
             }
 
+            config.Build = Convert.ToInt32(config._BuildInfo["Version"][0].Split('.')[3]);
+
             string buildKey = config._BuildInfo["Build Key"][0];
             string buildCfgPath = Path.Combine(basePath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
             using (Stream stream = new FileStream(buildCfgPath, FileMode.Open))
@@ -169,6 +173,8 @@ namespace CASCExplorer
         public string BasePath { get; private set; }
 
         public bool OnlineMode { get; private set; }
+
+        public int Build { get; private set; }
 
         public byte[] EncodingMD5
         {

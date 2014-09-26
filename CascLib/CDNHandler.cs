@@ -65,10 +65,12 @@ namespace CASCExplorer
 
         private void DownloadFile(string index, int i)
         {
-            if (!Directory.Exists("data\\indices\\"))
-                Directory.CreateDirectory("data\\indices\\");
+            var rootPath = Path.Combine("data", CASCConfig.Build.ToString(), "indices");
 
-            var path = "data\\indices\\" + index + ".index";
+            if (!Directory.Exists(rootPath))
+                Directory.CreateDirectory(rootPath);
+
+            var path = Path.Combine(rootPath, index + ".index");
 
             if (File.Exists(path))
             {

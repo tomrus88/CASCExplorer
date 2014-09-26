@@ -37,7 +37,7 @@ namespace CASCExplorer
 
             backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)NumFiles * 100));
 
-            CASC.Handler.SaveFileTo(file.Hash, file.FullName, ExtractPath, locale);
+            CASC.Handler.SaveFileTo(file.Hash, file.FullName, ExtractPath, locale, checkBox1.Checked ? ContentFlags.LowViolence : ContentFlags.None);
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -66,6 +66,7 @@ namespace CASCExplorer
         {
             button2.Enabled = false;
             comboBox1.Enabled = false;
+            checkBox1.Enabled = false;
             backgroundWorker1.RunWorkerAsync();
         }
 
@@ -93,6 +94,7 @@ namespace CASCExplorer
         {
             button2.Enabled = true;
             comboBox1.Enabled = true;
+            checkBox1.Enabled = true;
 
             if (e.Cancelled)
             {

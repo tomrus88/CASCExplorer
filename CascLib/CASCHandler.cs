@@ -31,10 +31,18 @@ namespace CASCExplorer
         ptPT = 0x10000
     }
 
+    [Flags]
+    public enum ContentFlags : uint
+    {
+        None = 0,
+        LowViolence = 0x80, // many models have this flag
+        NoCompression = 0x80000000 // sounds have this flag
+    }
+
     public class RootBlock
     {
-        public uint Unk1;
-        public LocaleFlags Flags;
+        public ContentFlags ContentFlags;
+        public LocaleFlags LocaleFlags;
     }
 
     public class RootEntry
@@ -46,7 +54,7 @@ namespace CASCExplorer
 
         public override string ToString()
         {
-            return String.Format("Block: {0:X8} {1:X8}, File: {2:X8} {3}", Block.Unk1, Block.Flags, Unk1, MD5.ToHexString());
+            return String.Format("Block: {0:X8} {1:X8}, File: {2:X8} {3}", Block.ContentFlags, Block.LocaleFlags, Unk1, MD5.ToHexString());
         }
     }
 
@@ -85,6 +93,8 @@ namespace CASCExplorer
 
         private readonly CASCConfig config;
         private readonly CDNHandler cdn;
+
+        public Dictionary<ulong, bool> UnknownFiles = new Dictionary<ulong, bool>();
 
         private CASCHandler(CASCConfig config, CDNHandler cdn, BackgroundWorker worker)
         {
@@ -228,11 +238,14 @@ namespace CASCExplorer
                     int count = br.ReadInt32();
 
                     RootBlock block = new RootBlock();
-                    block.Unk1 = br.ReadUInt32();
-                    block.Flags = (LocaleFlags)br.ReadUInt32();
+                    block.ContentFlags = (ContentFlags)br.ReadUInt32();
+                    block.LocaleFlags = (LocaleFlags)br.ReadUInt32();
 
-                    if (block.Flags == LocaleFlags.None)
-                        throw new Exception("block.Flags == LocaleFlags.None");
+                    if (block.LocaleFlags == LocaleFlags.None)
+                        throw new Exception("block.LocaleFlags == LocaleFlags.None");
+
+                    if (block.ContentFlags != ContentFlags.None && (block.ContentFlags & (ContentFlags.LowViolence | ContentFlags.NoCompression)) == 0)
+                        throw new Exception("block.ContentFlags != ContentFlags.None");
 
                     RootEntry[] entries = new RootEntry[count];
 
@@ -283,7 +296,7 @@ namespace CASCExplorer
             if (encInfo.Keys.Count > 1)
                 throw new FileNotFoundException("multiple encoding info for root file found!");
 
-            Stream s = TryLocalCache(encInfo.Keys[0], config.RootMD5, "data\\root");
+            Stream s = TryLocalCache(encInfo.Keys[0], config.RootMD5, Path.Combine("data", config.Build.ToString(), "root"));
 
             if (s != null)
                 return s;
@@ -293,7 +306,7 @@ namespace CASCExplorer
 
         private Stream OpenEncodingFile()
         {
-            Stream s = TryLocalCache(config.EncodingKey, config.EncodingMD5, "data\\encoding");
+            Stream s = TryLocalCache(config.EncodingKey, config.EncodingMD5, Path.Combine("data", config.Build.ToString(), "encoding"));
 
             if (s != null)
                 return s;
@@ -586,6 +599,9 @@ namespace CASCExplorer
                 Logger.WriteLine("CASCHandler: loaded {0} valid file names", FileNames.Count);
             }
 
+            //Stream sw = new FileStream("unknownHashes.dat", FileMode.Create);
+            //BinaryWriter bw = new BinaryWriter(sw);
+
             foreach (var rootEntry in RootData)
             {
                 string file;
@@ -594,12 +610,18 @@ namespace CASCExplorer
                     file = FileNames[rootEntry.Key];
                 else
                 {
-                    file = "unknown\\" + rootEntry.Key.ToString("X8");
+                    file = "unknown\\" + rootEntry.Key.ToString("X16");
                     NumUnknownFiles++;
+                    UnknownFiles[rootEntry.Key] = true;
+                    //Console.WriteLine("{0:X16}", BitConverter.ToUInt64(BitConverter.GetBytes(rootEntry.Key).Reverse().ToArray(), 0));
+                    //bw.Write(rootEntry.Key);
                 }
 
                 CreateTree(root, rootEntry.Key, file);
             }
+
+            //bw.Flush();
+            //bw.Close();
 
             Logger.WriteLine("CASCHandler: {0} file names missing", NumUnknownFiles);
 
@@ -654,7 +676,7 @@ namespace CASCExplorer
 
             foreach (var rootInfo in rootInfos)
             {
-                if ((rootInfo.Block.Flags & locale) != 0)
+                if ((rootInfo.Block.LocaleFlags & locale) != 0)
                 {
                     var encInfo = GetEncodingInfo(rootInfo.MD5);
 
@@ -669,14 +691,14 @@ namespace CASCExplorer
             throw new NotSupportedException();
         }
 
-        public void SaveFileTo(string fullName, string extractPath, LocaleFlags locale)
+        public void SaveFileTo(string fullName, string extractPath, LocaleFlags locale, ContentFlags content = ContentFlags.None)
         {
             var hash = Hasher.ComputeHash(fullName);
             var rootInfos = GetRootInfo(hash);
 
             foreach (var rootInfo in rootInfos)
             {
-                if ((rootInfo.Block.Flags & locale) != 0)
+                if ((rootInfo.Block.LocaleFlags & locale) != 0 && (rootInfo.Block.ContentFlags & content) == 0)
                 {
                     var encInfo = GetEncodingInfo(rootInfo.MD5);
 
@@ -693,13 +715,13 @@ namespace CASCExplorer
             //throw new NotSupportedException();
         }
 
-        public void SaveFileTo(ulong hash, string fullName, string extractPath, LocaleFlags locale)
+        public void SaveFileTo(ulong hash, string fullName, string extractPath, LocaleFlags locale, ContentFlags content = ContentFlags.None)
         {
             var rootInfos = GetRootInfo(hash);
 
             foreach (var rootInfo in rootInfos)
             {
-                if ((rootInfo.Block.Flags & locale) != 0)
+                if ((rootInfo.Block.LocaleFlags & locale) != 0 && (rootInfo.Block.ContentFlags & content) == 0)
                 {
                     var encInfo = GetEncodingInfo(rootInfo.MD5);
 

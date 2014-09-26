@@ -36,6 +36,7 @@
             this.folderBrowserDialog1 = new System.Windows.Forms.FolderBrowserDialog();
             this.backgroundWorker1 = new System.ComponentModel.BackgroundWorker();
             this.comboBox1 = new System.Windows.Forms.ComboBox();
+            this.checkBox1 = new System.Windows.Forms.CheckBox();
             this.SuspendLayout();
             // 
             // progressBar1
@@ -66,7 +67,7 @@
             // 
             // button2
             // 
-            this.button2.Location = new System.Drawing.Point(123, 68);
+            this.button2.Location = new System.Drawing.Point(224, 68);
             this.button2.Name = "button2";
             this.button2.Size = new System.Drawing.Size(75, 23);
             this.button2.TabIndex = 3;
@@ -76,7 +77,7 @@
             // 
             // button3
             // 
-            this.button3.Location = new System.Drawing.Point(204, 68);
+            this.button3.Location = new System.Drawing.Point(305, 68);
             this.button3.Name = "button3";
             this.button3.Size = new System.Drawing.Size(75, 23);
             this.button3.TabIndex = 4;
@@ -102,11 +103,24 @@
             this.comboBox1.TabIndex = 5;
             this.comboBox1.SelectedIndexChanged += new System.EventHandler(this.comboBox1_SelectedIndexChanged);
             // 
+            // checkBox1
+            // 
+            this.checkBox1.AutoSize = true;
+            this.checkBox1.Checked = true;
+            this.checkBox1.CheckState = System.Windows.Forms.CheckState.Checked;
+            this.checkBox1.Location = new System.Drawing.Point(123, 71);
+            this.checkBox1.Name = "checkBox1";
+            this.checkBox1.Size = new System.Drawing.Size(67, 17);
+            this.checkBox1.TabIndex = 6;
+            this.checkBox1.Text = "Skip LW";
+            this.checkBox1.UseVisualStyleBackColor = true;
+            // 
             // ExtractProgress
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.ClientSize = new System.Drawing.Size(393, 102);
+            this.Controls.Add(this.checkBox1);
             this.Controls.Add(this.comboBox1);
             this.Controls.Add(this.button3);
             this.Controls.Add(this.button2);
@@ -134,5 +148,6 @@
         private System.Windows.Forms.FolderBrowserDialog folderBrowserDialog1;
         private System.ComponentModel.BackgroundWorker backgroundWorker1;
         private System.Windows.Forms.ComboBox comboBox1;
+        private System.Windows.Forms.CheckBox checkBox1;
     }
 }

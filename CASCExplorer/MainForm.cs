@@ -150,7 +150,8 @@ namespace CASCExplorer
 
             ICASCEntry entry = folder.SubEntries.ElementAt(e.ItemIndex).Value;
 
-            var flags = LocaleFlags.None;
+            var localeFlags = LocaleFlags.None;
+            var contentFlags = ContentFlags.None;
 
             if (entry is CASCFile)
             {
@@ -160,10 +161,13 @@ namespace CASCExplorer
                     throw new Exception("root entry missing!");
 
                 foreach (var rootInfo in rootInfos)
-                    flags |= rootInfo.Block.Flags;
+                {
+                    localeFlags |= rootInfo.Block.LocaleFlags;
+                    contentFlags |= rootInfo.Block.ContentFlags;
+                }
             }
 
-            var item = new ListViewItem(new string[] { entry.Name, entry is CASCFolder ? "Folder" : "File", flags.ToString() });
+            var item = new ListViewItem(new string[] { entry.Name, entry is CASCFolder ? "Folder" : "File", localeFlags.ToString() + " (" + contentFlags.ToString() + ")" });
             item.ImageIndex = entry is CASCFolder ? 0 : 2;
             e.Item = item;
         }
