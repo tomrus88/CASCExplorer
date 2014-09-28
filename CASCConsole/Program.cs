@@ -51,9 +51,18 @@ namespace CASCConsole
             {
                 if (wildcard.IsMatch(file.FullName))
                 {
-                    Console.WriteLine("Extracting '{0}'...", file.FullName);
+                    Console.Write("Extracting '{0}'...", file.FullName);
 
-                    cascHandler.SaveFileTo(file.FullName, dest, locale, content);
+                    try
+                    {
+                        cascHandler.SaveFileTo(file.FullName, dest, locale, content);
+                        Console.WriteLine(" Ok!");
+                    }
+                    catch (Exception exc)
+                    {
+                        Console.WriteLine(" Error!");
+                        Logger.WriteLine(exc.Message);
+                    }
                 }
             }
 

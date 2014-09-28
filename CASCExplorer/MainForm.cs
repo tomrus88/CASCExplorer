@@ -61,7 +61,7 @@ namespace CASCExplorer
                 TreeNode node = folderTree.Nodes.Add("Root [Read only]");
                 node.Tag = Root;
                 node.Name = Root.Name;
-                node.Nodes.Add(new TreeNode() { Name = "tempnode" });
+                node.Nodes.Add(new TreeNode() { Name = "tempnode" }); // add dummy node
                 node.Expand();
                 folderTree.SelectedNode = node;
 
@@ -115,8 +115,10 @@ namespace CASCExplorer
 
             CASCFolder baseEntry = node.Tag as CASCFolder;
 
+            // check if we have dummy node
             if (node.Nodes["tempnode"] != null)
             {
+                // remove dummy node
                 node.Nodes.Clear();
 
                 var orderedEntries = baseEntry.SubEntries.OrderBy(v => v.Value);
@@ -133,7 +135,7 @@ namespace CASCExplorer
                         newNode.Name = entry.Name;
 
                         if (entry.SubEntries.Count(v => v.Value is CASCFolder) > 0)
-                            newNode.Nodes.Add(new TreeNode() { Name = "tempnode" });
+                            newNode.Nodes.Add(new TreeNode() { Name = "tempnode" }); // add dummy node
                     }
                 }
             }

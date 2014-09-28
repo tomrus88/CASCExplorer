@@ -32,16 +32,6 @@ namespace CASCExplorer
             this.files = files;
         }
 
-        private void ExtractFile(CASCFile file)
-        {
-            if (backgroundWorker1.CancellationPending)
-                throw new OperationCanceledException();
-
-            backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)NumFiles * 100));
-
-            CASC.SaveFileTo(file.Hash, file.FullName, ExtractPath, locale, checkBox1.Checked ? ContentFlags.LowViolence : ContentFlags.None);
-        }
-
         private void button1_Click(object sender, EventArgs e)
         {
             var result = folderBrowserDialog1.ShowDialog();
@@ -74,16 +64,24 @@ namespace CASCExplorer
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            try
+            foreach (var file in files)
             {
-                foreach (var file in files)
+                if (backgroundWorker1.CancellationPending)
                 {
-                    ExtractFile(file);
+                    e.Cancel = true;
+                    break;
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                e.Cancel = true;
+
+                try
+                {
+                    backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)NumFiles * 100));
+
+                    CASC.SaveFileTo(file.Hash, file.FullName, ExtractPath, locale, checkBox1.Checked ? ContentFlags.LowViolence : ContentFlags.None);
+                }
+                catch (Exception exc)
+                {
+                    Logger.WriteLine(exc.Message);
+                }
             }
         }
 

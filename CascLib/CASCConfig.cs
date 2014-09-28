@@ -32,12 +32,12 @@ namespace CASCExplorer
                 if (String.IsNullOrWhiteSpace(line) || line.StartsWith("#")) // skip empty lines and comments
                     continue;
 
-                string[] tokens = line.Split(new char[] {'='}, StringSplitOptions.RemoveEmptyEntries);
+                string[] tokens = line.Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
 
                 if (tokens.Length != 2)
                     throw new Exception("KeyValueConfig: tokens.Length != 2");
 
-                var values = tokens[1].Trim().Split(new char[] {' '}, StringSplitOptions.RemoveEmptyEntries);
+                var values = tokens[1].Trim().Split(new char[] { ' ' }, StringSplitOptions.RemoveEmptyEntries);
                 var valuesList = values.ToList();
                 result.Data.Add(tokens[0].Trim(), valuesList);
             }
@@ -62,13 +62,13 @@ namespace CASCExplorer
                 if (String.IsNullOrWhiteSpace(line) || line.StartsWith("#")) // skip empty lines and comments
                     continue;
 
-                string[] tokens = line.Split(new char[] {'|'});
+                string[] tokens = line.Split(new char[] { '|' });
 
                 if (lineNum == 0) // keys
                 {
                     foreach (var token in tokens)
                     {
-                        var tokens2 = token.Split(new char[] {'!'});
+                        var tokens2 = token.Split(new char[] { '!' });
                         result.Data[tokens2[0]] = new List<string>();
                     }
                 }
@@ -101,7 +101,7 @@ namespace CASCExplorer
 
         public static CASCConfig LoadOnlineStorageConfig(string product)
         {
-            var config = new CASCConfig {OnlineMode = true};
+            var config = new CASCConfig { OnlineMode = true };
             using (var cdnsStream = CDNIndexHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/cdns", product)))
             {
                 config._CDNData = KeyValueConfig.ReadVerBarConfig(cdnsStream);
@@ -142,8 +142,8 @@ namespace CASCExplorer
 
         public static CASCConfig LoadLocalStorageConfig(string basePath)
         {
-            var config = new CASCConfig {OnlineMode = false, BasePath = basePath};
-            
+            var config = new CASCConfig { OnlineMode = false, BasePath = basePath };
+
             string buildInfoPath = Path.Combine(basePath, ".build.info");
 
             using (Stream buildInfoStream = new FileStream(buildInfoPath, FileMode.Open))
@@ -166,7 +166,7 @@ namespace CASCExplorer
             {
                 config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
             }
-            
+
             return config;
         }
 
