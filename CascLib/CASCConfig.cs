@@ -102,12 +102,12 @@ namespace CASCExplorer
         public static CASCConfig LoadOnlineStorageConfig(string product)
         {
             var config = new CASCConfig {OnlineMode = true};
-            using (var cdnsStream = CDNHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/cdns", product)))
+            using (var cdnsStream = CDNIndexHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/cdns", product)))
             {
                 config._CDNData = KeyValueConfig.ReadVerBarConfig(cdnsStream);
             }
 
-            using (var versionsStream = CDNHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/versions", product)))
+            using (var versionsStream = CDNIndexHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/versions", product)))
             {
                 config._VersionsData = KeyValueConfig.ReadVerBarConfig(versionsStream);
             }
@@ -127,13 +127,13 @@ namespace CASCExplorer
             config.Build = build;
 
             string buildKey = config._VersionsData["BuildConfig"][index];
-            using (Stream stream = CDNHandler.OpenConfigFileDirect(config.CDNUrl, buildKey))
+            using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config.CDNUrl, buildKey))
             {
                 config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(stream);
             }
 
             string cdnKey = config._VersionsData["CDNConfig"][index];
-            using (Stream stream = CDNHandler.OpenConfigFileDirect(config.CDNUrl, cdnKey))
+            using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config.CDNUrl, cdnKey))
             {
                 config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
             }

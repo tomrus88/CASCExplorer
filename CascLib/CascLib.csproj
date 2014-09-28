@@ -47,11 +47,14 @@
     <Compile Include="CASCConfig.cs" />
     <Compile Include="CASCEntry.cs" />
     <Compile Include="CASCHandler.cs" />
-    <Compile Include="CDNHandler.cs" />
+    <Compile Include="CDNIndexHandler.cs" />
+    <Compile Include="EncodingHandler.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="Jenkins96.cs" />
+    <Compile Include="LocalIndexHandler.cs" />
     <Compile Include="Logger.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="WowRootHandler.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

@@ -12,6 +12,7 @@ namespace CASCExplorer
         private int NumExtracted;
         private LocaleFlags locale;
         private IEnumerable<CASCFile> files;
+        private CASCHandler CASC;
 
         public ExtractProgress()
         {
@@ -22,11 +23,12 @@ namespace CASCExplorer
             comboBox1.SelectedIndex = comboBox1.Items.Count - 1;
         }
 
-        public void SetExtractData(ICollection<CASCFile> files)
+        public void SetExtractData(CASCHandler handler, ICollection<CASCFile> files)
         {
             NumExtracted = 0;
             NumFiles = files.Count;
             progressBar1.Value = 0;
+            CASC = handler;
             this.files = files;
         }
 
@@ -37,7 +39,7 @@ namespace CASCExplorer
 
             backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)NumFiles * 100));
 
-            CASC.Handler.SaveFileTo(file.Hash, file.FullName, ExtractPath, locale, checkBox1.Checked ? ContentFlags.LowViolence : ContentFlags.None);
+            CASC.SaveFileTo(file.Hash, file.FullName, ExtractPath, locale, checkBox1.Checked ? ContentFlags.LowViolence : ContentFlags.None);
         }
 
         private void button1_Click(object sender, EventArgs e)

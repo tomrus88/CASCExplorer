@@ -14,6 +14,8 @@ namespace CASCExplorer
     public partial class MainForm : Form
     {
         ExtractProgress extractProgress;
+        CASCHandler CASC;
+        CASCFolder Root;
 
         public MainForm()
         {
@@ -57,20 +59,26 @@ namespace CASCExplorer
             else
             {
                 TreeNode node = folderTree.Nodes.Add("Root [Read only]");
-                node.Tag = CASC.Root;
-                node.Name = CASC.Root.Name;
+                node.Tag = Root;
+                node.Name = Root.Name;
                 node.Nodes.Add(new TreeNode() { Name = "tempnode" });
                 node.Expand();
                 folderTree.SelectedNode = node;
 
                 statusProgress.Visible = false;
-                statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.Handler.NumRootEntries - CASC.Handler.NumUnknownFiles, CASC.Handler.NumUnknownFiles);
+                statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.NumRootEntries - CASC.NumUnknownFiles, CASC.NumUnknownFiles);
             }
         }
 
         private void loadDataWorker_DoWork(object sender, DoWorkEventArgs e)
         {
-            CASC.Load(sender as BackgroundWorker);
+            var worker = sender as BackgroundWorker;
+
+            CASC = Settings.Default.OnlineMode
+                ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, worker)
+                : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, worker);
+
+            Root = CASC.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), worker);
         }
 
         private void treeView1_BeforeSelect(object sender, TreeViewCancelEventArgs e)
@@ -155,7 +163,7 @@ namespace CASCExplorer
 
             if (entry is CASCFile)
             {
-                var rootInfos = CASC.Handler.GetRootInfo(entry.Hash);
+                var rootInfos = CASC.GetRootInfo(entry.Hash);
 
                 if (rootInfos == null)
                     throw new Exception("root entry missing!");
@@ -224,7 +232,7 @@ namespace CASCExplorer
 
         private void PreviewText(string fullName)
         {
-            var stream = CASC.Handler.OpenFile(fullName, LocaleFlags.All);
+            var stream = CASC.OpenFile(fullName, LocaleFlags.All);
             var text = new StreamReader(stream).ReadToEnd();
             var form = new Form { FormBorderStyle = FormBorderStyle.SizableToolWindow };
             form.Controls.Add(new TextBox
@@ -240,7 +248,7 @@ namespace CASCExplorer
 
         private void PreviewBlp(string fullName)
         {
-            var stream = CASC.Handler.OpenFile(fullName, LocaleFlags.All);
+            var stream = CASC.OpenFile(fullName, LocaleFlags.All);
             var blp = new BlpFile(stream);
             var bitmap = blp.GetBitmap(0);
             var form = new ImagePreviewForm(bitmap)
@@ -297,7 +305,7 @@ namespace CASCExplorer
                 extractProgress = new ExtractProgress();
 
             var files = folder.GetFiles(fileList.SelectedIndices.Cast<int>()).ToList();
-            extractProgress.SetExtractData(files);
+            extractProgress.SetExtractData(CASC, files);
             extractProgress.ShowDialog();
         }
 

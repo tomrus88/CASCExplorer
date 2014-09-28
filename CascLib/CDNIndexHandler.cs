@@ -1,25 +1,31 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Net;
 
 namespace CASCExplorer
 {
-    internal class CDNHandler
+    internal class CDNIndexHandler
     {
-        static readonly ByteArrayComparer comparer = new ByteArrayComparer();
-        Dictionary<byte[], IndexEntry> CDNIndexData = new Dictionary<byte[], IndexEntry>(comparer);
+        private static readonly ByteArrayComparer comparer = new ByteArrayComparer();
+        private readonly Dictionary<byte[], IndexEntry> CDNIndexData = new Dictionary<byte[], IndexEntry>(comparer);
 
         private CASCConfig CASCConfig;
 
-        private CDNHandler(CASCConfig cascConfig)
+        public int Count
+        {
+            get { return CDNIndexData.Count; }
+        }
+
+        private CDNIndexHandler(CASCConfig cascConfig)
         {
             CASCConfig = cascConfig;
         }
 
-        public static CDNHandler Initialize(CASCConfig config)
+        public static CDNIndexHandler Initialize(CASCConfig config, BackgroundWorker worker)
         {
-            var handler = new CDNHandler(config);
+            var handler = new CDNIndexHandler(config);
 
             for (int i = 0; i < config.Archives.Count; i++)
             {
@@ -29,9 +35,13 @@ namespace CASCExplorer
                     handler.DownloadFile(index, i);
                 else
                     handler.OpenFile(index, i);
+
+                if (worker != null)
+                    worker.ReportProgress((int)((float)i / (float)config.Archives.Count * 100));
             }
 
-            Logger.WriteLine("CDNHandler: loaded {0} indexes", handler.CDNIndexData.Count);
+            Logger.WriteLine("CDNIndexHandler: loaded {0} indexes", handler.Count);
+
             return handler;
         }
 
@@ -158,7 +168,7 @@ namespace CASCExplorer
             return resp.GetResponseStream();
         }
 
-        public IndexEntry GetCDNIndexInfo(byte[] key)
+        public IndexEntry GetIndexInfo(byte[] key)
         {
             IndexEntry result;
             if (!CDNIndexData.TryGetValue(key, out result))
