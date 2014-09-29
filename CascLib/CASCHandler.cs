@@ -67,12 +67,22 @@ namespace CASCExplorer
             if (s != null)
                 return s;
 
+            s = TryLocalCache(encInfo.Keys[0], config.RootMD5, Path.Combine("data", config.Build.ToString(), "root"));
+
+            if (s != null)
+                return s;
+
             return OpenFile(encInfo.Keys[0]);
         }
 
         private Stream OpenEncodingFile()
         {
             Stream s = TryLocalCache(config.EncodingKey, config.EncodingMD5, Path.Combine("data", config.Build.ToString(), "encoding"));
+
+            if (s != null)
+                return s;
+
+            s = TryLocalCache(config.EncodingKey, config.EncodingMD5, Path.Combine("data", config.Build.ToString(), "encoding"));
 
             if (s != null)
                 return s;
@@ -145,9 +155,8 @@ namespace CASCExplorer
                 {
                     try
                     {
-                        int len;
-                        using (Stream s = CDNIndex.OpenDataFileDirect(key, out len))
-                        using (BLTEHandler blte = new BLTEHandler(s, len))
+                        using (Stream s = CDNIndex.OpenDataFileDirect(key))
+                        using (BLTEHandler blte = new BLTEHandler(s, (int)s.Length))
                         {
                             return blte.OpenFile();
                         }
@@ -203,9 +212,8 @@ namespace CASCExplorer
                 {
                     try
                     {
-                        int len;
-                        using (Stream s = CDNIndex.OpenDataFileDirect(key, out len))
-                        using (BLTEHandler blte = new BLTEHandler(s, len))
+                        using (Stream s = CDNIndex.OpenDataFileDirect(key))
+                        using (BLTEHandler blte = new BLTEHandler(s, (int)s.Length))
                         {
                             blte.ExtractToFile(path, name);
                         }

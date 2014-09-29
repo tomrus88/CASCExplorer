@@ -3,29 +3,41 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 using System.Net;
+using System.Threading;
 
 namespace CASCExplorer
 {
+    internal class UserState
+    {
+        public int Index;
+        public string Path;
+        public Stream Stream;
+        public ManualResetEvent ResetEvent = new ManualResetEvent(false);
+    }
+
     internal class CDNIndexHandler
     {
         private static readonly ByteArrayComparer comparer = new ByteArrayComparer();
         private readonly Dictionary<byte[], IndexEntry> CDNIndexData = new Dictionary<byte[], IndexEntry>(comparer);
 
         private CASCConfig CASCConfig;
+        private BackgroundWorker worker;
+        private Semaphore downloadSemaphore = new Semaphore(1, 1);
 
         public int Count
         {
             get { return CDNIndexData.Count; }
         }
 
-        private CDNIndexHandler(CASCConfig cascConfig)
+        private CDNIndexHandler(CASCConfig cascConfig, BackgroundWorker worker)
         {
             CASCConfig = cascConfig;
+            this.worker = worker;
         }
 
         public static CDNIndexHandler Initialize(CASCConfig config, BackgroundWorker worker)
         {
-            var handler = new CDNIndexHandler(config);
+            var handler = new CDNIndexHandler(config, worker);
 
             if (worker != null)
             {
@@ -96,9 +108,7 @@ namespace CASCExplorer
             if (File.Exists(path))
             {
                 using (FileStream fs = new FileStream(path, FileMode.Open))
-                {
                     ParseIndex(fs, i);
-                }
                 return;
             }
 
@@ -107,20 +117,37 @@ namespace CASCExplorer
                 var url = CASCConfig.CDNUrl + "/data/" + index.Substring(0, 2) + "/" + index.Substring(2, 2) + "/" + index + ".index";
 
                 using (WebClient webClient = new WebClient())
-                using (Stream s = webClient.OpenRead(url))
-                using (MemoryStream ms = new MemoryStream())
-                using (FileStream fs = File.Create(path))
                 {
-                    s.CopyTo(ms);
-                    ms.Position = 0;
-                    ms.CopyTo(fs);
-
-                    ParseIndex(ms, i);
+                    webClient.DownloadProgressChanged += WebClient_DownloadProgressChanged;
+                    webClient.DownloadFileCompleted += WebClient_DownloadFileCompleted;
+                    webClient.DownloadFileAsync(new Uri(url), path, new UserState() { Index = i, Path = path });
+                    downloadSemaphore.WaitOne();
                 }
             }
             catch
             {
                 throw new Exception("DownloadFile failed!");
+            }
+        }
+
+        private void WebClient_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
+        {
+            downloadSemaphore.Release();
+
+            var state = (UserState)e.UserState;
+
+            using (FileStream fs = File.OpenRead(state.Path))
+                ParseIndex(fs, state.Index);
+        }
+
+        private void WebClient_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
+        {
+            if (worker != null)
+            {
+                if (worker.CancellationPending)
+                    throw new OperationCanceledException();
+
+                //worker.ReportProgress(e.ProgressPercentage);
             }
         }
 
@@ -131,9 +158,7 @@ namespace CASCExplorer
                 var path = Path.Combine(CASCConfig.BasePath, "Data\\indices\\", index + ".index");
 
                 using (FileStream fs = new FileStream(path, FileMode.Open))
-                {
                     ParseIndex(fs, i);
-                }
             }
             catch
             {
@@ -154,15 +179,42 @@ namespace CASCExplorer
             return resp.GetResponseStream();
         }
 
-        public Stream OpenDataFileDirect(byte[] key, out int len)
+        public Stream OpenDataFileDirect(byte[] key)
         {
+            if (worker != null)
+                worker.ReportProgress(0);
+
             var file = key.ToHexString().ToLower();
             var url = CASCConfig.CDNUrl + "/data/" + file.Substring(0, 2) + "/" + file.Substring(2, 2) + "/" + file;
 
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
-            HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
-            len = (int)resp.ContentLength;
-            return resp.GetResponseStream();
+            WebClient client = new WebClient();
+            client.DownloadProgressChanged += Client_DownloadProgressChanged;
+            client.DownloadDataCompleted += Client_DownloadDataCompleted;
+
+            UserState state = new UserState();
+
+            client.DownloadDataAsync(new Uri(url), state);
+            state.ResetEvent.WaitOne();
+            return state.Stream;
+        }
+
+        private void Client_DownloadDataCompleted(object sender, DownloadDataCompletedEventArgs e)
+        {
+            UserState state = e.UserState as UserState;
+
+            state.Stream = new MemoryStream(e.Result);
+            state.ResetEvent.Set();
+        }
+
+        private void Client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
+        {
+            if (worker != null)
+            {
+                if (worker.CancellationPending)
+                    throw new OperationCanceledException();
+
+                worker.ReportProgress(e.ProgressPercentage);
+            }
         }
 
         public static Stream OpenConfigFileDirect(string cdnUrl, string key)
