@@ -105,7 +105,7 @@ namespace CASCExplorer
             fileList.VirtualListSize = 0;
             fileList.VirtualListSize = baseEntry.SubEntries.Count;
             fileList.EnsureVisible(0);
-            fileList.SelectedIndices.Add(0);
+            fileList.SelectedIndex = 0;
             fileList.FocusedItem = fileList.Items[0];
         }
 
@@ -195,39 +195,40 @@ namespace CASCExplorer
             if (folder == null)
                 return;
 
-            var files = folder.GetFiles(fileList.SelectedIndices.Cast<int>());
+            if (!fileList.HasSingleSelection)
+                return;
 
-            foreach (var file in files)
+            var file = folder.SubEntries.ElementAt(fileList.SelectedIndex).Value as CASCFile;
+
+            var extension = Path.GetExtension(file.Name);
+
+            if (extension != null)
             {
-                var extension = Path.GetExtension(file.Name);
-                if (extension != null)
+                switch (extension.ToLower())
                 {
-                    switch (extension.ToLower())
-                    {
-                        case ".blp":
-                            {
-                                PreviewBlp(file.FullName);
-                                break;
-                            }
-                        case ".txt":
-                        case ".ini":
-                        case ".wtf":
-                        case ".lua":
-                        case ".toc":
-                        case ".xml":
-                        case ".htm":
-                        case ".html":
-                        case ".lst":
-                            {
-                                PreviewText(file.FullName);
-                                break;
-                            }
-                        default:
-                            {
-                                MessageBox.Show(string.Format("Preview of {0} is not supported yet", extension), "Not supported file");
-                                break;
-                            }
-                    }
+                    case ".blp":
+                        {
+                            PreviewBlp(file.FullName);
+                            break;
+                        }
+                    case ".txt":
+                    case ".ini":
+                    case ".wtf":
+                    case ".lua":
+                    case ".toc":
+                    case ".xml":
+                    case ".htm":
+                    case ".html":
+                    case ".lst":
+                        {
+                            PreviewText(file.FullName);
+                            break;
+                        }
+                    default:
+                        {
+                            MessageBox.Show(string.Format("Preview of {0} is not supported yet", extension), "Not supported file");
+                            break;
+                        }
                 }
             }
         }
@@ -236,7 +237,7 @@ namespace CASCExplorer
         {
             var stream = CASC.OpenFile(fullName, LocaleFlags.All);
             var text = new StreamReader(stream).ReadToEnd();
-            var form = new Form { FormBorderStyle = FormBorderStyle.SizableToolWindow };
+            var form = new Form { FormBorderStyle = FormBorderStyle.SizableToolWindow, StartPosition = FormStartPosition.CenterParent };
             form.Controls.Add(new TextBox
             {
                 Multiline = true,
@@ -245,7 +246,7 @@ namespace CASCExplorer
                 Text = text,
                 ScrollBars = ScrollBars.Both
             });
-            form.Show();
+            form.Show(this);
         }
 
         private void PreviewBlp(string fullName)
@@ -253,10 +254,7 @@ namespace CASCExplorer
             var stream = CASC.OpenFile(fullName, LocaleFlags.All);
             var blp = new BlpFile(stream);
             var bitmap = blp.GetBitmap(0);
-            var form = new ImagePreviewForm(bitmap)
-            {
-                StartPosition = FormStartPosition.CenterParent
-            };
+            var form = new ImagePreviewForm(bitmap);
             form.Show(this);
         }
 
@@ -280,8 +278,11 @@ namespace CASCExplorer
             if (folder == null)
                 return false;
 
+            if (!fileList.HasSingleSelection)
+                return false;
+
             // Selected folder
-            CASCFolder baseEntry = folder.SubEntries.ElementAt(fileList.SelectedIndices[0]).Value as CASCFolder;
+            CASCFolder baseEntry = folder.SubEntries.ElementAt(fileList.SelectedIndex).Value as CASCFolder;
 
             if (baseEntry == null)
                 return false;
@@ -296,11 +297,14 @@ namespace CASCExplorer
             return true;
         }
 
-        private void toolStripMenuItem1_Click(object sender, EventArgs e)
+        private void extractToolStripMenuItem_Click(object sender, EventArgs e)
         {
             CASCFolder folder = fileList.Tag as CASCFolder;
 
             if (folder == null)
+                return;
+
+            if (!fileList.HasSelection)
                 return;
 
             if (extractProgress == null)
@@ -313,13 +317,31 @@ namespace CASCExplorer
 
         private void contextMenuStrip1_Opening(object sender, CancelEventArgs e)
         {
-            toolStripMenuItem1.Enabled = fileList.SelectedIndices.Count > 0;
+            extractToolStripMenuItem.Enabled = fileList.HasSelection;
+            copyNameToolStripMenuItem.Enabled = (fileList.HasSelection && (fileList.Tag as CASCFolder).GetFiles(fileList.SelectedIndices.Cast<int>(), false).Count() > 0) || false;
         }
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
             AboutBox about = new AboutBox();
             about.ShowDialog();
+        }
+
+        private void copyNameToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CASCFolder folder = fileList.Tag as CASCFolder;
+
+            if (folder == null)
+                return;
+
+            if (!fileList.HasSelection)
+                return;
+
+            var files = folder.GetFiles(fileList.SelectedIndices.Cast<int>(), false).Select(f => f.FullName);
+
+            string temp = string.Join(Environment.NewLine, files);
+
+            Clipboard.SetText(temp);
         }
     }
 }

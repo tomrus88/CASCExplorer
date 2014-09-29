@@ -8,10 +8,9 @@ namespace CASCExplorer
     public partial class ExtractProgress : Form
     {
         private string ExtractPath;
-        private int NumFiles;
         private int NumExtracted;
         private LocaleFlags locale;
-        private IEnumerable<CASCFile> files;
+        private ICollection<CASCFile> files;
         private CASCHandler CASC;
 
         public ExtractProgress()
@@ -26,7 +25,6 @@ namespace CASCExplorer
         public void SetExtractData(CASCHandler handler, ICollection<CASCFile> files)
         {
             NumExtracted = 0;
-            NumFiles = files.Count;
             progressBar1.Value = 0;
             CASC = handler;
             this.files = files;
@@ -74,7 +72,7 @@ namespace CASCExplorer
 
                 try
                 {
-                    backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)NumFiles * 100));
+                    backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)files.Count * 100));
 
                     CASC.SaveFileTo(file.Hash, file.FullName, ExtractPath, locale, checkBox1.Checked ? ContentFlags.LowViolence : ContentFlags.None);
                 }

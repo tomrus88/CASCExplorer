@@ -38,6 +38,7 @@
             this.ClientSize = new System.Drawing.Size(284, 262);
             this.FormBorderStyle = System.Windows.Forms.FormBorderStyle.FixedToolWindow;
             this.Name = "ImagePreviewForm";
+            this.StartPosition = System.Windows.Forms.FormStartPosition.CenterParent;
             this.Text = "Preview";
             this.Load += new System.EventHandler(this.FormLoad);
             this.Paint += new System.Windows.Forms.PaintEventHandler(this.FormPaint);
