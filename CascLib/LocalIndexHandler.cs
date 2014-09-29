@@ -31,7 +31,11 @@ namespace CASCExplorer
                 throw new FileNotFoundException("idx files missing!");
 
             if (worker != null)
+            {
+                if (worker.CancellationPending)
+                    throw new OperationCanceledException();
                 worker.ReportProgress(0);
+            }
 
             int idxIndex = 0;
 
@@ -40,7 +44,11 @@ namespace CASCExplorer
                 handler.ParseIndex(idx);
 
                 if (worker != null)
+                {
+                    if (worker.CancellationPending)
+                        throw new OperationCanceledException();
                     worker.ReportProgress((int)((float)++idxIndex / (float)idxFiles.Count * 100));
+                }
             }
 
             Logger.WriteLine("LocalIndexHandler: loaded {0} indexes", handler.Count);

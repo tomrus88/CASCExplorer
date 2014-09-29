@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
 
@@ -28,7 +29,11 @@ namespace CASCExplorer
         public EncodingHandler(Stream stream, BackgroundWorker worker)
         {
             if (worker != null)
+            {
+                if (worker.CancellationPending)
+                    throw new OperationCanceledException();
                 worker.ReportProgress(0);
+            }
 
             using (var br = new BinaryReader(stream))
             {
@@ -80,7 +85,11 @@ namespace CASCExplorer
                         stream.Position++;
 
                     if (worker != null)
+                    {
+                        if (worker.CancellationPending)
+                            throw new OperationCanceledException();
                         worker.ReportProgress((int)((float)i / (float)numEntries * 100));
+                    }
                 }
                 //var pos = br.BaseStream.Position;
                 //for (int i = 0; i < i1; ++i)

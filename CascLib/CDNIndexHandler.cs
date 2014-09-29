@@ -27,6 +27,13 @@ namespace CASCExplorer
         {
             var handler = new CDNIndexHandler(config);
 
+            if (worker != null)
+            {
+                if (worker.CancellationPending)
+                    throw new OperationCanceledException();
+                worker.ReportProgress(0);
+            }
+
             for (int i = 0; i < config.Archives.Count; i++)
             {
                 string index = config.Archives[i];
@@ -37,7 +44,11 @@ namespace CASCExplorer
                     handler.OpenFile(index, i);
 
                 if (worker != null)
+                {
+                    if (worker.CancellationPending)
+                        throw new OperationCanceledException();
                     worker.ReportProgress((int)((float)i / (float)config.Archives.Count * 100));
+                }
             }
 
             Logger.WriteLine("CDNIndexHandler: loaded {0} indexes", handler.Count);

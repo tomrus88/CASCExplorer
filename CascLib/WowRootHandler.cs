@@ -68,7 +68,11 @@ namespace CASCExplorer
         public WowRootHandler(Stream stream, BackgroundWorker worker)
         {
             if (worker != null)
+            {
+                if (worker.CancellationPending)
+                    throw new OperationCanceledException();
                 worker.ReportProgress(0);
+            }
 
             using (var br = new BinaryReader(stream))
             {
@@ -116,7 +120,11 @@ namespace CASCExplorer
                     }
 
                     if (worker != null)
+                    {
+                        if (worker.CancellationPending)
+                            throw new OperationCanceledException();
                         worker.ReportProgress((int)((float)stream.Position / (float)stream.Length * 100));
+                    }
                 }
             }
         }

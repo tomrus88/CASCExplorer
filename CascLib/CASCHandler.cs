@@ -265,7 +265,11 @@ namespace CASCExplorer
         public CASCFolder LoadListFile(string path, BackgroundWorker worker = null)
         {
             if (worker != null)
+            {
+                if (worker.CancellationPending)
+                    throw new OperationCanceledException();
                 worker.ReportProgress(0);
+            }
 
             if (!File.Exists(path))
                 throw new FileNotFoundException("list file missing!");
@@ -296,7 +300,11 @@ namespace CASCExplorer
                     FileNames[fileHash] = file;
 
                     if (worker != null)
+                    {
+                        if (worker.CancellationPending)
+                            throw new OperationCanceledException();
                         worker.ReportProgress((int)((float)sr.BaseStream.Position / (float)sr.BaseStream.Length * 100));
+                    }
                 }
 
                 Logger.WriteLine("CASCHandler: loaded {0} valid file names", FileNames.Count);

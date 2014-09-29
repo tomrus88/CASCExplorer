@@ -54,10 +54,10 @@ namespace CASCExplorer
                 MessageBox.Show("Error initializing required data files:\n" + e.Error.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
-            //else if(e.Cancelled)
-            //{
-
-            //}
+            else if (e.Cancelled)
+            {
+                Application.Exit();
+            }
             else
             {
                 TreeNode node = folderTree.Nodes.Add("Root [Read only]");
@@ -76,11 +76,18 @@ namespace CASCExplorer
         {
             var worker = sender as BackgroundWorker;
 
-            CASC = Settings.Default.OnlineMode
-                ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, worker)
-                : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, worker);
+            try
+            {
+                CASC = Settings.Default.OnlineMode
+                    ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, worker)
+                    : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, worker);
 
-            Root = CASC.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), worker);
+                Root = CASC.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), worker);
+            }
+            catch (OperationCanceledException)
+            {
+                e.Cancel = true;
+            }
         }
 
         private void treeView1_BeforeSelect(object sender, TreeViewCancelEventArgs e)
@@ -352,6 +359,17 @@ namespace CASCExplorer
             Settings.Default.Save();
 
             MessageBox.Show("Please restart CASCExplorer to apply changes", "Restart required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
+        }
+
+        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (loadDataWorker.IsBusy)
+            {
+                loadDataWorker.CancelAsync();
+
+                if (e.CloseReason == CloseReason.UserClosing)
+                    e.Cancel = true;
+            }
         }
     }
 }
