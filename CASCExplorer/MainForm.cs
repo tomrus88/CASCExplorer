@@ -35,6 +35,8 @@ namespace CASCExplorer
 
             folderTree.SelectedImageIndex = 1;
 
+            onlineModeToolStripMenuItem.Checked = Settings.Default.OnlineMode;
+
             statusLabel.Text = "Loading...";
 
             loadDataWorker.RunWorkerAsync();
@@ -342,6 +344,14 @@ namespace CASCExplorer
             string temp = string.Join(Environment.NewLine, files);
 
             Clipboard.SetText(temp);
+        }
+
+        private void onlineModeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Settings.Default.OnlineMode = onlineModeToolStripMenuItem.Checked = !onlineModeToolStripMenuItem.Checked;
+            Settings.Default.Save();
+
+            MessageBox.Show("Please restart CASCExplorer to apply changes", "Restart required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
     }
 }

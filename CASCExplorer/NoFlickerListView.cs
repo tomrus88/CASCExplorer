@@ -22,7 +22,13 @@ namespace CASCExplorer
         public int SelectedIndex
         {
             get { return HasSingleSelection ? SelectedIndices[0] : -1; }
-            set { SelectedIndices.Clear(); SelectedIndices.Add(value); }
+            set
+            {
+                SelectedIndices.Clear();
+
+                if (value >= 0)
+                    SelectedIndices.Add(value);
+            }
         }
     }
 }
