@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
+using System.Globalization;
 using System.IO;
 using System.Linq;
 using System.Windows.Forms;
@@ -16,6 +17,12 @@ namespace CASCExplorer
         ExtractProgress extractProgress;
         CASCHandler CASC;
         CASCFolder Root;
+        NumberFormatInfo sizeNumberFmt = new NumberFormatInfo()
+        {
+            NumberGroupSizes = new int[] { 3, 3, 3 },
+            NumberDecimalDigits = 0,
+            NumberGroupSeparator = " "
+        };
 
         public MainForm()
         {
@@ -39,7 +46,17 @@ namespace CASCExplorer
 
             statusLabel.Text = "Loading...";
 
+            AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
+
             loadDataWorker.RunWorkerAsync();
+        }
+
+        private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
+        {
+            //if (!e.IsTerminating)
+            //MessageBox.Show(e.ExceptionObject.ToString());
+            Logger.WriteLine(e.ExceptionObject.ToString());
+            Application.Exit();
         }
 
         private void loadDataWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -171,6 +188,7 @@ namespace CASCExplorer
 
             var localeFlags = LocaleFlags.None;
             var contentFlags = ContentFlags.None;
+            var size = "<DIR>";
 
             if (entry is CASCFile)
             {
@@ -179,6 +197,8 @@ namespace CASCExplorer
                 if (rootInfos == null)
                     throw new Exception("root entry missing!");
 
+                size = CASC.GetEncodingInfo(rootInfos[0].MD5).Size.ToString("N", sizeNumberFmt);
+
                 foreach (var rootInfo in rootInfos)
                 {
                     localeFlags |= rootInfo.Block.LocaleFlags;
@@ -186,7 +206,14 @@ namespace CASCExplorer
                 }
             }
 
-            var item = new ListViewItem(new string[] { entry.Name, entry is CASCFolder ? "Folder" : "File", localeFlags.ToString() + " (" + contentFlags.ToString() + ")" });
+            var item = new ListViewItem(new string[]
+            {
+                entry.Name,
+                entry is CASCFolder ? "Folder" : "File",
+                localeFlags.ToString() + " (" + contentFlags.ToString() + ")",
+                size
+            });
+
             item.ImageIndex = entry is CASCFolder ? 0 : 2;
             e.Item = item;
         }

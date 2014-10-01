@@ -5,7 +5,7 @@ using System.IO;
 
 namespace CASCExplorer
 {
-    internal class EncodingEntry
+    public class EncodingEntry
     {
         public int Size;
         public List<byte[]> Keys;

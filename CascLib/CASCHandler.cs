@@ -237,6 +237,11 @@ namespace CASCExplorer
             return RootHandler.GetRootInfo(hash);
         }
 
+        public EncodingEntry GetEncodingInfo(byte[] md5)
+        {
+            return EncodingHandler.GetEncodingInfo(md5);
+        }
+
         private FileStream GetDataStream(int index)
         {
             FileStream stream;
