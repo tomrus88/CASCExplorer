@@ -25,7 +25,8 @@ namespace CASCExplorer
 
         private readonly Dictionary<int, FileStream> DataStreams = new Dictionary<int, FileStream>();
 
-        public int NumRootEntries { get { return RootHandler.Count; } }
+        public int NumRootEntriesTotal { get { return RootHandler.Count; } }
+        public int NumRootEntriesSelect { get; private set; }
         public int NumUnknownFiles { get; private set; }
 
         private readonly CASCConfig config;
@@ -327,6 +328,8 @@ namespace CASCExplorer
             //Stream sw = new FileStream("unknownHashes.dat", FileMode.Create);
             //BinaryWriter bw = new BinaryWriter(sw);
 
+            NumRootEntriesSelect = 0;
+
             // Cleanup fake names for unknown files
             NumUnknownFiles = 0;
 
@@ -362,6 +365,7 @@ namespace CASCExplorer
                 }
 
                 CreateSubTree(root, rootEntry.Key, file);
+                NumRootEntriesSelect++;
             }
 
             //bw.Flush();

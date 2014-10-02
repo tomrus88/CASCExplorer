@@ -101,7 +101,7 @@ namespace CASCExplorer
             folderTree.SelectedNode = node;
 
             statusProgress.Visible = false;
-            statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.NumRootEntries - CASC.NumUnknownFiles, CASC.NumUnknownFiles);
+            statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.NumRootEntriesSelect - CASC.NumUnknownFiles, CASC.NumUnknownFiles);
         }
 
         private void loadDataWorker_DoWork(object sender, DoWorkEventArgs e)
