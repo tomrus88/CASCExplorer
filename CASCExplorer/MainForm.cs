@@ -217,13 +217,13 @@ namespace CASCExplorer
                 if (rootInfos == null)
                     throw new Exception("root entry missing!");
 
-                rootInfos = rootInfos.Where(re => (re.Block.LocaleFlags & Settings.Default.Locale) != 0).ToList();
+                var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & Settings.Default.Locale) != 0);
 
-                if (rootInfos.Count > 0)
+                if (rootInfosLocale.Any())
                 {
-                    size = CASC.GetEncodingInfo(rootInfos[0].MD5).Size.ToString("N", sizeNumberFmt);
+                    size = CASC.GetEncodingInfo(rootInfosLocale.First().MD5).Size.ToString("N", sizeNumberFmt);
 
-                    foreach (var rootInfo in rootInfos)
+                    foreach (var rootInfo in rootInfosLocale)
                     {
                         localeFlags |= rootInfo.Block.LocaleFlags;
                         contentFlags |= rootInfo.Block.ContentFlags;
