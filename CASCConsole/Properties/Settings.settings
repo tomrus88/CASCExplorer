@@ -11,5 +11,8 @@
     <Setting Name="Product" Type="System.String" Scope="User">
       <Value Profile="(Default)">wow_beta</Value>
     </Setting>
+    <Setting Name="Locale" Type="CASCExplorer.LocaleFlags" Scope="User">
+      <Value Profile="(Default)">enUS</Value>
+    </Setting>
   </Settings>
 </SettingsFile>

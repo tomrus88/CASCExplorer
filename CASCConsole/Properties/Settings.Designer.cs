@@ -58,5 +58,17 @@ namespace CASCConsole.Properties {
                 this["Product"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("enUS")]
+        public global::CASCExplorer.LocaleFlags Locale {
+            get {
+                return ((global::CASCExplorer.LocaleFlags)(this["Locale"]));
+            }
+            set {
+                this["Locale"] = value;
+            }
+        }
     }
 }
