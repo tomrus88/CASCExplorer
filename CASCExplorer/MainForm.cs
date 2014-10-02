@@ -428,14 +428,14 @@ namespace CASCExplorer
         {
             var item = e.ClickedItem as ToolStripMenuItem;
 
-            item.Checked = true;
-
             var parent = (sender as ToolStripMenuItem);
 
             foreach (var dropdown in parent.DropDownItems)
             {
                 if (dropdown != item)
                     (dropdown as ToolStripMenuItem).Checked = false;
+                else
+                    (dropdown as ToolStripMenuItem).Checked = true;
             }
 
             Settings.Default.Locale = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), item.Text);
