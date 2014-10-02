@@ -34,9 +34,9 @@ namespace CASCExplorer
 
         public ICASCEntry GetEntry(ulong hash)
         {
-            if (!SubEntries.ContainsKey(hash))
-                return null;
-            return SubEntries[hash];
+            ICASCEntry entry;
+            SubEntries.TryGetValue(hash, out entry);
+            return entry;
         }
 
         public IEnumerable<CASCFile> GetFiles(IEnumerable<int> selection = null, bool recursive = true)

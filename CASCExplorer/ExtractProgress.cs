@@ -9,17 +9,12 @@ namespace CASCExplorer
     {
         private string ExtractPath;
         private int NumExtracted;
-        private LocaleFlags locale;
         private ICollection<CASCFile> files;
         private CASCHandler CASC;
 
         public ExtractProgress()
         {
             InitializeComponent();
-
-            comboBox1.Items.AddRange(Enum.GetNames(typeof(LocaleFlags)));
-
-            comboBox1.SelectedIndex = comboBox1.Items.Count - 1;
         }
 
         public void SetExtractData(CASCHandler handler, ICollection<CASCFile> files)
@@ -55,13 +50,14 @@ namespace CASCExplorer
         private void button2_Click(object sender, EventArgs e)
         {
             button2.Enabled = false;
-            comboBox1.Enabled = false;
             checkBox1.Enabled = false;
             backgroundWorker1.RunWorkerAsync();
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
+            LocaleFlags locale = Properties.Settings.Default.Locale;
+
             foreach (var file in files)
             {
                 if (backgroundWorker1.CancellationPending)
@@ -91,7 +87,6 @@ namespace CASCExplorer
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             button2.Enabled = true;
-            comboBox1.Enabled = true;
             checkBox1.Enabled = true;
 
             if (e.Cancelled)
@@ -103,11 +98,6 @@ namespace CASCExplorer
             }
 
             Hide();
-        }
-
-        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            locale = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), comboBox1.SelectedItem as string);
         }
     }
 }

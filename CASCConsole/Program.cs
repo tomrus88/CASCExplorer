@@ -8,9 +8,6 @@ namespace CASCConsole
 {
     class Program
     {
-        static CASCHandler cascHandler;
-        static CASCFolder root;
-
         static void Main(string[] args)
         {
             if (args.Length != 4)
@@ -26,18 +23,20 @@ namespace CASCConsole
 
             Console.WriteLine("Loading...");
 
-            cascHandler = Settings.Default.OnlineMode
+            CASCHandler cascHandler = Settings.Default.OnlineMode
                 ? CASCHandler.OpenOnlineStorage(Settings.Default.Product)
                 : CASCHandler.OpenLocalStorage(Settings.Default.WowPath);
 
-            root = cascHandler.LoadListFile(Path.Combine(Environment.CurrentDirectory, "listfile.txt"));
-
-            Console.WriteLine("Loaded.");
+            cascHandler.LoadListFile(Path.Combine(Environment.CurrentDirectory, "listfile.txt"));
 
             string pattern = args[0];
             string dest = args[1];
             LocaleFlags locale = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), args[2]);
             ContentFlags content = (ContentFlags)Enum.Parse(typeof(ContentFlags), args[3]);
+
+            CASCFolder root = cascHandler.CreateStorageTree(locale);
+
+            Console.WriteLine("Loaded.");
 
             Console.WriteLine("Extract params:", pattern, dest, locale);
             Console.WriteLine("    Pattern: {0}", pattern);

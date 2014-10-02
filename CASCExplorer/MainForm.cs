@@ -48,6 +48,14 @@ namespace CASCExplorer
 
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
+            var locales = Enum.GetNames(typeof(LocaleFlags));
+            foreach (var locale in locales)
+            {
+                var item = new ToolStripMenuItem(locale);
+                item.Checked = Settings.Default.Locale.ToString() == locale;
+                localeToolStripMenuItem.DropDownItems.Add(item);
+            }
+
             loadDataWorker.RunWorkerAsync();
         }
 
@@ -77,16 +85,23 @@ namespace CASCExplorer
             }
             else
             {
-                TreeNode node = folderTree.Nodes.Add("Root [Read only]");
-                node.Tag = Root;
-                node.Name = Root.Name;
-                node.Nodes.Add(new TreeNode() { Name = "tempnode" }); // add dummy node
-                node.Expand();
-                folderTree.SelectedNode = node;
-
-                statusProgress.Visible = false;
-                statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.NumRootEntries - CASC.NumUnknownFiles, CASC.NumUnknownFiles);
+                OnStorageChanged();
             }
+        }
+
+        private void OnStorageChanged()
+        {
+            folderTree.Nodes.Clear();
+
+            TreeNode node = folderTree.Nodes.Add("Root [Read only]");
+            node.Tag = Root;
+            node.Name = Root.Name;
+            node.Nodes.Add(new TreeNode() { Name = "tempnode" }); // add dummy node
+            node.Expand();
+            folderTree.SelectedNode = node;
+
+            statusProgress.Visible = false;
+            statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.NumRootEntries - CASC.NumUnknownFiles, CASC.NumUnknownFiles);
         }
 
         private void loadDataWorker_DoWork(object sender, DoWorkEventArgs e)
@@ -99,7 +114,8 @@ namespace CASCExplorer
                     ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, worker)
                     : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, worker);
 
-                Root = CASC.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), worker);
+                CASC.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), worker);
+                Root = CASC.CreateStorageTree(Settings.Default.Locale);
             }
             catch (OperationCanceledException)
             {
@@ -130,9 +146,13 @@ namespace CASCExplorer
             fileList.Tag = baseEntry;
             fileList.VirtualListSize = 0;
             fileList.VirtualListSize = baseEntry.SubEntries.Count;
-            fileList.EnsureVisible(0);
-            fileList.SelectedIndex = 0;
-            fileList.FocusedItem = fileList.Items[0];
+
+            if (fileList.VirtualListSize > 0)
+            {
+                fileList.EnsureVisible(0);
+                fileList.SelectedIndex = 0;
+                fileList.FocusedItem = fileList.Items[0];
+            }
         }
 
         private void treeView1_BeforeExpand(object sender, TreeViewCancelEventArgs e)
@@ -197,12 +217,17 @@ namespace CASCExplorer
                 if (rootInfos == null)
                     throw new Exception("root entry missing!");
 
-                size = CASC.GetEncodingInfo(rootInfos[0].MD5).Size.ToString("N", sizeNumberFmt);
+                rootInfos = rootInfos.Where(re => (re.Block.LocaleFlags & Settings.Default.Locale) != 0).ToList();
 
-                foreach (var rootInfo in rootInfos)
+                if (rootInfos.Count > 0)
                 {
-                    localeFlags |= rootInfo.Block.LocaleFlags;
-                    contentFlags |= rootInfo.Block.ContentFlags;
+                    size = CASC.GetEncodingInfo(rootInfos[0].MD5).Size.ToString("N", sizeNumberFmt);
+
+                    foreach (var rootInfo in rootInfos)
+                    {
+                        localeFlags |= rootInfo.Block.LocaleFlags;
+                        contentFlags |= rootInfo.Block.ContentFlags;
+                    }
                 }
             }
 
@@ -397,6 +422,27 @@ namespace CASCExplorer
                 if (e.CloseReason == CloseReason.UserClosing)
                     e.Cancel = true;
             }
+        }
+
+        private void localeToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+            var item = e.ClickedItem as ToolStripMenuItem;
+
+            item.Checked = true;
+
+            var parent = (sender as ToolStripMenuItem);
+
+            foreach (var dropdown in parent.DropDownItems)
+            {
+                if (dropdown != item)
+                    (dropdown as ToolStripMenuItem).Checked = false;
+            }
+
+            Settings.Default.Locale = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), item.Text);
+            Settings.Default.Save();
+
+            Root = CASC.CreateStorageTree(Settings.Default.Locale);
+            OnStorageChanged();
         }
     }
 }

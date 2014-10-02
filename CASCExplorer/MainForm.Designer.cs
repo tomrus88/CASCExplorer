@@ -47,6 +47,8 @@
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.loadDataWorker = new System.ComponentModel.BackgroundWorker();
+            this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.localeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.fileList = new CASCExplorer.NoFlickerListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
@@ -176,6 +178,7 @@
             this.menuStrip1.Dock = System.Windows.Forms.DockStyle.None;
             this.menuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.fileToolStripMenuItem,
+            this.viewToolStripMenuItem,
             this.toolsToolStripMenuItem,
             this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
@@ -236,6 +239,21 @@
             this.loadDataWorker.DoWork += new System.ComponentModel.DoWorkEventHandler(this.loadDataWorker_DoWork);
             this.loadDataWorker.ProgressChanged += new System.ComponentModel.ProgressChangedEventHandler(this.loadDataWorker_ProgressChanged);
             this.loadDataWorker.RunWorkerCompleted += new System.ComponentModel.RunWorkerCompletedEventHandler(this.loadDataWorker_RunWorkerCompleted);
+            // 
+            // viewToolStripMenuItem
+            // 
+            this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.localeToolStripMenuItem});
+            this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
+            this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
+            this.viewToolStripMenuItem.Text = "View";
+            // 
+            // localeToolStripMenuItem
+            // 
+            this.localeToolStripMenuItem.Name = "localeToolStripMenuItem";
+            this.localeToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.localeToolStripMenuItem.Text = "Locale";
+            this.localeToolStripMenuItem.DropDownItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.localeToolStripMenuItem_DropDownItemClicked);
             // 
             // fileList
             // 
@@ -339,6 +357,8 @@
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem onlineModeToolStripMenuItem;
         private System.Windows.Forms.ColumnHeader columnHeader4;
+        private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem localeToolStripMenuItem;
     }
 }
 
