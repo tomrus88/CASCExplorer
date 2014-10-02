@@ -69,6 +69,7 @@ namespace CASCExplorer
                         var entry = new EncodingEntry();
                         entry.Size = fileSize;
 
+                        // how do we handle multiple keys?
                         for (int ki = 0; ki < keysCount; ++ki)
                         {
                             byte[] key = br.ReadBytes(16);

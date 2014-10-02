@@ -408,14 +408,27 @@ namespace CASCExplorer
             return rootInfos != null && rootInfos.Count > 0;
         }
 
-        public Stream OpenFile(string fullName, LocaleFlags locale, ContentFlags content = ContentFlags.None)
+        private EncodingEntry GetEncodingEntry(ulong hash, LocaleFlags locale, ContentFlags content)
         {
-            var hash = Hasher.ComputeHash(fullName);
+            var rootInfos = RootHandler.GetRootInfo(hash);
 
-            return OpenFile(hash, fullName, locale, content);
+            var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & locale) != 0);
+
+            if (rootInfosLocale.Count() > 1)
+            {
+                if (content != ContentFlags.None)
+                {
+                    var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.Block.ContentFlags & content) == 0);
+
+                    if (rootInfosLocaleAndContent.Any())
+                        rootInfosLocale = rootInfosLocaleAndContent;
+                }
+            }
+
+            return EncodingHandler.GetEncodingInfo(rootInfosLocale.First().MD5);
         }
 
-        public Stream OpenFile(ulong hash, string fullName, LocaleFlags locale, ContentFlags content = ContentFlags.None)
+        private EncodingEntry GetEncodingEntryOld(ulong hash, LocaleFlags locale, ContentFlags content)
         {
             var rootInfos = RootHandler.GetRootInfo(hash);
 
@@ -425,13 +438,27 @@ namespace CASCExplorer
                 {
                     var encInfo = EncodingHandler.GetEncodingInfo(rootInfo.MD5);
 
-                    if (encInfo == null)
-                        continue;
-
-                    foreach (var key in encInfo.Keys)
-                        return OpenFile(key);
+                    if (encInfo != null)
+                        return encInfo;
                 }
             }
+
+            return null;
+        }
+
+        public Stream OpenFile(string fullName, LocaleFlags locale, ContentFlags content = ContentFlags.None)
+        {
+            var hash = Hasher.ComputeHash(fullName);
+
+            return OpenFile(hash, fullName, locale, content);
+        }
+
+        public Stream OpenFile(ulong hash, string fullName, LocaleFlags locale, ContentFlags content = ContentFlags.None)
+        {
+            EncodingEntry encInfo = GetEncodingEntry(hash, locale, content);
+
+            if (encInfo != null)
+                return OpenFile(encInfo.Keys[0]);
 
             throw new FileNotFoundException(fullName);
         }
@@ -445,23 +472,12 @@ namespace CASCExplorer
 
         public void SaveFileTo(ulong hash, string fullName, string extractPath, LocaleFlags locale, ContentFlags content = ContentFlags.None)
         {
-            var rootInfos = RootHandler.GetRootInfo(hash);
+            EncodingEntry encInfo = GetEncodingEntry(hash, locale, content);
 
-            foreach (var rootInfo in rootInfos)
+            if (encInfo != null)
             {
-                if ((rootInfo.Block.LocaleFlags & locale) != 0 && (rootInfo.Block.ContentFlags & content) == 0)
-                {
-                    var encInfo = EncodingHandler.GetEncodingInfo(rootInfo.MD5);
-
-                    if (encInfo == null)
-                        continue;
-
-                    foreach (var key in encInfo.Keys)
-                    {
-                        ExtractFile(key, extractPath, fullName);
-                        return;
-                    }
-                }
+                ExtractFile(encInfo.Keys[0], extractPath, fullName);
+                return;
             }
 
             throw new FileNotFoundException(fullName);
