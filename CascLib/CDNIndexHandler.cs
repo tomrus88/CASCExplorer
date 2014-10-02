@@ -181,7 +181,7 @@ namespace CASCExplorer
 
         public Stream OpenDataFileDirect(byte[] key)
         {
-            if (worker != null)
+            if (worker != null && worker.IsBusy)
                 worker.ReportProgress(0);
 
             var file = key.ToHexString().ToLower();
@@ -213,7 +213,8 @@ namespace CASCExplorer
                 if (worker.CancellationPending)
                     throw new OperationCanceledException();
 
-                worker.ReportProgress(e.ProgressPercentage);
+                if (worker.IsBusy)
+                    worker.ReportProgress(e.ProgressPercentage);
             }
         }
 
