@@ -74,7 +74,7 @@ namespace CASCExplorer
                 }
                 catch (Exception exc)
                 {
-                    Logger.WriteLine(exc.Message);
+                    Logger.WriteLine("Unable to extract file {0}: {1}", file.FullName, exc.Message);
                 }
             }
         }

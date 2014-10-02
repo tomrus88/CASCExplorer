@@ -234,6 +234,7 @@ namespace CASCExplorer
         public IndexEntry GetIndexInfo(byte[] key)
         {
             IndexEntry result;
+
             if (!CDNIndexData.TryGetValue(key, out result))
                 Logger.WriteLine("CDNHandler: missing index: {0}", key.ToHexString());
 

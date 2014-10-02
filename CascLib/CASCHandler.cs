@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.IO;
+using System.Linq;
 using System.Security.Cryptography;
 
 namespace CASCExplorer
@@ -25,7 +26,8 @@ namespace CASCExplorer
 
         private readonly Dictionary<int, FileStream> DataStreams = new Dictionary<int, FileStream>();
 
-        public int NumRootEntriesTotal { get { return RootHandler.Count; } }
+        public int NumRootEntries { get { return RootHandler.Count; } }
+        public int NumRootEntriesTotal { get { return RootHandler.RootData.Sum(re => re.Value.Count); } }
         public int NumRootEntriesSelect { get; private set; }
         public int NumUnknownFiles { get; private set; }
 
@@ -325,9 +327,6 @@ namespace CASCExplorer
 
             CASCFolder.FolderNames[rootHash] = "root";
 
-            //Stream sw = new FileStream("unknownHashes.dat", FileMode.Create);
-            //BinaryWriter bw = new BinaryWriter(sw);
-
             NumRootEntriesSelect = 0;
 
             // Cleanup fake names for unknown files
@@ -336,21 +335,13 @@ namespace CASCExplorer
             foreach (var unkFile in UnknownFiles)
                 CASCFile.FileNames.Remove(unkFile.Key);
 
+            //Stream sw = new FileStream("unknownHashes.dat", FileMode.Create);
+            //BinaryWriter bw = new BinaryWriter(sw);
+
             // Create new tree based on specified locale
             foreach (var rootEntry in RootHandler.RootData)
             {
-                bool valid = false;
-
-                foreach (var rootEntry2 in rootEntry.Value)
-                {
-                    if ((rootEntry2.Block.LocaleFlags & locale) != 0)
-                    {
-                        valid = true;
-                        break;
-                    }
-                }
-
-                if (!valid)
+                if (!rootEntry.Value.Any(re => (re.Block.LocaleFlags & locale) != 0))
                     continue;
 
                 string file;
@@ -420,6 +411,27 @@ namespace CASCExplorer
         public Stream OpenFile(string fullName, LocaleFlags locale, ContentFlags content = ContentFlags.None)
         {
             var hash = Hasher.ComputeHash(fullName);
+            var rootInfos = RootHandler.GetRootInfo(hash);
+
+            foreach (var rootInfo in rootInfos)
+            {
+                if ((rootInfo.Block.LocaleFlags & locale) != 0 && (rootInfo.Block.ContentFlags & content) == 0)
+                {
+                    var encInfo = EncodingHandler.GetEncodingInfo(rootInfo.MD5);
+
+                    if (encInfo == null)
+                        continue;
+
+                    foreach (var key in encInfo.Keys)
+                        return OpenFile(key);
+                }
+            }
+
+            throw new FileNotFoundException(fullName);
+        }
+
+        public Stream OpenFile(ulong hash, string fullName, LocaleFlags locale, ContentFlags content = ContentFlags.None)
+        {
             var rootInfos = RootHandler.GetRootInfo(hash);
 
             foreach (var rootInfo in rootInfos)
