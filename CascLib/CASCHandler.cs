@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -35,7 +34,7 @@ namespace CASCExplorer
 
         public Dictionary<ulong, bool> UnknownFiles = new Dictionary<ulong, bool>();
 
-        private CASCHandler(CASCConfig config, BackgroundWorker worker)
+        private CASCHandler(CASCConfig config, AsyncAction worker)
         {
             this.config = config;
 
@@ -120,7 +119,7 @@ namespace CASCExplorer
             try
             {
                 if (config.OnlineMode)
-                    throw new Exception();
+                    throw new Exception("OnlineMode=true");
 
                 var idxInfo = LocalIndex.GetIndexInfo(key);
 
@@ -177,7 +176,7 @@ namespace CASCExplorer
             try
             {
                 if (config.OnlineMode)
-                    throw new Exception();
+                    throw new Exception("OnlineMode=true");
 
                 var idxInfo = LocalIndex.GetIndexInfo(key);
 
@@ -259,31 +258,30 @@ namespace CASCExplorer
             return stream;
         }
 
-        public static CASCHandler OpenLocalStorage(string basePath, BackgroundWorker worker = null)
+        public static CASCHandler OpenLocalStorage(string basePath, AsyncAction worker = null)
         {
             CASCConfig config = CASCConfig.LoadLocalStorageConfig(basePath);
 
             return Open(worker, config);
         }
 
-        public static CASCHandler OpenOnlineStorage(string product, BackgroundWorker worker = null)
+        public static CASCHandler OpenOnlineStorage(string product, AsyncAction worker = null)
         {
             CASCConfig config = CASCConfig.LoadOnlineStorageConfig(product);
 
             return Open(worker, config);
         }
 
-        private static CASCHandler Open(BackgroundWorker worker, CASCConfig config)
+        private static CASCHandler Open(AsyncAction worker, CASCConfig config)
         {
             return new CASCHandler(config, worker);
         }
 
-        public void LoadListFile(string path, BackgroundWorker worker = null)
+        public void LoadListFile(string path, AsyncAction worker = null)
         {
             if (worker != null)
             {
-                if (worker.CancellationPending)
-                    throw new OperationCanceledException();
+                worker.ThrowOnCancel();
                 worker.ReportProgress(0);
             }
 
@@ -309,8 +307,7 @@ namespace CASCExplorer
 
                     if (worker != null)
                     {
-                        if (worker.CancellationPending)
-                            throw new OperationCanceledException();
+                        worker.ThrowOnCancel();
                         worker.ReportProgress((int)((float)sr.BaseStream.Position / (float)sr.BaseStream.Length * 100));
                     }
                 }

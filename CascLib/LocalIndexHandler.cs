@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 
@@ -21,7 +20,7 @@ namespace CASCExplorer
 
         }
 
-        public static LocalIndexHandler Initialize(CASCConfig config, BackgroundWorker worker)
+        public static LocalIndexHandler Initialize(CASCConfig config, AsyncAction worker)
         {
             var handler = new LocalIndexHandler();
 
@@ -32,8 +31,7 @@ namespace CASCExplorer
 
             if (worker != null)
             {
-                if (worker.CancellationPending)
-                    throw new OperationCanceledException();
+                worker.ThrowOnCancel();
                 worker.ReportProgress(0);
             }
 
@@ -45,8 +43,7 @@ namespace CASCExplorer
 
                 if (worker != null)
                 {
-                    if (worker.CancellationPending)
-                        throw new OperationCanceledException();
+                    worker.ThrowOnCancel();
                     worker.ReportProgress((int)((float)++idxIndex / (float)idxFiles.Count * 100));
                 }
             }

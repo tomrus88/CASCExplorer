@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 
 namespace CASCExplorer
@@ -66,12 +65,11 @@ namespace CASCExplorer
             get { return RootData.Count; }
         }
 
-        public WowRootHandler(Stream stream, BackgroundWorker worker)
+        public WowRootHandler(Stream stream, AsyncAction worker)
         {
             if (worker != null)
             {
-                if (worker.CancellationPending)
-                    throw new OperationCanceledException();
+                worker.ThrowOnCancel();
                 worker.ReportProgress(0);
             }
 
@@ -122,8 +120,7 @@ namespace CASCExplorer
 
                     if (worker != null)
                     {
-                        if (worker.CancellationPending)
-                            throw new OperationCanceledException();
+                        worker.ThrowOnCancel();
                         worker.ReportProgress((int)((float)stream.Position / (float)stream.Length * 100));
                     }
                 }

@@ -24,6 +24,8 @@ namespace CASCExplorer
             NumberGroupSeparator = " "
         };
 
+        AsyncAction bgAction;
+
         public MainForm()
         {
             InitializeComponent();
@@ -34,7 +36,7 @@ namespace CASCExplorer
             Application.Exit();
         }
 
-        private void Form1_Load(object sender, EventArgs e)
+        private async void Form1_Load(object sender, EventArgs e)
         {
             iconsList.Images.Add(Resources.folder);
             iconsList.Images.Add(Resources.openFolder);
@@ -56,37 +58,38 @@ namespace CASCExplorer
                 localeToolStripMenuItem.DropDownItems.Add(item);
             }
 
-            loadDataWorker.RunWorkerAsync();
+            bgAction = new AsyncAction(() => LoadData(), bgAction_ProgressChanged);
+
+            try
+            {
+                await bgAction.DoAction();
+
+                OnStorageChanged();
+            }
+            catch (OperationCanceledException)
+            {
+                Application.Exit();
+            }
+            catch (Exception exc)
+            {
+                MessageBox.Show("Error initializing required data files:\n" + exc.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+        }
+
+        private void bgAction_ProgressChanged(int progress)
+        {
+            try
+            {
+                statusProgress.Value = progress;
+            }
+            catch
+            { }
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
         {
-            //if (!e.IsTerminating)
-            //MessageBox.Show(e.ExceptionObject.ToString());
-            Logger.WriteLine(e.ExceptionObject.ToString());
-            Application.Exit();
-        }
-
-        private void loadDataWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
-        {
-            statusProgress.Value = e.ProgressPercentage;
-        }
-
-        private void loadDataWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
-        {
-            if (e.Error != null)
-            {
-                MessageBox.Show("Error initializing required data files:\n" + e.Error.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-            else if (e.Cancelled)
-            {
-                Application.Exit();
-            }
-            else
-            {
-                OnStorageChanged();
-            }
+            MessageBox.Show(e.ExceptionObject.ToString());
         }
 
         private void OnStorageChanged()
@@ -104,23 +107,14 @@ namespace CASCExplorer
             statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.NumRootEntriesSelect - CASC.NumUnknownFiles, CASC.NumUnknownFiles);
         }
 
-        private void loadDataWorker_DoWork(object sender, DoWorkEventArgs e)
+        private void LoadData()
         {
-            var worker = sender as BackgroundWorker;
+            CASC = Settings.Default.OnlineMode
+                ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, bgAction)
+                : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, bgAction);
 
-            try
-            {
-                CASC = Settings.Default.OnlineMode
-                    ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, worker)
-                    : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, worker);
-
-                CASC.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), worker);
-                Root = CASC.CreateStorageTree(Settings.Default.Locale);
-            }
-            catch (OperationCanceledException)
-            {
-                e.Cancel = true;
-            }
+            CASC.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), bgAction);
+            Root = CASC.CreateStorageTree(Settings.Default.Locale);
         }
 
         private void treeView1_BeforeSelect(object sender, TreeViewCancelEventArgs e)
@@ -415,13 +409,7 @@ namespace CASCExplorer
 
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if (loadDataWorker.IsBusy)
-            {
-                loadDataWorker.CancelAsync();
-
-                if (e.CloseReason == CloseReason.UserClosing)
-                    e.Cancel = true;
-            }
+            bgAction.Cancel();
         }
 
         private void localeToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)

@@ -21,7 +21,7 @@ namespace CASCExplorer
         private readonly Dictionary<byte[], IndexEntry> CDNIndexData = new Dictionary<byte[], IndexEntry>(comparer);
 
         private CASCConfig CASCConfig;
-        private BackgroundWorker worker;
+        private AsyncAction worker;
         private Semaphore downloadSemaphore = new Semaphore(1, 1);
 
         public int Count
@@ -29,20 +29,19 @@ namespace CASCExplorer
             get { return CDNIndexData.Count; }
         }
 
-        private CDNIndexHandler(CASCConfig cascConfig, BackgroundWorker worker)
+        private CDNIndexHandler(CASCConfig cascConfig, AsyncAction worker)
         {
             CASCConfig = cascConfig;
             this.worker = worker;
         }
 
-        public static CDNIndexHandler Initialize(CASCConfig config, BackgroundWorker worker)
+        public static CDNIndexHandler Initialize(CASCConfig config, AsyncAction worker)
         {
             var handler = new CDNIndexHandler(config, worker);
 
             if (worker != null)
             {
-                if (worker.CancellationPending)
-                    throw new OperationCanceledException();
+                worker.ThrowOnCancel();
                 worker.ReportProgress(0);
             }
 
@@ -57,8 +56,7 @@ namespace CASCExplorer
 
                 if (worker != null)
                 {
-                    if (worker.CancellationPending)
-                        throw new OperationCanceledException();
+                    worker.ThrowOnCancel();
                     worker.ReportProgress((int)((float)i / (float)config.Archives.Count * 100));
                 }
             }
@@ -132,6 +130,9 @@ namespace CASCExplorer
 
         private void WebClient_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
         {
+            if (e.Cancelled)
+                return;
+
             downloadSemaphore.Release();
 
             var state = (UserState)e.UserState;
@@ -144,9 +145,10 @@ namespace CASCExplorer
         {
             if (worker != null)
             {
-                if (worker.CancellationPending)
-                    throw new OperationCanceledException();
+                if (worker.IsCancellationRequested)
+                    (sender as WebClient).CancelAsync();
 
+                //worker.ThrowOnCancel();
                 //worker.ReportProgress(e.ProgressPercentage);
             }
         }
@@ -181,8 +183,11 @@ namespace CASCExplorer
 
         public Stream OpenDataFileDirect(byte[] key)
         {
-            if (worker != null && worker.IsBusy)
+            if (worker != null)
+            {
+                worker.ThrowOnCancel();
                 worker.ReportProgress(0);
+            }
 
             var file = key.ToHexString().ToLower();
             var url = CASCConfig.CDNUrl + "/data/" + file.Substring(0, 2) + "/" + file.Substring(2, 2) + "/" + file;
@@ -200,6 +205,9 @@ namespace CASCExplorer
 
         private void Client_DownloadDataCompleted(object sender, DownloadDataCompletedEventArgs e)
         {
+            if (e.Cancelled)
+                return;
+
             UserState state = e.UserState as UserState;
 
             state.Stream = new MemoryStream(e.Result);
@@ -210,11 +218,11 @@ namespace CASCExplorer
         {
             if (worker != null)
             {
-                if (worker.CancellationPending)
-                    throw new OperationCanceledException();
+                if (worker.IsCancellationRequested)
+                    (sender as WebClient).CancelAsync();
 
-                if (worker.IsBusy)
-                    worker.ReportProgress(e.ProgressPercentage);
+                //worker.ThrowOnCancel();
+                worker.ReportProgress(e.ProgressPercentage);
             }
         }
 

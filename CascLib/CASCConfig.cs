@@ -196,7 +196,11 @@ namespace CASCExplorer
             get
             {
                 if (OnlineMode)
-                    return String.Format("http://{0}/{1}", _CDNData["Hosts"][0], _CDNData["Path"][0]);
+                {
+                    // multiple hosts possible!
+                    string cdns = _CDNData["Hosts"][0].Split(' ')[0];
+                    return String.Format("http://{0}/{1}", cdns, _CDNData["Path"][0]);
+                }
                 else
                     return String.Format("http://{0}{1}", _BuildInfo["CDN Hosts"][0], _BuildInfo["CDN Path"][0]);
             }
