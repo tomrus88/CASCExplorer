@@ -40,6 +40,7 @@
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.extractToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyNameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.getSizeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolStripContainer1 = new System.Windows.Forms.ToolStripContainer();
             this.statusStrip1 = new System.Windows.Forms.StatusStrip();
             this.statusLabel = new System.Windows.Forms.ToolStripStatusLabel();
@@ -155,9 +156,10 @@
             // 
             this.contextMenuStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.extractToolStripMenuItem,
-            this.copyNameToolStripMenuItem});
+            this.copyNameToolStripMenuItem,
+            this.getSizeToolStripMenuItem});
             this.contextMenuStrip1.Name = "contextMenuStrip1";
-            this.contextMenuStrip1.Size = new System.Drawing.Size(138, 48);
+            this.contextMenuStrip1.Size = new System.Drawing.Size(138, 70);
             this.contextMenuStrip1.Opening += new System.ComponentModel.CancelEventHandler(this.contextMenuStrip1_Opening);
             // 
             // extractToolStripMenuItem
@@ -173,6 +175,13 @@
             this.copyNameToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
             this.copyNameToolStripMenuItem.Text = "Copy Name";
             this.copyNameToolStripMenuItem.Click += new System.EventHandler(this.copyNameToolStripMenuItem_Click);
+            // 
+            // getSizeToolStripMenuItem
+            // 
+            this.getSizeToolStripMenuItem.Name = "getSizeToolStripMenuItem";
+            this.getSizeToolStripMenuItem.Size = new System.Drawing.Size(137, 22);
+            this.getSizeToolStripMenuItem.Text = "Get Size";
+            this.getSizeToolStripMenuItem.Click += new System.EventHandler(this.getSizeToolStripMenuItem_Click);
             // 
             // toolStripContainer1
             // 
@@ -349,6 +358,7 @@
         private System.Windows.Forms.ColumnHeader columnHeader4;
         private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem localeToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem getSizeToolStripMenuItem;
     }
 }
 

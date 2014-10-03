@@ -19,7 +19,7 @@ namespace CASCExplorer
         CASCFolder Root;
         NumberFormatInfo sizeNumberFmt = new NumberFormatInfo()
         {
-            NumberGroupSizes = new int[] { 3, 3, 3 },
+            NumberGroupSizes = new int[] { 3, 3, 3, 3, 3 },
             NumberDecimalDigits = 0,
             NumberGroupSeparator = " "
         };
@@ -374,6 +374,7 @@ namespace CASCExplorer
         {
             extractToolStripMenuItem.Enabled = fileList.HasSelection;
             copyNameToolStripMenuItem.Enabled = (fileList.HasSelection && (fileList.Tag as CASCFolder).GetFiles(fileList.SelectedIndices.Cast<int>(), false).Count() > 0) || false;
+            getSizeToolStripMenuItem.Enabled = fileList.HasSelection;
         }
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
@@ -431,6 +432,38 @@ namespace CASCExplorer
 
             Root = CASC.CreateStorageTree(Settings.Default.Locale);
             OnStorageChanged();
+        }
+
+        private void getSizeToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            CASCFolder folder = fileList.Tag as CASCFolder;
+
+            if (folder == null)
+                return;
+
+            if (!fileList.HasSelection)
+                return;
+
+            var files = folder.GetFiles(fileList.SelectedIndices.Cast<int>());
+
+            long size = 0;
+
+            foreach (var file in files)
+            {
+                var rootInfos = CASC.GetRootInfo(file.Hash);
+
+                if (rootInfos == null)
+                    throw new Exception("root entry missing!");
+
+                var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & Settings.Default.Locale) != 0);
+
+                if (rootInfosLocale.Any())
+                {
+                    size += CASC.GetEncodingInfo(rootInfosLocale.First().MD5).Size;
+                }
+            }
+
+            MessageBox.Show(String.Format(sizeNumberFmt, "{0:N} bytes", size));
         }
     }
 }
