@@ -263,7 +263,7 @@ namespace CASCExplorer
                 {
                     case ".blp":
                         {
-                            PreviewBlp(file.FullName);
+                            PreviewBlp(file);
                             break;
                         }
                     case ".txt":
@@ -276,7 +276,7 @@ namespace CASCExplorer
                     case ".html":
                     case ".lst":
                         {
-                            PreviewText(file.FullName);
+                            PreviewText(file);
                             break;
                         }
                     default:
@@ -288,9 +288,9 @@ namespace CASCExplorer
             }
         }
 
-        private void PreviewText(string fullName)
+        private void PreviewText(CASCFile file)
         {
-            var stream = CASC.OpenFile(fullName, LocaleFlags.All);
+            var stream = CASC.OpenFile(file.Hash, file.FullName, LocaleFlags.All);
             var text = new StreamReader(stream).ReadToEnd();
             var form = new Form { FormBorderStyle = FormBorderStyle.SizableToolWindow, StartPosition = FormStartPosition.CenterParent };
             form.Controls.Add(new TextBox
@@ -304,9 +304,9 @@ namespace CASCExplorer
             form.Show(this);
         }
 
-        private void PreviewBlp(string fullName)
+        private void PreviewBlp(CASCFile file)
         {
-            var stream = CASC.OpenFile(fullName, LocaleFlags.All);
+            var stream = CASC.OpenFile(file.Hash, file.FullName, LocaleFlags.All);
             var blp = new BlpFile(stream);
             var bitmap = blp.GetBitmap(0);
             var form = new ImagePreviewForm(bitmap);
