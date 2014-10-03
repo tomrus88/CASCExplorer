@@ -32,7 +32,7 @@ namespace CASCExplorer
             if (worker != null)
             {
                 worker.ThrowOnCancel();
-                worker.ReportProgress(0);
+                worker.ReportProgress(0, "Loading \"local indexes\"...");
             }
 
             int idxIndex = 0;

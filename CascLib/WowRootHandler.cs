@@ -70,7 +70,7 @@ namespace CASCExplorer
             if (worker != null)
             {
                 worker.ThrowOnCancel();
-                worker.ReportProgress(0);
+                worker.ReportProgress(0, "Loading \"root\"...");
             }
 
             using (var br = new BinaryReader(stream))
@@ -104,10 +104,6 @@ namespace CASCExplorer
 
                         ulong hash = br.ReadUInt64();
                         entries[i].Hash = hash;
-
-                        // don't load other locales
-                        //if (block.Flags != LocaleFlags.All && (block.Flags & LocaleFlags.enUS) == 0)
-                        //    continue;
 
                         if (!RootData.ContainsKey(hash))
                         {

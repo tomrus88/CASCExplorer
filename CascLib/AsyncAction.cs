@@ -4,14 +4,43 @@ using System.Threading.Tasks;
 
 namespace CASCExplorer
 {
+    public class AsyncActionProgressChangedEventArgs : EventArgs
+    {
+        public int Progress { get; private set; }
+        public object UserData { get; private set; }
+
+        public AsyncActionProgressChangedEventArgs(int progress)
+        {
+            Progress = progress;
+        }
+
+        public AsyncActionProgressChangedEventArgs(int progress, object userData) : this(progress)
+        {
+            UserData = userData;
+        }
+    }
+
+    delegate void AsyncActionProgressEventHandler(object sender, AsyncActionProgressChangedEventArgs e);
+
+    public class AsyncActionProgress : Progress<AsyncActionProgressChangedEventArgs>
+    {
+        public AsyncActionProgress(Action<AsyncActionProgressChangedEventArgs> action) : base(action) { }
+        public AsyncActionProgress() : base() { }
+
+        public void Report(AsyncActionProgressChangedEventArgs value)
+        {
+            base.OnReport(value);
+        }
+    }
+
     public class AsyncAction
     {
-        private Progress<int> progress;
+        private AsyncActionProgress progress;
         private CancellationTokenSource cts;
         private Task task;
         private Action action;
 
-        public event EventHandler<int> ProgressChanged
+        public event EventHandler<AsyncActionProgressChangedEventArgs> ProgressChanged
         {
             add { progress.ProgressChanged += value; }
             remove { progress.ProgressChanged -= value; }
@@ -22,14 +51,14 @@ namespace CASCExplorer
             get { return cts.IsCancellationRequested; }
         }
 
-        public AsyncAction(Action action, Action<int> progressAction = null)
+        public AsyncAction(Action action, Action<AsyncActionProgressChangedEventArgs> progressAction = null)
         {
             this.action = action;
 
             if (progressAction != null)
-                progress = new Progress<int>(progressAction);
+                progress = new AsyncActionProgress(progressAction);
             else
-                progress = new Progress<int>();
+                progress = new AsyncActionProgress();
 
             cts = new CancellationTokenSource();
         }
@@ -40,11 +69,11 @@ namespace CASCExplorer
             await task;
         }
 
-        public void ReportProgress(int percent)
+        public void ReportProgress(int percent, object userData = null)
         {
             if (cts.IsCancellationRequested)
                 return;
-            (progress as IProgress<int>).Report(percent);
+            progress.Report(new AsyncActionProgressChangedEventArgs(percent, userData));
         }
 
         public void ThrowOnCancel()

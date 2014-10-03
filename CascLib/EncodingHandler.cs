@@ -29,7 +29,7 @@ namespace CASCExplorer
             if (worker != null)
             {
                 worker.ThrowOnCancel();
-                worker.ReportProgress(0);
+                worker.ReportProgress(0, "Loading \"encoding\"...");
             }
 
             using (var br = new BinaryReader(stream))

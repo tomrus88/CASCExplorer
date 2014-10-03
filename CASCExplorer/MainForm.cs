@@ -58,7 +58,8 @@ namespace CASCExplorer
                 localeToolStripMenuItem.DropDownItems.Add(item);
             }
 
-            bgAction = new AsyncAction(() => LoadData(), bgAction_ProgressChanged);
+            bgAction = new AsyncAction(() => LoadData());
+            bgAction.ProgressChanged += new EventHandler<AsyncActionProgressChangedEventArgs>(bgAction_ProgressChanged);
 
             try
             {
@@ -72,19 +73,20 @@ namespace CASCExplorer
             }
             catch (Exception exc)
             {
-                MessageBox.Show("Error initializing required data files:\n" + exc.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error during initialization of required data files:\n" + exc.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
         }
 
-        private void bgAction_ProgressChanged(int progress)
+        private void bgAction_ProgressChanged(object sender, AsyncActionProgressChangedEventArgs progress)
         {
-            try
-            {
-                statusProgress.Value = progress;
-            }
-            catch
-            { }
+            if (bgAction.IsCancellationRequested)
+                return;
+
+            statusProgress.Value = progress.Progress;
+
+            if (progress.UserData != null)
+                statusLabel.Text = progress.UserData as string;
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)

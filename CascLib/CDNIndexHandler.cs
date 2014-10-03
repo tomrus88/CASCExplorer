@@ -42,7 +42,7 @@ namespace CASCExplorer
             if (worker != null)
             {
                 worker.ThrowOnCancel();
-                worker.ReportProgress(0);
+                worker.ReportProgress(0, "Loading \"CDN indexes\"...");
             }
 
             for (int i = 0; i < config.Archives.Count; i++)
@@ -73,6 +73,9 @@ namespace CASCExplorer
                 stream.Seek(-12, SeekOrigin.End);
                 int count = br.ReadInt32();
                 stream.Seek(0, SeekOrigin.Begin);
+
+                if (count * (16 + 4 + 4) > stream.Length)
+                    throw new Exception("ParseIndex failed");
 
                 for (int j = 0; j < count; ++j)
                 {
@@ -186,7 +189,7 @@ namespace CASCExplorer
             if (worker != null)
             {
                 worker.ThrowOnCancel();
-                worker.ReportProgress(0);
+                worker.ReportProgress(0, "Downloading file...");
             }
 
             var file = key.ToHexString().ToLower();
