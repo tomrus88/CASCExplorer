@@ -164,7 +164,7 @@ namespace CASCExplorer
                     }
                 }
 
-                Logger.WriteLine("CASCHandler: loaded {0} valid file names", CASCFile.FileNames.Count);
+                Logger.WriteLine("WowRootHandler: loaded {0} valid file names", CASCFile.FileNames.Count);
             }
         }
 
@@ -211,7 +211,7 @@ namespace CASCExplorer
             //bw.Flush();
             //bw.Close();
 
-            Logger.WriteLine("CASCHandler: {0} file names missing", CountUnknown);
+            Logger.WriteLine("WowRootHandler: {0} file names missing for locale {1}", CountUnknown, locale);
 
             return root;
         }

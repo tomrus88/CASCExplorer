@@ -248,7 +248,7 @@ namespace CASCExplorer
             IndexEntry result;
 
             if (!CDNIndexData.TryGetValue(key, out result))
-                Logger.WriteLine("CDNHandler: missing index: {0}", key.ToHexString());
+                Logger.WriteLine("CDNIndexHandler: missing index: {0}", key.ToHexString());
 
             return result;
         }
