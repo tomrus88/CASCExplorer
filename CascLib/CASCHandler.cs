@@ -19,13 +19,16 @@ namespace CASCExplorer
         private readonly CDNIndexHandler CDNIndex;
 
         private readonly EncodingHandler EncodingHandler;
-        public readonly WowRootHandler RootHandler;
+        private readonly WowRootHandler RootHandler;
 
         private static readonly Jenkins96 Hasher = new Jenkins96();
 
         private readonly Dictionary<int, FileStream> DataStreams = new Dictionary<int, FileStream>();
 
         private readonly CASCConfig config;
+
+        public int CountSelect { get { return RootHandler.CountSelect; } }
+        public int CountUnknown { get { return RootHandler.CountUnknown; } }
 
         private CASCHandler(CASCConfig config, AsyncAction worker)
         {
@@ -45,6 +48,17 @@ namespace CASCExplorer
                 RootHandler = new WowRootHandler(fs, worker);
 
             Logger.WriteLine("CASCHandler: loaded {0} root data", RootHandler.Count);
+        }
+
+        public CASCFolder LoadListFileForLocale(string path, LocaleFlags locale, AsyncAction worker = null)
+        {
+            RootHandler.LoadListFile(path, worker);
+            return RootHandler.SetLocale(locale);
+        }
+
+        public CASCFolder SetLocale(LocaleFlags locale)
+        {
+            return RootHandler.SetLocale(locale);
         }
 
         private Stream OpenRootFile()
@@ -267,9 +281,14 @@ namespace CASCExplorer
             return new CASCHandler(config, worker);
         }
 
-        public bool FileExist(string file)
+        public bool FileExists(string file)
         {
             var hash = Hasher.ComputeHash(file);
+            return FileExists(hash);
+        }
+
+        public bool FileExists(ulong hash)
+        {
             var rootInfos = RootHandler.GetRootInfo(hash);
             return rootInfos != null && rootInfos.Count > 0;
         }

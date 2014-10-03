@@ -59,9 +59,11 @@ namespace CASCExplorer
 
     public class WowRootHandler
     {
-        public readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
-        public readonly HashSet<ulong> UnknownFiles = new HashSet<ulong>();
+        private readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
+        private readonly HashSet<ulong> UnknownFiles = new HashSet<ulong>();
         private static readonly Jenkins96 Hasher = new Jenkins96();
+        private LocaleFlags locale;
+        private CASCFolder Root;
 
         public int Count { get { return RootData.Count; } }
         public int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
@@ -166,7 +168,7 @@ namespace CASCExplorer
             }
         }
 
-        public CASCFolder CreateStorageTree(LocaleFlags locale)
+        private CASCFolder CreateStorageTree(LocaleFlags locale)
         {
             var rootHash = Hasher.ComputeHash("root");
 
@@ -246,6 +248,17 @@ namespace CASCExplorer
 
                 folder = entry as CASCFolder;
             }
+        }
+
+        public CASCFolder SetLocale(LocaleFlags locale)
+        {
+            if (this.locale != locale)
+            {
+                this.locale = locale;
+                Root = CreateStorageTree(locale);
+            }
+
+            return Root;
         }
     }
 }

@@ -105,7 +105,7 @@ namespace CASCExplorer
             folderTree.SelectedNode = node;
 
             statusProgress.Visible = false;
-            statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.RootHandler.CountSelect - CASC.RootHandler.CountUnknown, CASC.RootHandler.CountUnknown);
+            statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.CountSelect - CASC.CountUnknown, CASC.CountUnknown);
         }
 
         private void LoadData()
@@ -114,8 +114,7 @@ namespace CASCExplorer
                 ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, bgAction)
                 : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, bgAction);
 
-            CASC.RootHandler.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), bgAction);
-            Root = CASC.RootHandler.CreateStorageTree(Settings.Default.Locale);
+            CASC.LoadListFileForLocale(Path.Combine(Application.StartupPath, "listfile.txt"), Settings.Default.Locale, bgAction);
         }
 
         private void treeView1_BeforeSelect(object sender, TreeViewCancelEventArgs e)
@@ -431,7 +430,7 @@ namespace CASCExplorer
             Settings.Default.Locale = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), item.Text);
             Settings.Default.Save();
 
-            Root = CASC.RootHandler.CreateStorageTree(Settings.Default.Locale);
+            Root = CASC.SetLocale(Settings.Default.Locale);
             OnStorageChanged();
         }
 

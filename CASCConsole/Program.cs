@@ -27,14 +27,12 @@ namespace CASCConsole
                 ? CASCHandler.OpenOnlineStorage(Settings.Default.Product)
                 : CASCHandler.OpenLocalStorage(Settings.Default.WowPath);
 
-            cascHandler.RootHandler.LoadListFile(Path.Combine(Environment.CurrentDirectory, "listfile.txt"));
-
             string pattern = args[0];
             string dest = args[1];
             LocaleFlags locale = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), args[2]);
             ContentFlags content = (ContentFlags)Enum.Parse(typeof(ContentFlags), args[3]);
 
-            CASCFolder root = cascHandler.RootHandler.CreateStorageTree(locale);
+            CASCFolder root = cascHandler.LoadListFileForLocale(Path.Combine(Environment.CurrentDirectory, "listfile.txt"), locale);
 
             Console.WriteLine("Loaded.");
 
