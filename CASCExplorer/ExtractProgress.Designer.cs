@@ -95,13 +95,11 @@
             // checkBox1
             // 
             this.checkBox1.AutoSize = true;
-            this.checkBox1.Checked = true;
-            this.checkBox1.CheckState = System.Windows.Forms.CheckState.Checked;
             this.checkBox1.Location = new System.Drawing.Point(12, 73);
             this.checkBox1.Name = "checkBox1";
-            this.checkBox1.Size = new System.Drawing.Size(67, 17);
+            this.checkBox1.Size = new System.Drawing.Size(65, 17);
             this.checkBox1.TabIndex = 6;
-            this.checkBox1.Text = "Skip LW";
+            this.checkBox1.Text = "Use LW";
             this.checkBox1.UseVisualStyleBackColor = true;
             // 
             // ExtractProgress

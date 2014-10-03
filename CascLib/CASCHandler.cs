@@ -282,7 +282,7 @@ namespace CASCExplorer
             {
                 if (content != ContentFlags.None)
                 {
-                    var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.Block.ContentFlags & content) == 0);
+                    var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.Block.ContentFlags & content) != 0);
 
                     if (rootInfosLocaleAndContent.Any())
                         rootInfosLocale = rootInfosLocaleAndContent;

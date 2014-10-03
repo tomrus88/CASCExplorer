@@ -41,7 +41,7 @@ namespace CASCConsole
             Console.WriteLine("    Pattern: {0}", pattern);
             Console.WriteLine("    Destination: {0}", dest);
             Console.WriteLine("    LocaleFlags: {0}", locale);
-            Console.WriteLine("    ContentFlags: {0} (exclusive!)", content);
+            Console.WriteLine("    ContentFlags: {0}", content);
 
             Wildcard wildcard = new Wildcard(pattern, RegexOptions.IgnoreCase);
 
