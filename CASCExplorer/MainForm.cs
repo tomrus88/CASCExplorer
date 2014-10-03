@@ -14,17 +14,16 @@ namespace CASCExplorer
 {
     public partial class MainForm : Form
     {
-        ExtractProgress extractProgress;
-        CASCHandler CASC;
-        CASCFolder Root;
-        NumberFormatInfo sizeNumberFmt = new NumberFormatInfo()
+        private ExtractProgress extractProgress;
+        private CASCHandler CASC;
+        private CASCFolder Root;
+        private AsyncAction bgAction;
+        private NumberFormatInfo sizeNumberFmt = new NumberFormatInfo()
         {
             NumberGroupSizes = new int[] { 3, 3, 3, 3, 3 },
             NumberDecimalDigits = 0,
             NumberGroupSeparator = " "
         };
-
-        AsyncAction bgAction;
 
         public MainForm()
         {
@@ -106,7 +105,7 @@ namespace CASCExplorer
             folderTree.SelectedNode = node;
 
             statusProgress.Visible = false;
-            statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.NumRootEntriesSelect - CASC.NumUnknownFiles, CASC.NumUnknownFiles);
+            statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.RootHandler.CountSelect - CASC.RootHandler.CountUnknown, CASC.RootHandler.CountUnknown);
         }
 
         private void LoadData()
@@ -115,8 +114,8 @@ namespace CASCExplorer
                 ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, bgAction)
                 : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, bgAction);
 
-            CASC.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), bgAction);
-            Root = CASC.CreateStorageTree(Settings.Default.Locale);
+            CASC.RootHandler.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), bgAction);
+            Root = CASC.RootHandler.CreateStorageTree(Settings.Default.Locale);
         }
 
         private void treeView1_BeforeSelect(object sender, TreeViewCancelEventArgs e)
@@ -432,7 +431,7 @@ namespace CASCExplorer
             Settings.Default.Locale = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), item.Text);
             Settings.Default.Save();
 
-            Root = CASC.CreateStorageTree(Settings.Default.Locale);
+            Root = CASC.RootHandler.CreateStorageTree(Settings.Default.Locale);
             OnStorageChanged();
         }
 

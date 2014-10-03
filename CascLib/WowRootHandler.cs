@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace CASCExplorer
 {
@@ -56,14 +57,16 @@ namespace CASCExplorer
         }
     }
 
-    class WowRootHandler
+    public class WowRootHandler
     {
-        public readonly Dictionary<ulong, List<RootEntry>> RootData = new Dictionary<ulong, List<RootEntry>>();
+        public readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
+        public readonly HashSet<ulong> UnknownFiles = new HashSet<ulong>();
+        private static readonly Jenkins96 Hasher = new Jenkins96();
 
-        public int Count
-        {
-            get { return RootData.Count; }
-        }
+        public int Count { get { return RootData.Count; } }
+        public int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
+        public int CountSelect { get; private set; }
+        public int CountUnknown { get; private set; }
 
         public WowRootHandler(Stream stream, AsyncAction worker)
         {
@@ -105,13 +108,7 @@ namespace CASCExplorer
                         ulong hash = br.ReadUInt64();
                         entries[i].Hash = hash;
 
-                        if (!RootData.ContainsKey(hash))
-                        {
-                            RootData[hash] = new List<RootEntry>();
-                            RootData[hash].Add(entries[i]);
-                        }
-                        else
-                            RootData[hash].Add(entries[i]);
+                        RootData.Add(hash, entries[i]);
                     }
 
                     if (worker != null)
@@ -123,11 +120,132 @@ namespace CASCExplorer
             }
         }
 
-        public List<RootEntry> GetRootInfo(ulong hash)
+        public HashSet<RootEntry> GetRootInfo(ulong hash)
         {
-            List<RootEntry> result;
+            HashSet<RootEntry> result;
             RootData.TryGetValue(hash, out result);
             return result;
+        }
+
+        public void LoadListFile(string path, AsyncAction worker = null)
+        {
+            if (worker != null)
+            {
+                worker.ThrowOnCancel();
+                worker.ReportProgress(0, "Loading \"listfile\"...");
+            }
+
+            if (!File.Exists(path))
+                throw new FileNotFoundException("list file missing!");
+
+            using (var sr = new StreamReader(path))
+            {
+                string file;
+
+                while ((file = sr.ReadLine()) != null)
+                {
+                    ulong fileHash = Hasher.ComputeHash(file);
+
+                    // skip invalid names
+                    if (!RootData.ContainsKey(fileHash))
+                    {
+                        Logger.WriteLine("Invalid file name: {0}", file);
+                        continue;
+                    }
+
+                    CASCFile.FileNames[fileHash] = file;
+
+                    if (worker != null)
+                    {
+                        worker.ThrowOnCancel();
+                        worker.ReportProgress((int)((float)sr.BaseStream.Position / (float)sr.BaseStream.Length * 100));
+                    }
+                }
+
+                Logger.WriteLine("CASCHandler: loaded {0} valid file names", CASCFile.FileNames.Count);
+            }
+        }
+
+        public CASCFolder CreateStorageTree(LocaleFlags locale)
+        {
+            var rootHash = Hasher.ComputeHash("root");
+
+            var root = new CASCFolder(rootHash);
+
+            CASCFolder.FolderNames[rootHash] = "root";
+
+            CountSelect = 0;
+
+            // Cleanup fake names for unknown files
+            CountUnknown = 0;
+
+            foreach (var unkFile in UnknownFiles)
+                CASCFile.FileNames.Remove(unkFile);
+
+            //Stream sw = new FileStream("unknownHashes.dat", FileMode.Create);
+            //BinaryWriter bw = new BinaryWriter(sw);
+
+            // Create new tree based on specified locale
+            foreach (var rootEntry in RootData)
+            {
+                if (!rootEntry.Value.Any(re => (re.Block.LocaleFlags & locale) != 0))
+                    continue;
+
+                string file;
+
+                if (!CASCFile.FileNames.TryGetValue(rootEntry.Key, out file))
+                {
+                    file = "unknown\\" + rootEntry.Key.ToString("X16");
+                    CountUnknown++;
+                    UnknownFiles.Add(rootEntry.Key);
+                    //Console.WriteLine("{0:X16}", BitConverter.ToUInt64(BitConverter.GetBytes(rootEntry.Key).Reverse().ToArray(), 0));
+                    //bw.Write(rootEntry.Key);
+                }
+
+                CreateSubTree(root, rootEntry.Key, file);
+                CountSelect++;
+            }
+
+            //bw.Flush();
+            //bw.Close();
+
+            Logger.WriteLine("CASCHandler: {0} file names missing", CountUnknown);
+
+            return root;
+        }
+
+        private static void CreateSubTree(CASCFolder root, ulong filehash, string file)
+        {
+            string[] parts = file.Split('\\');
+
+            CASCFolder folder = root;
+
+            for (int i = 0; i < parts.Length; ++i)
+            {
+                bool isFile = (i == parts.Length - 1);
+
+                ulong hash = isFile ? filehash : Hasher.ComputeHash(parts[i]);
+
+                ICASCEntry entry = folder.GetEntry(hash);
+
+                if (entry == null)
+                {
+                    if (isFile)
+                    {
+                        entry = new CASCFile(hash);
+                        CASCFile.FileNames[hash] = file;
+                    }
+                    else
+                    {
+                        entry = new CASCFolder(hash);
+                        CASCFolder.FolderNames[hash] = parts[i];
+                    }
+
+                    folder.SubEntries[hash] = entry;
+                }
+
+                folder = entry as CASCFolder;
+            }
         }
     }
 }

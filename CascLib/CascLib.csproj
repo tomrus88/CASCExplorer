@@ -54,6 +54,7 @@
     <Compile Include="Jenkins96.cs" />
     <Compile Include="LocalIndexHandler.cs" />
     <Compile Include="Logger.cs" />
+    <Compile Include="MultiDictionary.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="WowRootHandler.cs" />
   </ItemGroup>

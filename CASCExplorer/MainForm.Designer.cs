@@ -267,8 +267,8 @@
             // localeToolStripMenuItem
             // 
             this.localeToolStripMenuItem.Name = "localeToolStripMenuItem";
-            this.localeToolStripMenuItem.Size = new System.Drawing.Size(108, 22);
-            this.localeToolStripMenuItem.Text = "Locale";
+            this.localeToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
+            this.localeToolStripMenuItem.Text = "Content Locale";
             this.localeToolStripMenuItem.DropDownItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.localeToolStripMenuItem_DropDownItemClicked);
             // 
             // toolsToolStripMenuItem

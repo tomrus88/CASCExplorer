@@ -83,8 +83,8 @@ namespace CASCExplorer
 
                     // duplicate keys wtf...
                     //IndexData[key] = info; // use last key
-                    if (!LocalIndexData.ContainsKey(key)) // use first key
-                        LocalIndexData.Add(key, info);
+                    //if (!LocalIndexData.ContainsKey(key)) // use first key
+                    LocalIndexData.Add(key, info);
                 }
 
                 padPos = (dataLen + 0x0FFF) & 0xFFFFF000;

@@ -6,12 +6,7 @@ namespace CASCExplorer
     public class EncodingEntry
     {
         public int Size;
-        public List<byte[]> Keys;
-
-        public EncodingEntry()
-        {
-            Keys = new List<byte[]>();
-        }
+        public byte[] Key;
     }
 
     class EncodingHandler
@@ -71,7 +66,11 @@ namespace CASCExplorer
                         {
                             byte[] key = br.ReadBytes(16);
 
-                            entry.Keys.Add(key);
+                            // use first key for now
+                            if (ki == 0)
+                                entry.Key = key;
+                            else
+                                Logger.WriteLine("Multiple encoding keys for MD5 {0}: {1}", md5.ToHexString(), key.ToHexString());
                         }
 
                         //Encodings[md5] = entry;

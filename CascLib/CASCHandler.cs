@@ -19,20 +19,13 @@ namespace CASCExplorer
         private readonly CDNIndexHandler CDNIndex;
 
         private readonly EncodingHandler EncodingHandler;
-        private readonly WowRootHandler RootHandler;
+        public readonly WowRootHandler RootHandler;
 
         private static readonly Jenkins96 Hasher = new Jenkins96();
 
         private readonly Dictionary<int, FileStream> DataStreams = new Dictionary<int, FileStream>();
 
-        public int NumRootEntries { get { return RootHandler.Count; } }
-        public int NumRootEntriesTotal { get { return RootHandler.RootData.Sum(re => re.Value.Count); } }
-        public int NumRootEntriesSelect { get; private set; }
-        public int NumUnknownFiles { get; private set; }
-
         private readonly CASCConfig config;
-
-        public Dictionary<ulong, bool> UnknownFiles = new Dictionary<ulong, bool>();
 
         private CASCHandler(CASCConfig config, AsyncAction worker)
         {
@@ -61,20 +54,17 @@ namespace CASCExplorer
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for root file missing!");
 
-            if (encInfo.Keys.Count > 1)
-                throw new FileNotFoundException("multiple encoding info for root file found!");
-
-            Stream s = TryLocalCache(encInfo.Keys[0], config.RootMD5, Path.Combine("data", config.Build.ToString(), "root"));
+            Stream s = TryLocalCache(encInfo.Key, config.RootMD5, Path.Combine("data", config.Build.ToString(), "root"));
 
             if (s != null)
                 return s;
 
-            s = TryLocalCache(encInfo.Keys[0], config.RootMD5, Path.Combine("data", config.Build.ToString(), "root"));
+            s = TryLocalCache(encInfo.Key, config.RootMD5, Path.Combine("data", config.Build.ToString(), "root"));
 
             if (s != null)
                 return s;
 
-            return OpenFile(encInfo.Keys[0]);
+            return OpenFile(encInfo.Key);
         }
 
         private Stream OpenEncodingFile()
@@ -234,7 +224,7 @@ namespace CASCExplorer
                 stream.Value.Close();
         }
 
-        public List<RootEntry> GetRootInfo(ulong hash)
+        public HashSet<RootEntry> GetRootInfo(ulong hash)
         {
             return RootHandler.GetRootInfo(hash);
         }
@@ -275,127 +265,6 @@ namespace CASCExplorer
         private static CASCHandler Open(AsyncAction worker, CASCConfig config)
         {
             return new CASCHandler(config, worker);
-        }
-
-        public void LoadListFile(string path, AsyncAction worker = null)
-        {
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(0, "Loading \"listfile\"...");
-            }
-
-            if (!File.Exists(path))
-                throw new FileNotFoundException("list file missing!");
-
-            using (var sr = new StreamReader(path))
-            {
-                string file;
-
-                while ((file = sr.ReadLine()) != null)
-                {
-                    ulong fileHash = Hasher.ComputeHash(file);
-
-                    // skip invalid names
-                    if (!RootHandler.RootData.ContainsKey(fileHash))
-                    {
-                        Logger.WriteLine("Invalid file name: {0}", file);
-                        continue;
-                    }
-
-                    CASCFile.FileNames[fileHash] = file;
-
-                    if (worker != null)
-                    {
-                        worker.ThrowOnCancel();
-                        worker.ReportProgress((int)((float)sr.BaseStream.Position / (float)sr.BaseStream.Length * 100));
-                    }
-                }
-
-                Logger.WriteLine("CASCHandler: loaded {0} valid file names", CASCFile.FileNames.Count);
-            }
-        }
-
-        public CASCFolder CreateStorageTree(LocaleFlags locale)
-        {
-            var rootHash = Hasher.ComputeHash("root");
-
-            var root = new CASCFolder(rootHash);
-
-            CASCFolder.FolderNames[rootHash] = "root";
-
-            NumRootEntriesSelect = 0;
-
-            // Cleanup fake names for unknown files
-            NumUnknownFiles = 0;
-
-            foreach (var unkFile in UnknownFiles)
-                CASCFile.FileNames.Remove(unkFile.Key);
-
-            //Stream sw = new FileStream("unknownHashes.dat", FileMode.Create);
-            //BinaryWriter bw = new BinaryWriter(sw);
-
-            // Create new tree based on specified locale
-            foreach (var rootEntry in RootHandler.RootData)
-            {
-                if (!rootEntry.Value.Any(re => (re.Block.LocaleFlags & locale) != 0))
-                    continue;
-
-                string file;
-
-                if (!CASCFile.FileNames.TryGetValue(rootEntry.Key, out file))
-                {
-                    file = "unknown\\" + rootEntry.Key.ToString("X16");
-                    NumUnknownFiles++;
-                    UnknownFiles[rootEntry.Key] = true;
-                    //Console.WriteLine("{0:X16}", BitConverter.ToUInt64(BitConverter.GetBytes(rootEntry.Key).Reverse().ToArray(), 0));
-                    //bw.Write(rootEntry.Key);
-                }
-
-                CreateSubTree(root, rootEntry.Key, file);
-                NumRootEntriesSelect++;
-            }
-
-            //bw.Flush();
-            //bw.Close();
-
-            Logger.WriteLine("CASCHandler: {0} file names missing", NumUnknownFiles);
-
-            return root;
-        }
-
-        private static void CreateSubTree(CASCFolder root, ulong filehash, string file)
-        {
-            string[] parts = file.Split('\\');
-
-            CASCFolder folder = root;
-
-            for (int i = 0; i < parts.Length; ++i)
-            {
-                bool isFile = (i == parts.Length - 1);
-
-                ulong hash = isFile ? filehash : Hasher.ComputeHash(parts[i]);
-
-                ICASCEntry entry = folder.GetEntry(hash);
-
-                if (entry == null)
-                {
-                    if (isFile)
-                    {
-                        entry = new CASCFile(hash);
-                        CASCFile.FileNames[hash] = file;
-                    }
-                    else
-                    {
-                        entry = new CASCFolder(hash);
-                        CASCFolder.FolderNames[hash] = parts[i];
-                    }
-
-                    folder.SubEntries[hash] = entry;
-                }
-
-                folder = entry as CASCFolder;
-            }
         }
 
         public bool FileExist(string file)
@@ -455,7 +324,7 @@ namespace CASCExplorer
             EncodingEntry encInfo = GetEncodingEntry(hash, locale, content);
 
             if (encInfo != null)
-                return OpenFile(encInfo.Keys[0]);
+                return OpenFile(encInfo.Key);
 
             throw new FileNotFoundException(fullName);
         }
@@ -473,7 +342,7 @@ namespace CASCExplorer
 
             if (encInfo != null)
             {
-                ExtractFile(encInfo.Keys[0], extractPath, fullName);
+                ExtractFile(encInfo.Key, extractPath, fullName);
                 return;
             }
 
