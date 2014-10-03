@@ -9,7 +9,7 @@ namespace CASCExplorer
         public byte[] Key;
     }
 
-    class EncodingHandler
+    public class EncodingHandler
     {
         private static readonly ByteArrayComparer comparer = new ByteArrayComparer();
         private readonly Dictionary<byte[], EncodingEntry> EncodingData = new Dictionary<byte[], EncodingEntry>(comparer);
@@ -96,7 +96,7 @@ namespace CASCExplorer
             }
         }
 
-        public EncodingEntry GetEncodingInfo(byte[] md5)
+        public EncodingEntry GetEntry(byte[] md5)
         {
             EncodingEntry result;
             EncodingData.TryGetValue(md5, out result);

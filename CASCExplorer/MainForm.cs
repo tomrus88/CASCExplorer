@@ -105,7 +105,7 @@ namespace CASCExplorer
             folderTree.SelectedNode = node;
 
             statusProgress.Visible = false;
-            statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.CountSelect - CASC.CountUnknown, CASC.CountUnknown);
+            statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.Root.CountSelect - CASC.Root.CountUnknown, CASC.Root.CountUnknown);
         }
 
         private void LoadData()
@@ -114,7 +114,8 @@ namespace CASCExplorer
                 ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, bgAction)
                 : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, bgAction);
 
-            CASC.LoadListFileForLocale(Path.Combine(Application.StartupPath, "listfile.txt"), Settings.Default.Locale, bgAction);
+            CASC.Root.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), bgAction);
+            Root = CASC.Root.SetLocale(Settings.Default.Locale);
         }
 
         private void treeView1_BeforeSelect(object sender, TreeViewCancelEventArgs e)
@@ -206,7 +207,7 @@ namespace CASCExplorer
 
             if (entry is CASCFile)
             {
-                var rootInfos = CASC.GetRootInfo(entry.Hash);
+                var rootInfos = CASC.Root.GetEntries(entry.Hash);
 
                 if (rootInfos == null)
                     throw new Exception("root entry missing!");
@@ -215,7 +216,7 @@ namespace CASCExplorer
 
                 if (rootInfosLocale.Any())
                 {
-                    size = CASC.GetEncodingInfo(rootInfosLocale.First().MD5).Size.ToString("N", sizeNumberFmt);
+                    size = CASC.Encoding.GetEntry(rootInfosLocale.First().MD5).Size.ToString("N", sizeNumberFmt);
 
                     foreach (var rootInfo in rootInfosLocale)
                     {
@@ -430,7 +431,7 @@ namespace CASCExplorer
             Settings.Default.Locale = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), item.Text);
             Settings.Default.Save();
 
-            Root = CASC.SetLocale(Settings.Default.Locale);
+            Root = CASC.Root.SetLocale(Settings.Default.Locale);
             OnStorageChanged();
         }
 
@@ -450,7 +451,7 @@ namespace CASCExplorer
 
             foreach (var file in files)
             {
-                var rootInfos = CASC.GetRootInfo(file.Hash);
+                var rootInfos = CASC.Root.GetEntries(file.Hash);
 
                 if (rootInfos == null)
                     throw new Exception("root entry missing!");
@@ -459,7 +460,7 @@ namespace CASCExplorer
 
                 if (rootInfosLocale.Any())
                 {
-                    size += CASC.GetEncodingInfo(rootInfosLocale.First().MD5).Size;
+                    size += CASC.Encoding.GetEntry(rootInfosLocale.First().MD5).Size;
                 }
             }
 

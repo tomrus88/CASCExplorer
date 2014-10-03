@@ -32,7 +32,8 @@ namespace CASCConsole
             LocaleFlags locale = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), args[2]);
             ContentFlags content = (ContentFlags)Enum.Parse(typeof(ContentFlags), args[3]);
 
-            CASCFolder root = cascHandler.LoadListFileForLocale(Path.Combine(Environment.CurrentDirectory, "listfile.txt"), locale);
+            cascHandler.Root.LoadListFile(Path.Combine(Environment.CurrentDirectory, "listfile.txt"));
+            CASCFolder root = cascHandler.Root.SetLocale(locale);
 
             Console.WriteLine("Loaded.");
 

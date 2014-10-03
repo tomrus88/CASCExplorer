@@ -122,7 +122,7 @@ namespace CASCExplorer
             }
         }
 
-        public HashSet<RootEntry> GetRootInfo(ulong hash)
+        public HashSet<RootEntry> GetEntries(ulong hash)
         {
             HashSet<RootEntry> result;
             RootData.TryGetValue(hash, out result);

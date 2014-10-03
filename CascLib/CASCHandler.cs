@@ -27,8 +27,8 @@ namespace CASCExplorer
 
         private readonly CASCConfig config;
 
-        public int CountSelect { get { return RootHandler.CountSelect; } }
-        public int CountUnknown { get { return RootHandler.CountUnknown; } }
+        public EncodingHandler Encoding { get { return EncodingHandler; } }
+        public WowRootHandler Root { get { return RootHandler; } }
 
         private CASCHandler(CASCConfig config, AsyncAction worker)
         {
@@ -50,20 +50,9 @@ namespace CASCExplorer
             Logger.WriteLine("CASCHandler: loaded {0} root data", RootHandler.Count);
         }
 
-        public CASCFolder LoadListFileForLocale(string path, LocaleFlags locale, AsyncAction worker = null)
-        {
-            RootHandler.LoadListFile(path, worker);
-            return RootHandler.SetLocale(locale);
-        }
-
-        public CASCFolder SetLocale(LocaleFlags locale)
-        {
-            return RootHandler.SetLocale(locale);
-        }
-
         private Stream OpenRootFile()
         {
-            var encInfo = EncodingHandler.GetEncodingInfo(config.RootMD5);
+            var encInfo = EncodingHandler.GetEntry(config.RootMD5);
 
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for root file missing!");
@@ -238,16 +227,6 @@ namespace CASCExplorer
                 stream.Value.Close();
         }
 
-        public HashSet<RootEntry> GetRootInfo(ulong hash)
-        {
-            return RootHandler.GetRootInfo(hash);
-        }
-
-        public EncodingEntry GetEncodingInfo(byte[] md5)
-        {
-            return EncodingHandler.GetEncodingInfo(md5);
-        }
-
         private FileStream GetDataStream(int index)
         {
             FileStream stream;
@@ -289,13 +268,13 @@ namespace CASCExplorer
 
         public bool FileExists(ulong hash)
         {
-            var rootInfos = RootHandler.GetRootInfo(hash);
+            var rootInfos = RootHandler.GetEntries(hash);
             return rootInfos != null && rootInfos.Count > 0;
         }
 
         private EncodingEntry GetEncodingEntry(ulong hash, LocaleFlags locale, ContentFlags content)
         {
-            var rootInfos = RootHandler.GetRootInfo(hash);
+            var rootInfos = RootHandler.GetEntries(hash);
 
             var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & locale) != 0);
 
@@ -310,18 +289,18 @@ namespace CASCExplorer
                 }
             }
 
-            return EncodingHandler.GetEncodingInfo(rootInfosLocale.First().MD5);
+            return EncodingHandler.GetEntry(rootInfosLocale.First().MD5);
         }
 
         private EncodingEntry GetEncodingEntryOld(ulong hash, LocaleFlags locale, ContentFlags content)
         {
-            var rootInfos = RootHandler.GetRootInfo(hash);
+            var rootInfos = RootHandler.GetEntries(hash);
 
             foreach (var rootInfo in rootInfos)
             {
                 if ((rootInfo.Block.LocaleFlags & locale) != 0 && (rootInfo.Block.ContentFlags & content) == 0)
                 {
-                    var encInfo = EncodingHandler.GetEncodingInfo(rootInfo.MD5);
+                    var encInfo = EncodingHandler.GetEntry(rootInfo.MD5);
 
                     if (encInfo != null)
                         return encInfo;
