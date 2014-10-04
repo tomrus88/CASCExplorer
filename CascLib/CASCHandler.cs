@@ -21,7 +21,7 @@ namespace CASCExplorer
         private readonly EncodingHandler EncodingHandler;
         private readonly WowRootHandler RootHandler;
 
-        private static readonly Jenkins96 Hasher = new Jenkins96();
+        private static readonly Jenkins96_2 Hasher = new Jenkins96_2();
 
         private readonly Dictionary<int, FileStream> DataStreams = new Dictionary<int, FileStream>();
 

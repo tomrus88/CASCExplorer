@@ -61,7 +61,7 @@ namespace CASCExplorer
     {
         private readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
         private readonly HashSet<ulong> UnknownFiles = new HashSet<ulong>();
-        private static readonly Jenkins96 Hasher = new Jenkins96();
+        private static readonly Jenkins96_2 Hasher = new Jenkins96_2();
         private LocaleFlags locale;
         private CASCFolder Root;
 

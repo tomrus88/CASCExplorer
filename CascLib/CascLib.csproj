@@ -51,6 +51,7 @@
     <Compile Include="AsyncAction.cs" />
     <Compile Include="EncodingHandler.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="Jenkins96_2.cs" />
     <Compile Include="Jenkins96.cs" />
     <Compile Include="LocalIndexHandler.cs" />
     <Compile Include="Logger.cs" />
