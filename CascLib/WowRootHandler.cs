@@ -69,6 +69,7 @@ namespace CASCExplorer
         public int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
         public int CountSelect { get; private set; }
         public int CountUnknown { get; private set; }
+        public LocaleFlags Locale { get { return locale; } }
 
         public WowRootHandler(Stream stream, AsyncAction worker)
         {

@@ -54,6 +54,7 @@
             this.onlineModeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -81,7 +82,7 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.fileList);
-            this.splitContainer1.Size = new System.Drawing.Size(775, 491);
+            this.splitContainer1.Size = new System.Drawing.Size(838, 491);
             this.splitContainer1.SplitterDistance = 212;
             this.splitContainer1.TabIndex = 0;
             // 
@@ -112,6 +113,7 @@
             this.columnHeader1,
             this.columnHeader2,
             this.columnHeader3,
+            this.columnHeader5,
             this.columnHeader4});
             this.fileList.ContextMenuStrip = this.contextMenuStrip1;
             this.fileList.Dock = System.Windows.Forms.DockStyle.Fill;
@@ -120,7 +122,7 @@
             this.fileList.Location = new System.Drawing.Point(0, 0);
             this.fileList.Name = "fileList";
             this.fileList.SelectedIndex = -1;
-            this.fileList.Size = new System.Drawing.Size(559, 491);
+            this.fileList.Size = new System.Drawing.Size(622, 491);
             this.fileList.SmallImageList = this.iconsList;
             this.fileList.Sorting = System.Windows.Forms.SortOrder.Ascending;
             this.fileList.TabIndex = 0;
@@ -143,7 +145,7 @@
             // 
             // columnHeader3
             // 
-            this.columnHeader3.Text = "Flags";
+            this.columnHeader3.Text = "Locale Flags";
             this.columnHeader3.Width = 100;
             // 
             // columnHeader4
@@ -193,11 +195,11 @@
             // toolStripContainer1.ContentPanel
             // 
             this.toolStripContainer1.ContentPanel.Controls.Add(this.splitContainer1);
-            this.toolStripContainer1.ContentPanel.Size = new System.Drawing.Size(775, 491);
+            this.toolStripContainer1.ContentPanel.Size = new System.Drawing.Size(838, 491);
             this.toolStripContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.toolStripContainer1.Location = new System.Drawing.Point(0, 0);
             this.toolStripContainer1.Name = "toolStripContainer1";
-            this.toolStripContainer1.Size = new System.Drawing.Size(775, 537);
+            this.toolStripContainer1.Size = new System.Drawing.Size(838, 537);
             this.toolStripContainer1.TabIndex = 3;
             this.toolStripContainer1.Text = "toolStripContainer1";
             // 
@@ -213,7 +215,7 @@
             this.statusProgress});
             this.statusStrip1.Location = new System.Drawing.Point(0, 0);
             this.statusStrip1.Name = "statusStrip1";
-            this.statusStrip1.Size = new System.Drawing.Size(775, 22);
+            this.statusStrip1.Size = new System.Drawing.Size(838, 22);
             this.statusStrip1.TabIndex = 0;
             // 
             // statusLabel
@@ -237,7 +239,7 @@
             this.helpToolStripMenuItem});
             this.menuStrip1.Location = new System.Drawing.Point(0, 0);
             this.menuStrip1.Name = "menuStrip1";
-            this.menuStrip1.Size = new System.Drawing.Size(775, 24);
+            this.menuStrip1.Size = new System.Drawing.Size(838, 24);
             this.menuStrip1.TabIndex = 0;
             this.menuStrip1.Text = "menuStrip1";
             // 
@@ -301,11 +303,16 @@
             this.aboutToolStripMenuItem.Text = "About...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
             // 
+            // columnHeader5
+            // 
+            this.columnHeader5.Text = "Content Flags";
+            this.columnHeader5.Width = 100;
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
-            this.ClientSize = new System.Drawing.Size(775, 537);
+            this.ClientSize = new System.Drawing.Size(838, 537);
             this.Controls.Add(this.toolStripContainer1);
             this.MainMenuStrip = this.menuStrip1;
             this.Name = "MainForm";
@@ -359,6 +366,7 @@
         private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem localeToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem getSizeToolStripMenuItem;
+        private System.Windows.Forms.ColumnHeader columnHeader5;
     }
 }
 

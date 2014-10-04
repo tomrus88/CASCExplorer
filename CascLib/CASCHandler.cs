@@ -292,24 +292,6 @@ namespace CASCExplorer
             return EncodingHandler.GetEntry(rootInfosLocale.First().MD5);
         }
 
-        private EncodingEntry GetEncodingEntryOld(ulong hash, LocaleFlags locale, ContentFlags content)
-        {
-            var rootInfos = RootHandler.GetEntries(hash);
-
-            foreach (var rootInfo in rootInfos)
-            {
-                if ((rootInfo.Block.LocaleFlags & locale) != 0 && (rootInfo.Block.ContentFlags & content) == 0)
-                {
-                    var encInfo = EncodingHandler.GetEntry(rootInfo.MD5);
-
-                    if (encInfo != null)
-                        return encInfo;
-                }
-            }
-
-            return null;
-        }
-
         public Stream OpenFile(string fullName, LocaleFlags locale, ContentFlags content = ContentFlags.None)
         {
             var hash = Hasher.ComputeHash(fullName);

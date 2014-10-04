@@ -58,6 +58,7 @@
     <Compile Include="AboutBox.Designer.cs">
       <DependentUpon>AboutBox.cs</DependentUpon>
     </Compile>
+    <Compile Include="CASCEntrySorter.cs" />
     <Compile Include="ExtractProgress.cs">
       <SubType>Form</SubType>
     </Compile>

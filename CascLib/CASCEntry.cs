@@ -5,13 +5,13 @@ using System.Linq;
 
 namespace CASCExplorer
 {
-    public interface ICASCEntry : IComparable<ICASCEntry>
+    public interface ICASCEntry
     {
         string Name { get; }
         ulong Hash { get; }
     }
 
-    public class CASCFolder : ICASCEntry, IComparable<ICASCEntry>
+    public class CASCFolder : ICASCEntry
     {
         public Dictionary<ulong, ICASCEntry> SubEntries;
         ulong hash;
@@ -85,18 +85,10 @@ namespace CASCExplorer
             }
         }
 
-        public int CompareTo(ICASCEntry other)
-        {
-            if (other is CASCFolder)
-                return Name.CompareTo(other.Name);
-            else
-                return this is CASCFolder ? -1 : 1;
-        }
-
         public static readonly Dictionary<ulong, string> FolderNames = new Dictionary<ulong, string>();
     }
 
-    public class CASCFile : ICASCEntry, IComparable<ICASCEntry>
+    public class CASCFile : ICASCEntry
     {
         ulong hash;
 
@@ -120,12 +112,21 @@ namespace CASCExplorer
             get { return hash; }
         }
 
-        public int CompareTo(ICASCEntry other)
+        public int GetSize(CASCHandler casc, LocaleFlags locale)
         {
-            if (other is CASCFile)
-                return Name.CompareTo(other.Name);
-            else
-                return this is CASCFile ? 1 : -1;
+            var rootInfosLocale = GetRootEntries(casc, locale);
+
+            if (rootInfosLocale.Any())
+            {
+                return casc.Encoding.GetEntry(rootInfosLocale.First().MD5).Size;
+            }
+
+            return 0;
+        }
+
+        public IEnumerable<RootEntry> GetRootEntries(CASCHandler casc, LocaleFlags locale)
+        {
+            return casc.Root.GetEntries(Hash).Where(re => (re.Block.LocaleFlags & locale) != 0);
         }
 
         public static readonly Dictionary<ulong, string> FileNames = new Dictionary<ulong, string>();

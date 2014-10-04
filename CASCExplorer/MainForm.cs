@@ -18,6 +18,7 @@ namespace CASCExplorer
         private CASCHandler CASC;
         private CASCFolder Root;
         private AsyncAction bgAction;
+        private CASCEntrySorter Sorter;
         private NumberFormatInfo sizeNumberFmt = new NumberFormatInfo()
         {
             NumberGroupSizes = new int[] { 3, 3, 3, 3, 3 },
@@ -116,6 +117,8 @@ namespace CASCExplorer
 
             CASC.Root.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), bgAction);
             Root = CASC.Root.SetLocale(Settings.Default.Locale);
+
+            Sorter = new CASCEntrySorter(CASC);
         }
 
         private void treeView1_BeforeSelect(object sender, TreeViewCancelEventArgs e)
@@ -128,14 +131,7 @@ namespace CASCExplorer
         private void UpdateListView(CASCFolder baseEntry)
         {
             // Sort
-            Dictionary<ulong, ICASCEntry> orderedEntries;
-
-            if (fileList.Sorting == SortOrder.Ascending)
-                orderedEntries = baseEntry.SubEntries.OrderBy(v => v.Value).ToDictionary(pair => pair.Key, pair => pair.Value);
-            else
-                orderedEntries = baseEntry.SubEntries.OrderByDescending(v => v.Value).ToDictionary(pair => pair.Key, pair => pair.Value);
-
-            baseEntry.SubEntries = orderedEntries;
+            baseEntry.SubEntries = baseEntry.SubEntries.OrderBy(v => v.Value, Sorter).ToDictionary(pair => pair.Key, pair => pair.Value);
 
             // Update
             fileList.Tag = baseEntry;
@@ -162,7 +158,7 @@ namespace CASCExplorer
                 // remove dummy node
                 node.Nodes.Clear();
 
-                var orderedEntries = baseEntry.SubEntries.OrderBy(v => v.Value);
+                var orderedEntries = baseEntry.SubEntries.OrderBy(v => v.Value.Name);
 
                 // Create nodes dynamically
                 foreach (var it in orderedEntries)
@@ -184,8 +180,8 @@ namespace CASCExplorer
 
         private void listView1_ColumnClick(object sender, ColumnClickEventArgs e)
         {
-            fileList.Sorting = fileList.Sorting == SortOrder.Ascending ? SortOrder.Descending : SortOrder.Ascending;
-
+            Sorter.SortColumn = e.Column;
+            Sorter.Order = Sorter.Order == SortOrder.Ascending ? SortOrder.Descending : SortOrder.Ascending;
             UpdateListView(fileList.Tag as CASCFolder);
         }
 
@@ -207,12 +203,7 @@ namespace CASCExplorer
 
             if (entry is CASCFile)
             {
-                var rootInfos = CASC.Root.GetEntries(entry.Hash);
-
-                if (rootInfos == null)
-                    throw new Exception("root entry missing!");
-
-                var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & Settings.Default.Locale) != 0);
+                var rootInfosLocale = (entry as CASCFile).GetRootEntries(CASC, Settings.Default.Locale);
 
                 if (rootInfosLocale.Any())
                 {
@@ -230,7 +221,8 @@ namespace CASCExplorer
             {
                 entry.Name,
                 entry is CASCFolder ? "Folder" : "File",
-                localeFlags.ToString() + " (" + contentFlags.ToString() + ")",
+                localeFlags.ToString(),
+                contentFlags.ToString(),
                 size
             });
 
@@ -447,22 +439,7 @@ namespace CASCExplorer
 
             var files = folder.GetFiles(fileList.SelectedIndices.Cast<int>());
 
-            long size = 0;
-
-            foreach (var file in files)
-            {
-                var rootInfos = CASC.Root.GetEntries(file.Hash);
-
-                if (rootInfos == null)
-                    throw new Exception("root entry missing!");
-
-                var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & Settings.Default.Locale) != 0);
-
-                if (rootInfosLocale.Any())
-                {
-                    size += CASC.Encoding.GetEntry(rootInfosLocale.First().MD5).Size;
-                }
-            }
+            long size = files.Sum(f => (long)f.GetSize(CASC, Settings.Default.Locale));
 
             MessageBox.Show(String.Format(sizeNumberFmt, "{0:N} bytes", size));
         }
