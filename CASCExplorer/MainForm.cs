@@ -204,7 +204,6 @@ namespace CASCExplorer
             var localeFlags = LocaleFlags.None;
             var contentFlags = ContentFlags.None;
             var size = "<DIR>";
-            var count = 0;
 
             if (entry is CASCFile)
             {
@@ -212,9 +211,12 @@ namespace CASCExplorer
 
                 if (rootInfosLocale.Any())
                 {
-                    size = CASC.Encoding.GetEntry(rootInfosLocale.First().MD5).Size.ToString("N", sizeNumberFmt);
+                    var enc = CASC.Encoding.GetEntry(rootInfosLocale.First().MD5);
 
-                    count = rootInfosLocale.Count();
+                    if (enc != null)
+                        size = enc.Size.ToString("N", sizeNumberFmt);
+                    else
+                        size = "0";
 
                     foreach (var rootInfo in rootInfosLocale)
                     {
@@ -228,7 +230,7 @@ namespace CASCExplorer
             {
                 entry.Name,
                 entry is CASCFolder ? "Folder" : "File",
-                localeFlags.ToString() + " (" + count.ToString() + ")",
+                localeFlags.ToString(),
                 contentFlags.ToString(),
                 size
             });
