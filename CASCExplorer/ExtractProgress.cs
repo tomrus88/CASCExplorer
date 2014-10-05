@@ -32,8 +32,14 @@ namespace CASCExplorer
             if (result != DialogResult.OK)
                 return;
 
-            ExtractPath = folderBrowserDialog1.SelectedPath;
+            var path = folderBrowserDialog1.SelectedPath;
+
+            if (path == null)
+                return;
+
+            ExtractPath = path;
             textBox1.Text = ExtractPath;
+            button2.Enabled = true;
         }
 
         private void button3_Click(object sender, EventArgs e)
