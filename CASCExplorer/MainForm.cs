@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
@@ -53,10 +52,15 @@ namespace CASCExplorer
             var locales = Enum.GetNames(typeof(LocaleFlags));
             foreach (var locale in locales)
             {
+                if (locale == "None")
+                    continue;
+
                 var item = new ToolStripMenuItem(locale);
-                item.Checked = Settings.Default.Locale.ToString() == locale;
-                localeToolStripMenuItem.DropDownItems.Add(item);
+                item.Checked = Settings.Default.LocaleFlags.ToString() == locale;
+                localeFlagsToolStripMenuItem.DropDownItems.Add(item);
             }
+
+            useLWToolStripMenuItem.Checked = Settings.Default.ContentFlags == ContentFlags.LowViolence;
 
             bgAction = new AsyncAction(() => LoadData());
             bgAction.ProgressChanged += new EventHandler<AsyncActionProgressChangedEventArgs>(bgAction_ProgressChanged);
@@ -116,7 +120,7 @@ namespace CASCExplorer
                 : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, bgAction);
 
             CASC.Root.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), bgAction);
-            Root = CASC.Root.SetLocale(Settings.Default.Locale);
+            Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
 
             Sorter = new CASCEntrySorter(CASC);
         }
@@ -200,14 +204,17 @@ namespace CASCExplorer
             var localeFlags = LocaleFlags.None;
             var contentFlags = ContentFlags.None;
             var size = "<DIR>";
+            var count = 0;
 
             if (entry is CASCFile)
             {
-                var rootInfosLocale = (entry as CASCFile).GetRootEntries(CASC, Settings.Default.Locale);
+                var rootInfosLocale = CASC.Root.GetEntries(entry.Hash, Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
 
                 if (rootInfosLocale.Any())
                 {
                     size = CASC.Encoding.GetEntry(rootInfosLocale.First().MD5).Size.ToString("N", sizeNumberFmt);
+
+                    count = rootInfosLocale.Count();
 
                     foreach (var rootInfo in rootInfosLocale)
                     {
@@ -221,7 +228,7 @@ namespace CASCExplorer
             {
                 entry.Name,
                 entry is CASCFolder ? "Folder" : "File",
-                localeFlags.ToString(),
+                localeFlags.ToString() + " (" + count.ToString() + ")",
                 contentFlags.ToString(),
                 size
             });
@@ -420,10 +427,10 @@ namespace CASCExplorer
                     (dropdown as ToolStripMenuItem).Checked = true;
             }
 
-            Settings.Default.Locale = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), item.Text);
+            Settings.Default.LocaleFlags = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), item.Text);
             Settings.Default.Save();
 
-            Root = CASC.Root.SetLocale(Settings.Default.Locale);
+            Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
             OnStorageChanged();
         }
 
@@ -439,9 +446,24 @@ namespace CASCExplorer
 
             var files = folder.GetFiles(fileList.SelectedIndices.Cast<int>());
 
-            long size = files.Sum(f => (long)f.GetSize(CASC, Settings.Default.Locale));
+            long size = files.Sum(f => (long)f.GetSize(CASC, Settings.Default.LocaleFlags, Settings.Default.ContentFlags));
 
             MessageBox.Show(String.Format(sizeNumberFmt, "{0:N} bytes", size));
+        }
+
+        private void contentFlagsToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            useLWToolStripMenuItem.Checked = !useLWToolStripMenuItem.Checked;
+
+            if (useLWToolStripMenuItem.Checked)
+                Settings.Default.ContentFlags = ContentFlags.LowViolence;
+            else
+                Settings.Default.ContentFlags = ContentFlags.None;
+
+            Settings.Default.Save();
+
+            Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
+            OnStorageChanged();
         }
     }
 }

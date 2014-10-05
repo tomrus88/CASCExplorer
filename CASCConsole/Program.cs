@@ -33,7 +33,7 @@ namespace CASCConsole
             ContentFlags content = (ContentFlags)Enum.Parse(typeof(ContentFlags), args[3]);
 
             cascHandler.Root.LoadListFile(Path.Combine(Environment.CurrentDirectory, "listfile.txt"));
-            CASCFolder root = cascHandler.Root.SetLocale(locale);
+            CASCFolder root = cascHandler.Root.SetFlags(locale, content);
 
             Console.WriteLine("Loaded.");
 

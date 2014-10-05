@@ -36,6 +36,7 @@
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.extractToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -49,12 +50,12 @@
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.localeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.localeFlagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.useLWToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.onlineModeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -147,6 +148,11 @@
             // 
             this.columnHeader3.Text = "Locale Flags";
             this.columnHeader3.Width = 100;
+            // 
+            // columnHeader5
+            // 
+            this.columnHeader5.Text = "Content Flags";
+            this.columnHeader5.Width = 100;
             // 
             // columnHeader4
             // 
@@ -261,17 +267,25 @@
             // viewToolStripMenuItem
             // 
             this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.localeToolStripMenuItem});
+            this.localeFlagsToolStripMenuItem,
+            this.useLWToolStripMenuItem});
             this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
             this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.viewToolStripMenuItem.Text = "View";
             // 
-            // localeToolStripMenuItem
+            // localeFlagsToolStripMenuItem
             // 
-            this.localeToolStripMenuItem.Name = "localeToolStripMenuItem";
-            this.localeToolStripMenuItem.Size = new System.Drawing.Size(154, 22);
-            this.localeToolStripMenuItem.Text = "Content Locale";
-            this.localeToolStripMenuItem.DropDownItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.localeToolStripMenuItem_DropDownItemClicked);
+            this.localeFlagsToolStripMenuItem.Name = "localeFlagsToolStripMenuItem";
+            this.localeFlagsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.localeFlagsToolStripMenuItem.Text = "Locale";
+            this.localeFlagsToolStripMenuItem.DropDownItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.localeToolStripMenuItem_DropDownItemClicked);
+            // 
+            // useLWToolStripMenuItem
+            // 
+            this.useLWToolStripMenuItem.Name = "useLWToolStripMenuItem";
+            this.useLWToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.useLWToolStripMenuItem.Text = "Use LW";
+            this.useLWToolStripMenuItem.Click += new System.EventHandler(this.contentFlagsToolStripMenuItem_Click);
             // 
             // toolsToolStripMenuItem
             // 
@@ -302,11 +316,6 @@
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.aboutToolStripMenuItem.Text = "About...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
-            // 
-            // columnHeader5
-            // 
-            this.columnHeader5.Text = "Content Flags";
-            this.columnHeader5.Width = 100;
             // 
             // MainForm
             // 
@@ -364,9 +373,10 @@
         private System.Windows.Forms.ToolStripMenuItem onlineModeToolStripMenuItem;
         private System.Windows.Forms.ColumnHeader columnHeader4;
         private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem localeToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem localeFlagsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem getSizeToolStripMenuItem;
         private System.Windows.Forms.ColumnHeader columnHeader5;
+        private System.Windows.Forms.ToolStripMenuItem useLWToolStripMenuItem;
     }
 }
 

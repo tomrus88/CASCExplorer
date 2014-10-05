@@ -21,7 +21,7 @@ namespace CASCExplorer
         private readonly EncodingHandler EncodingHandler;
         private readonly WowRootHandler RootHandler;
 
-        private static readonly Jenkins96_2 Hasher = new Jenkins96_2();
+        private static readonly Jenkins96 Hasher = new Jenkins96();
 
         private readonly Dictionary<int, FileStream> DataStreams = new Dictionary<int, FileStream>();
 
@@ -272,24 +272,10 @@ namespace CASCExplorer
             return rootInfos != null && rootInfos.Count > 0;
         }
 
-        private EncodingEntry GetEncodingEntry(ulong hash, LocaleFlags locale, ContentFlags content)
+        public EncodingEntry GetEncodingEntry(ulong hash, LocaleFlags locale, ContentFlags content)
         {
-            var rootInfos = RootHandler.GetEntries(hash);
-
-            var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & locale) != 0);
-
-            if (rootInfosLocale.Count() > 1)
-            {
-                if (content != ContentFlags.None)
-                {
-                    var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.Block.ContentFlags & content) != 0);
-
-                    if (rootInfosLocaleAndContent.Any())
-                        rootInfosLocale = rootInfosLocaleAndContent;
-                }
-            }
-
-            return EncodingHandler.GetEntry(rootInfosLocale.First().MD5);
+            var rootInfos = RootHandler.GetEntries(hash, locale, content);
+            return EncodingHandler.GetEntry(rootInfos.First().MD5);
         }
 
         public Stream OpenFile(string fullName, LocaleFlags locale, ContentFlags content = ContentFlags.None)

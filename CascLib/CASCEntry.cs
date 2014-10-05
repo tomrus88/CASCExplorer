@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -16,10 +15,10 @@ namespace CASCExplorer
         public Dictionary<ulong, ICASCEntry> SubEntries;
         ulong hash;
 
-        public CASCFolder(ulong _hash)
+        public CASCFolder(ulong hash)
         {
             SubEntries = new Dictionary<ulong, ICASCEntry>();
-            hash = _hash;
+            this.hash = hash;
         }
 
         public string Name
@@ -92,9 +91,9 @@ namespace CASCExplorer
     {
         ulong hash;
 
-        public CASCFile(ulong _hash)
+        public CASCFile(ulong hash)
         {
-            hash = _hash;
+            this.hash = hash;
         }
 
         public string Name
@@ -112,21 +111,14 @@ namespace CASCExplorer
             get { return hash; }
         }
 
-        public int GetSize(CASCHandler casc, LocaleFlags locale)
+        public int GetSize(CASCHandler casc, LocaleFlags locale, ContentFlags content)
         {
-            var rootInfosLocale = GetRootEntries(casc, locale);
+            var encoding = casc.GetEncodingEntry(hash, locale, content);
 
-            if (rootInfosLocale.Any())
-            {
-                return casc.Encoding.GetEntry(rootInfosLocale.First().MD5).Size;
-            }
+            if (encoding != null)
+                return encoding.Size;
 
             return 0;
-        }
-
-        public IEnumerable<RootEntry> GetRootEntries(CASCHandler casc, LocaleFlags locale)
-        {
-            return casc.Root.GetEntries(Hash).Where(re => (re.Block.LocaleFlags & locale) != 0);
         }
 
         public static readonly Dictionary<ulong, string> FileNames = new Dictionary<ulong, string>();

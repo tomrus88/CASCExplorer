@@ -61,8 +61,9 @@ namespace CASCExplorer
     {
         private readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
         private readonly HashSet<ulong> UnknownFiles = new HashSet<ulong>();
-        private static readonly Jenkins96_2 Hasher = new Jenkins96_2();
+        private static readonly Jenkins96 Hasher = new Jenkins96();
         private LocaleFlags locale;
+        private ContentFlags content;
         private CASCFolder Root;
 
         public int Count { get { return RootData.Count; } }
@@ -70,6 +71,7 @@ namespace CASCExplorer
         public int CountSelect { get; private set; }
         public int CountUnknown { get; private set; }
         public LocaleFlags Locale { get { return locale; } }
+        public ContentFlags Content { get { return content; } }
 
         public WowRootHandler(Stream stream, AsyncAction worker)
         {
@@ -130,6 +132,23 @@ namespace CASCExplorer
             return result;
         }
 
+        public IEnumerable<RootEntry> GetEntries(ulong hash, LocaleFlags locale, ContentFlags content)
+        {
+            var rootInfos = GetEntries(hash);
+
+            var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & locale) != 0);
+
+            if (rootInfosLocale.Count() > 1)
+            {
+                var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.Block.ContentFlags == content));
+
+                if (rootInfosLocaleAndContent.Any())
+                    rootInfosLocale = rootInfosLocaleAndContent;
+            }
+
+            return rootInfosLocale;
+        }
+
         public void LoadListFile(string path, AsyncAction worker = null)
         {
             if (worker != null)
@@ -169,7 +188,7 @@ namespace CASCExplorer
             }
         }
 
-        private CASCFolder CreateStorageTree(LocaleFlags locale)
+        private CASCFolder CreateStorageTree(LocaleFlags locale, ContentFlags content)
         {
             var rootHash = Hasher.ComputeHash("root");
 
@@ -185,13 +204,22 @@ namespace CASCExplorer
             foreach (var unkFile in UnknownFiles)
                 CASCFile.FileNames.Remove(unkFile);
 
-            //Stream sw = new FileStream("unknownHashes.dat", FileMode.Create);
-            //BinaryWriter bw = new BinaryWriter(sw);
-
             // Create new tree based on specified locale
             foreach (var rootEntry in RootData)
             {
-                if (!rootEntry.Value.Any(re => (re.Block.LocaleFlags & locale) != 0))
+                //if (!rootEntry.Value.Any(re => (re.Block.LocaleFlags & locale) != 0))
+                //    continue;
+                var rootInfosLocale = rootEntry.Value.Where(re => (re.Block.LocaleFlags & locale) != 0);
+
+                if (rootInfosLocale.Count() > 1)
+                {
+                    var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.Block.ContentFlags == content));
+
+                    if (rootInfosLocaleAndContent.Any())
+                        rootInfosLocale = rootInfosLocaleAndContent;
+                }
+
+                if (!rootInfosLocale.Any())
                     continue;
 
                 string file;
@@ -201,16 +229,11 @@ namespace CASCExplorer
                     file = "unknown\\" + rootEntry.Key.ToString("X16");
                     CountUnknown++;
                     UnknownFiles.Add(rootEntry.Key);
-                    //Console.WriteLine("{0:X16}", BitConverter.ToUInt64(BitConverter.GetBytes(rootEntry.Key).Reverse().ToArray(), 0));
-                    //bw.Write(rootEntry.Key);
                 }
 
                 CreateSubTree(root, rootEntry.Key, file);
                 CountSelect++;
             }
-
-            //bw.Flush();
-            //bw.Close();
 
             Logger.WriteLine("WowRootHandler: {0} file names missing for locale {1}", CountUnknown, locale);
 
@@ -251,12 +274,13 @@ namespace CASCExplorer
             }
         }
 
-        public CASCFolder SetLocale(LocaleFlags locale)
+        public CASCFolder SetFlags(LocaleFlags locale, ContentFlags content)
         {
-            if (this.locale != locale)
+            if (this.locale != locale || this.content != content)
             {
                 this.locale = locale;
-                Root = CreateStorageTree(locale);
+                this.content = content;
+                Root = CreateStorageTree(locale, content);
             }
 
             return Root;

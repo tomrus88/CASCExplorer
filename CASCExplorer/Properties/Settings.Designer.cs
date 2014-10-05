@@ -62,12 +62,24 @@ namespace CASCExplorer.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("enUS")]
-        public global::CASCExplorer.LocaleFlags Locale {
+        public global::CASCExplorer.LocaleFlags LocaleFlags {
             get {
-                return ((global::CASCExplorer.LocaleFlags)(this["Locale"]));
+                return ((global::CASCExplorer.LocaleFlags)(this["LocaleFlags"]));
             }
             set {
-                this["Locale"] = value;
+                this["LocaleFlags"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("None")]
+        public global::CASCExplorer.ContentFlags ContentFlags {
+            get {
+                return ((global::CASCExplorer.ContentFlags)(this["ContentFlags"]));
+            }
+            set {
+                this["ContentFlags"] = value;
             }
         }
     }

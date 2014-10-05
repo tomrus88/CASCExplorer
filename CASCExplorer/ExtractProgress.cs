@@ -50,13 +50,13 @@ namespace CASCExplorer
         private void button2_Click(object sender, EventArgs e)
         {
             button2.Enabled = false;
-            checkBox1.Enabled = false;
             backgroundWorker1.RunWorkerAsync();
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            LocaleFlags locale = Properties.Settings.Default.Locale;
+            LocaleFlags locale = Properties.Settings.Default.LocaleFlags;
+            ContentFlags content = Properties.Settings.Default.ContentFlags;
 
             foreach (var file in files)
             {
@@ -70,7 +70,7 @@ namespace CASCExplorer
                 {
                     backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)files.Count * 100));
 
-                    CASC.SaveFileTo(file.Hash, file.FullName, ExtractPath, locale, checkBox1.Checked ? ContentFlags.LowViolence : ContentFlags.None);
+                    CASC.SaveFileTo(file.Hash, file.FullName, ExtractPath, locale, content);
                 }
                 catch (Exception exc)
                 {
@@ -87,7 +87,6 @@ namespace CASCExplorer
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             button2.Enabled = true;
-            checkBox1.Enabled = true;
 
             if (e.Cancelled)
             {
