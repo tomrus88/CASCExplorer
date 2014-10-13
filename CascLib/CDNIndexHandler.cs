@@ -1,19 +1,11 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Net;
 using System.Threading;
 
 namespace CASCExplorer
 {
-    internal class UserState
-    {
-        public int Index;
-        public string Path;
-        public Stream Stream;
-    }
-
     internal class CDNIndexHandler
     {
         private static readonly ByteArrayComparer comparer = new ByteArrayComparer();
@@ -21,6 +13,7 @@ namespace CASCExplorer
 
         private CASCConfig CASCConfig;
         private AsyncAction worker;
+        private SyncDownloader downloader;
 
         public AutoResetEvent ResetEvent = new AutoResetEvent(false);
 
@@ -33,6 +26,7 @@ namespace CASCExplorer
         {
             CASCConfig = cascConfig;
             this.worker = worker;
+            downloader = new SyncDownloader(worker);
         }
 
         public static CDNIndexHandler Initialize(CASCConfig config, AsyncAction worker)
@@ -117,43 +111,11 @@ namespace CASCExplorer
             {
                 var url = CASCConfig.CDNUrl + "/data/" + archive.Substring(0, 2) + "/" + archive.Substring(2, 2) + "/" + archive + ".index";
 
-                using (WebClient webClient = new WebClient())
-                {
-                    webClient.DownloadProgressChanged += WebClient_DownloadProgressChanged;
-                    webClient.DownloadFileCompleted += WebClient_DownloadFileCompleted;
-                    UserState state = new UserState() { Index = i, Path = path };
-                    webClient.DownloadFileAsync(new Uri(url), path, state);
-                    ResetEvent.WaitOne();
-                }
+                downloader.DownloadFile(url, path);
             }
             catch
             {
                 throw new Exception("DownloadFile failed!");
-            }
-        }
-
-        private void WebClient_DownloadFileCompleted(object sender, AsyncCompletedEventArgs e)
-        {
-            if (e.Cancelled)
-                return;
-
-            var state = (UserState)e.UserState;
-
-            using (FileStream fs = File.OpenRead(state.Path))
-                ParseIndex(fs, state.Index);
-
-            ResetEvent.Set();
-        }
-
-        private void WebClient_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
-        {
-            if (worker != null)
-            {
-                if (worker.IsCancellationRequested)
-                    (sender as WebClient).CancelAsync();
-
-                //worker.ThrowOnCancel();
-                //worker.ReportProgress(e.ProgressPercentage);
             }
         }
 
@@ -196,38 +158,7 @@ namespace CASCExplorer
             var keyStr = key.ToHexString().ToLower();
             var url = CASCConfig.CDNUrl + "/data/" + keyStr.Substring(0, 2) + "/" + keyStr.Substring(2, 2) + "/" + keyStr;
 
-            WebClient client = new WebClient();
-            client.DownloadProgressChanged += Client_DownloadProgressChanged;
-            client.DownloadDataCompleted += Client_DownloadDataCompleted;
-
-            UserState state = new UserState();
-
-            client.DownloadDataAsync(new Uri(url), state);
-            ResetEvent.WaitOne();
-            return state.Stream;
-        }
-
-        private void Client_DownloadDataCompleted(object sender, DownloadDataCompletedEventArgs e)
-        {
-            if (e.Cancelled)
-                return;
-
-            UserState state = e.UserState as UserState;
-
-            state.Stream = new MemoryStream(e.Result);
-            ResetEvent.Set();
-        }
-
-        private void Client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
-        {
-            if (worker != null)
-            {
-                if (worker.IsCancellationRequested)
-                    (sender as WebClient).CancelAsync();
-
-                //worker.ThrowOnCancel();
-                worker.ReportProgress(e.ProgressPercentage);
-            }
+            return downloader.OpenFile(url);
         }
 
         public static Stream OpenConfigFileDirect(string cdnUrl, string key)

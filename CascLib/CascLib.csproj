@@ -57,6 +57,7 @@
     <Compile Include="Logger.cs" />
     <Compile Include="MultiDictionary.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="SyncDownloader.cs" />
     <Compile Include="WowRootHandler.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
