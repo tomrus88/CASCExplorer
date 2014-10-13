@@ -49,7 +49,7 @@ namespace CASCExplorer
             int count;
             do
             {
-                if (bgAction.IsCancellationRequested)
+                if (bgAction != null && bgAction.IsCancellationRequested)
                     return;
 
                 count = src.Read(buf, 0, buf.Length);
