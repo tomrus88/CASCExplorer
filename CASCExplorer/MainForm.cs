@@ -37,6 +37,10 @@ namespace CASCExplorer
 
         private async void Form1_Load(object sender, EventArgs e)
         {
+            CASCHandler CASC = CASCHandler.OpenOnlineStorage("wow_beta");
+            CASC.Root.SetFlags(LocaleFlags.enUS, ContentFlags.None, false);
+            CASC.SaveFileTo("Creature\\Arthas\\Arthas.M2", ".");
+
             iconsList.Images.Add(Resources.folder);
             iconsList.Images.Add(Resources.openFolder);
             iconsList.Images.Add(SystemIcons.WinLogo);
@@ -207,7 +211,7 @@ namespace CASCExplorer
 
             if (entry is CASCFile)
             {
-                var rootInfosLocale = CASC.Root.GetEntries(entry.Hash, Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
+                var rootInfosLocale = CASC.Root.GetEntries(entry.Hash);
 
                 if (rootInfosLocale.Any())
                 {
@@ -292,7 +296,7 @@ namespace CASCExplorer
 
         private void PreviewText(CASCFile file)
         {
-            var stream = CASC.OpenFile(file.Hash, file.FullName, LocaleFlags.All);
+            var stream = CASC.OpenFile(file.Hash, file.FullName);
             var text = new StreamReader(stream).ReadToEnd();
             var form = new Form { FormBorderStyle = FormBorderStyle.SizableToolWindow, StartPosition = FormStartPosition.CenterParent };
             form.Controls.Add(new TextBox
@@ -308,7 +312,7 @@ namespace CASCExplorer
 
         private void PreviewBlp(CASCFile file)
         {
-            var stream = CASC.OpenFile(file.Hash, file.FullName, LocaleFlags.All);
+            var stream = CASC.OpenFile(file.Hash, file.FullName);
             var blp = new BlpFile(stream);
             var bitmap = blp.GetBitmap(0);
             var form = new ImagePreviewForm(bitmap);
@@ -448,7 +452,7 @@ namespace CASCExplorer
 
             var files = folder.GetFiles(fileList.SelectedIndices.Cast<int>());
 
-            long size = files.Sum(f => (long)f.GetSize(CASC, Settings.Default.LocaleFlags, Settings.Default.ContentFlags));
+            long size = files.Sum(f => (long)f.GetSize(CASC));
 
             MessageBox.Show(String.Format(sizeNumberFmt, "{0:N} bytes", size));
         }

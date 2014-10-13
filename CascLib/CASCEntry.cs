@@ -111,9 +111,9 @@ namespace CASCExplorer
             get { return hash; }
         }
 
-        public int GetSize(CASCHandler casc, LocaleFlags locale, ContentFlags content)
+        public int GetSize(CASCHandler casc)
         {
-            var encoding = casc.GetEncodingEntry(hash, locale, content);
+            var encoding = casc.GetEncodingEntry(hash);
 
             if (encoding != null)
                 return encoding.Size;
