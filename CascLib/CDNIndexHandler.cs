@@ -12,7 +12,6 @@ namespace CASCExplorer
         public int Index;
         public string Path;
         public Stream Stream;
-        public ManualResetEvent ResetEvent = new ManualResetEvent(false);
     }
 
     internal class CDNIndexHandler
@@ -22,6 +21,8 @@ namespace CASCExplorer
 
         private CASCConfig CASCConfig;
         private AsyncAction worker;
+
+        public AutoResetEvent ResetEvent = new AutoResetEvent(false);
 
         public int Count
         {
@@ -56,7 +57,7 @@ namespace CASCExplorer
                 if (worker != null)
                 {
                     worker.ThrowOnCancel();
-                    worker.ReportProgress((int)((float)i / (float)config.Archives.Count * 100));
+                    worker.ReportProgress((int)((float)i / (float)(config.Archives.Count - 1) * 100.0f));
                 }
             }
 
@@ -122,7 +123,7 @@ namespace CASCExplorer
                     webClient.DownloadFileCompleted += WebClient_DownloadFileCompleted;
                     UserState state = new UserState() { Index = i, Path = path };
                     webClient.DownloadFileAsync(new Uri(url), path, state);
-                    state.ResetEvent.WaitOne();
+                    ResetEvent.WaitOne();
                 }
             }
             catch
@@ -138,10 +139,10 @@ namespace CASCExplorer
 
             var state = (UserState)e.UserState;
 
-            state.ResetEvent.Set();
-
             using (FileStream fs = File.OpenRead(state.Path))
                 ParseIndex(fs, state.Index);
+
+            ResetEvent.Set();
         }
 
         private void WebClient_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
@@ -202,7 +203,7 @@ namespace CASCExplorer
             UserState state = new UserState();
 
             client.DownloadDataAsync(new Uri(url), state);
-            state.ResetEvent.WaitOne();
+            ResetEvent.WaitOne();
             return state.Stream;
         }
 
@@ -214,7 +215,7 @@ namespace CASCExplorer
             UserState state = e.UserState as UserState;
 
             state.Stream = new MemoryStream(e.Result);
-            state.ResetEvent.Set();
+            ResetEvent.Set();
         }
 
         private void Client_DownloadProgressChanged(object sender, DownloadProgressChangedEventArgs e)
