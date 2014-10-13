@@ -22,7 +22,6 @@ namespace CASCExplorer
 
         private CASCConfig CASCConfig;
         private AsyncAction worker;
-        private Semaphore downloadSemaphore = new Semaphore(1, 1);
 
         public int Count
         {
@@ -47,12 +46,12 @@ namespace CASCExplorer
 
             for (int i = 0; i < config.Archives.Count; i++)
             {
-                string index = config.Archives[i];
+                string archive = config.Archives[i];
 
                 if (config.OnlineMode)
-                    handler.DownloadFile(index, i);
+                    handler.DownloadFile(archive, i);
                 else
-                    handler.OpenFile(index, i);
+                    handler.OpenFile(archive, i);
 
                 if (worker != null)
                 {
@@ -97,14 +96,14 @@ namespace CASCExplorer
             }
         }
 
-        private void DownloadFile(string index, int i)
+        private void DownloadFile(string archive, int i)
         {
             var rootPath = Path.Combine("data", CASCConfig.Build.ToString(), "indices");
 
             if (!Directory.Exists(rootPath))
                 Directory.CreateDirectory(rootPath);
 
-            var path = Path.Combine(rootPath, index + ".index");
+            var path = Path.Combine(rootPath, archive + ".index");
 
             if (File.Exists(path))
             {
@@ -115,14 +114,15 @@ namespace CASCExplorer
 
             try
             {
-                var url = CASCConfig.CDNUrl + "/data/" + index.Substring(0, 2) + "/" + index.Substring(2, 2) + "/" + index + ".index";
+                var url = CASCConfig.CDNUrl + "/data/" + archive.Substring(0, 2) + "/" + archive.Substring(2, 2) + "/" + archive + ".index";
 
                 using (WebClient webClient = new WebClient())
                 {
                     webClient.DownloadProgressChanged += WebClient_DownloadProgressChanged;
                     webClient.DownloadFileCompleted += WebClient_DownloadFileCompleted;
-                    webClient.DownloadFileAsync(new Uri(url), path, new UserState() { Index = i, Path = path });
-                    downloadSemaphore.WaitOne();
+                    UserState state = new UserState() { Index = i, Path = path };
+                    webClient.DownloadFileAsync(new Uri(url), path, state);
+                    state.ResetEvent.WaitOne();
                 }
             }
             catch
@@ -136,9 +136,9 @@ namespace CASCExplorer
             if (e.Cancelled)
                 return;
 
-            downloadSemaphore.Release();
-
             var state = (UserState)e.UserState;
+
+            state.ResetEvent.Set();
 
             using (FileStream fs = File.OpenRead(state.Path))
                 ParseIndex(fs, state.Index);
@@ -156,11 +156,11 @@ namespace CASCExplorer
             }
         }
 
-        private void OpenFile(string index, int i)
+        private void OpenFile(string archive, int i)
         {
             try
             {
-                var path = Path.Combine(CASCConfig.BasePath, "Data\\indices\\", index + ".index");
+                var path = Path.Combine(CASCConfig.BasePath, "Data\\indices\\", archive + ".index");
 
                 using (FileStream fs = new FileStream(path, FileMode.Open))
                     ParseIndex(fs, i);
@@ -175,8 +175,8 @@ namespace CASCExplorer
         {
             var indexEntry = CDNIndexData[key];
 
-            var index = CASCConfig.Archives[indexEntry.Index];
-            var url = CASCConfig.CDNUrl + "/data/" + index.Substring(0, 2) + "/" + index.Substring(2, 2) + "/" + index;
+            var archive = CASCConfig.Archives[indexEntry.Index];
+            var url = CASCConfig.CDNUrl + "/data/" + archive.Substring(0, 2) + "/" + archive.Substring(2, 2) + "/" + archive;
 
             HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
             req.AddRange(indexEntry.Offset, indexEntry.Offset + indexEntry.Size - 1);
@@ -192,8 +192,8 @@ namespace CASCExplorer
                 worker.ReportProgress(0, "Downloading file...");
             }
 
-            var file = key.ToHexString().ToLower();
-            var url = CASCConfig.CDNUrl + "/data/" + file.Substring(0, 2) + "/" + file.Substring(2, 2) + "/" + file;
+            var keyStr = key.ToHexString().ToLower();
+            var url = CASCConfig.CDNUrl + "/data/" + keyStr.Substring(0, 2) + "/" + keyStr.Substring(2, 2) + "/" + keyStr;
 
             WebClient client = new WebClient();
             client.DownloadProgressChanged += Client_DownloadProgressChanged;
