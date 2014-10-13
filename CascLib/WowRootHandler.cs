@@ -125,16 +125,17 @@ namespace CASCExplorer
             }
         }
 
-        public HashSet<RootEntry> GetEntries(ulong hash)
+        public HashSet<RootEntry> GetAllEntries(ulong hash)
         {
             HashSet<RootEntry> result;
             RootData.TryGetValue(hash, out result);
             return result;
         }
 
-        public IEnumerable<RootEntry> GetEntries(ulong hash, LocaleFlags locale, ContentFlags content)
+        // Returns only entries that match current locale and content flags
+        public IEnumerable<RootEntry> GetEntries(ulong hash)
         {
-            var rootInfos = GetEntries(hash);
+            var rootInfos = GetAllEntries(hash);
 
             var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & locale) != 0);
 
@@ -188,7 +189,7 @@ namespace CASCExplorer
             }
         }
 
-        private CASCFolder CreateStorageTree(LocaleFlags locale, ContentFlags content)
+        private CASCFolder CreateStorageTree()
         {
             var rootHash = Hasher.ComputeHash("root");
 
@@ -207,8 +208,6 @@ namespace CASCExplorer
             // Create new tree based on specified locale
             foreach (var rootEntry in RootData)
             {
-                //if (!rootEntry.Value.Any(re => (re.Block.LocaleFlags & locale) != 0))
-                //    continue;
                 var rootInfosLocale = rootEntry.Value.Where(re => (re.Block.LocaleFlags & locale) != 0);
 
                 if (rootInfosLocale.Count() > 1)
@@ -274,13 +273,15 @@ namespace CASCExplorer
             }
         }
 
-        public CASCFolder SetFlags(LocaleFlags locale, ContentFlags content)
+        public CASCFolder SetFlags(LocaleFlags locale, ContentFlags content, bool createTree = true)
         {
             if (this.locale != locale || this.content != content)
             {
                 this.locale = locale;
                 this.content = content;
-                Root = CreateStorageTree(locale, content);
+
+                if (createTree)
+                    Root = CreateStorageTree();
             }
 
             return Root;

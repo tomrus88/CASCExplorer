@@ -268,26 +268,26 @@ namespace CASCExplorer
 
         public bool FileExists(ulong hash)
         {
-            var rootInfos = RootHandler.GetEntries(hash);
+            var rootInfos = RootHandler.GetAllEntries(hash);
             return rootInfos != null && rootInfos.Count > 0;
         }
 
-        public EncodingEntry GetEncodingEntry(ulong hash, LocaleFlags locale, ContentFlags content)
+        public EncodingEntry GetEncodingEntry(ulong hash)
         {
-            var rootInfos = RootHandler.GetEntries(hash, locale, content);
+            var rootInfos = RootHandler.GetEntries(hash);
             return EncodingHandler.GetEntry(rootInfos.First().MD5);
         }
 
-        public Stream OpenFile(string fullName, LocaleFlags locale, ContentFlags content = ContentFlags.None)
+        public Stream OpenFile(string fullName)
         {
             var hash = Hasher.ComputeHash(fullName);
 
-            return OpenFile(hash, fullName, locale, content);
+            return OpenFile(hash, fullName);
         }
 
-        public Stream OpenFile(ulong hash, string fullName, LocaleFlags locale, ContentFlags content = ContentFlags.None)
+        public Stream OpenFile(ulong hash, string fullName)
         {
-            EncodingEntry encInfo = GetEncodingEntry(hash, locale, content);
+            EncodingEntry encInfo = GetEncodingEntry(hash);
 
             if (encInfo != null)
                 return OpenFile(encInfo.Key);
@@ -295,16 +295,16 @@ namespace CASCExplorer
             throw new FileNotFoundException(fullName);
         }
 
-        public void SaveFileTo(string fullName, string extractPath, LocaleFlags locale, ContentFlags content = ContentFlags.None)
+        public void SaveFileTo(string fullName, string extractPath)
         {
             var hash = Hasher.ComputeHash(fullName);
 
-            SaveFileTo(hash, fullName, extractPath, locale, content);
+            SaveFileTo(hash, extractPath, fullName);
         }
 
-        public void SaveFileTo(ulong hash, string fullName, string extractPath, LocaleFlags locale, ContentFlags content = ContentFlags.None)
+        public void SaveFileTo(ulong hash, string extractPath, string fullName)
         {
-            EncodingEntry encInfo = GetEncodingEntry(hash, locale, content);
+            EncodingEntry encInfo = GetEncodingEntry(hash);
 
             if (encInfo != null)
             {

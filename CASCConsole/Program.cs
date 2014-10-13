@@ -57,7 +57,7 @@ namespace CASCConsole
 
                     try
                     {
-                        cascHandler.SaveFileTo(file.FullName, dest, locale, content);
+                        cascHandler.SaveFileTo(file.FullName, dest);
                         Console.WriteLine(" Ok!");
                     }
                     catch (Exception exc)

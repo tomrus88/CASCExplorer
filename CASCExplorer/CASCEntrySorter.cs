@@ -47,8 +47,8 @@ namespace CASCExplorer
                 case 4: // Size
                     if (x is CASCFile && y is CASCFile)
                     {
-                        var size1 = (x as CASCFile).GetSize(CASC, CASC.Root.Locale, CASC.Root.Content);
-                        var size2 = (y as CASCFile).GetSize(CASC, CASC.Root.Locale, CASC.Root.Content);
+                        var size1 = (x as CASCFile).GetSize(CASC);
+                        var size2 = (y as CASCFile).GetSize(CASC);
 
                         if (size1 == size2)
                             result = 0;

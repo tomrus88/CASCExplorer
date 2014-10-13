@@ -61,9 +61,6 @@ namespace CASCExplorer
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            LocaleFlags locale = Properties.Settings.Default.LocaleFlags;
-            ContentFlags content = Properties.Settings.Default.ContentFlags;
-
             foreach (var file in files)
             {
                 if (backgroundWorker1.CancellationPending)
@@ -76,7 +73,7 @@ namespace CASCExplorer
                 {
                     backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)files.Count * 100));
 
-                    CASC.SaveFileTo(file.Hash, file.FullName, ExtractPath, locale, content);
+                    CASC.SaveFileTo(file.Hash, ExtractPath, file.FullName);
                 }
                 catch (Exception exc)
                 {

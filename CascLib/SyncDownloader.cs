@@ -5,11 +5,11 @@ namespace CASCExplorer
 {
     public class SyncDownloader
     {
-        AsyncAction bgAction;
+        AsyncAction progressReporter;
 
-        public SyncDownloader(AsyncAction bgAction)
+        public SyncDownloader(AsyncAction progressReporter)
         {
-            this.bgAction = bgAction;
+            this.progressReporter = progressReporter;
         }
 
         public void DownloadFile(string url, string path)
@@ -49,7 +49,7 @@ namespace CASCExplorer
             int count;
             do
             {
-                if (bgAction != null && bgAction.IsCancellationRequested)
+                if (progressReporter != null && progressReporter.IsCancellationRequested)
                     return;
 
                 count = src.Read(buf, 0, buf.Length);
@@ -57,8 +57,8 @@ namespace CASCExplorer
 
                 done += count;
 
-                if (bgAction != null)
-                    bgAction.ReportProgress((int)((float)done / (float)len * 100.0f));
+                if (progressReporter != null)
+                    progressReporter.ReportProgress((int)((float)done / (float)len * 100.0f));
             } while (count > 0);
         }
     }
