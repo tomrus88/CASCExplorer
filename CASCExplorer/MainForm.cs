@@ -37,6 +37,10 @@ namespace CASCExplorer
 
         private async void Form1_Load(object sender, EventArgs e)
         {
+            CASCHandler CASC = CASCHandler.OpenOnlineStorage("wow_beta");
+            CASC.Root.SetFlags(LocaleFlags.enUS, ContentFlags.None, false);
+            CASC.SaveFileTo("Creature\\Arthas\\Arthas.M2", ".");
+
             iconsList.Images.Add(Resources.folder);
             iconsList.Images.Add(Resources.openFolder);
             iconsList.Images.Add(SystemIcons.WinLogo);
