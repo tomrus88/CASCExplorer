@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Threading;
 
 namespace CASCExplorer
 {
@@ -14,8 +13,6 @@ namespace CASCExplorer
         private CASCConfig CASCConfig;
         private AsyncAction worker;
         private SyncDownloader downloader;
-
-        public AutoResetEvent ResetEvent = new AutoResetEvent(false);
 
         public int Count
         {
@@ -112,6 +109,9 @@ namespace CASCExplorer
                 var url = CASCConfig.CDNUrl + "/data/" + archive.Substring(0, 2) + "/" + archive.Substring(2, 2) + "/" + archive + ".index";
 
                 downloader.DownloadFile(url, path);
+
+                using (FileStream fs = File.OpenRead(path))
+                    ParseIndex(fs, i);
             }
             catch
             {
