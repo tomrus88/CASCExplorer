@@ -5,6 +5,110 @@ using System.Linq;
 
 namespace CASCExplorer
 {
+    class CDNConfigEntry
+    {
+        public string Name { get; private set; }
+        public string Path { get; private set; }
+        public string[] Hosts { get; private set; }
+    }
+
+    class VersionsConfigEntry
+    {
+        public string Region { get; private set; }
+        public string BuildConfig { get; private set; }
+        public string CDNConfig { get; private set; }
+        public int BuildId { get; private set; }
+        public string VersionsName { get; private set; }
+    }
+
+    class BuildInfoEntry
+    {
+        public string Branch { get; private set; }
+        public int Active { get; private set; }
+        public string BuildKey { get; private set; }
+        public string CDNKey { get; private set; }
+        public string InstallKey { get; private set; }
+        public int IMSize { get; private set; }
+        public string CDNPath { get; private set; }
+        public string[] CDNHosts { get; private set; }
+        public string Tags { get; private set; }
+        public string Armadillo { get; private set; }
+        public string LastActivated { get; private set; }
+        public string Version { get; private set; }
+    }
+
+    class VerBarConfig<T> where T : new()
+    {
+        private readonly List<T> Data = new List<T>();
+
+        public int Count { get { return Data.Count; } }
+
+        public T this[int index]
+        {
+            get { return Data[index]; }
+        }
+
+        public static VerBarConfig<T> ReadVerBarConfig(Stream stream)
+        {
+            using (var sr = new StreamReader(stream))
+                return ReadVerBarConfig(sr);
+        }
+
+        public static VerBarConfig<T> ReadVerBarConfig(TextReader reader)
+        {
+            var result = new VerBarConfig<T>();
+            string line;
+
+            int lineNum = 0;
+
+            string[] fields = null;
+
+            while ((line = reader.ReadLine()) != null)
+            {
+                if (String.IsNullOrWhiteSpace(line) || line.StartsWith("#")) // skip empty lines and comments
+                    continue;
+
+                string[] tokens = line.Split(new char[] { '|' });
+
+                Type t = typeof(T);
+
+                if (lineNum == 0) // keys
+                {
+                    fields = new string[tokens.Length];
+
+                    for (int i = 0; i < tokens.Length; ++i)
+                    {
+                        fields[i] = tokens[i].Split(new char[] { '!' })[0].Replace(" ", "");
+                    }
+                }
+                else // values
+                {
+                    var v = new T();
+
+                    for (int i = 0; i < tokens.Length; ++i)
+                    {
+                        Type propt = t.GetProperty(fields[i]).PropertyType;
+
+                        if (propt.IsArray)
+                        {
+                            t.GetProperty(fields[i]).SetValue(v, tokens[i].Split(' '));
+                        }
+                        else
+                        {
+                            t.GetProperty(fields[i]).SetValue(v, Convert.ChangeType(tokens[i], propt));
+                        }
+                    }
+
+                    result.Data.Add(v);
+                }
+
+                lineNum++;
+            }
+
+            return result;
+        }
+    }
+
     internal class KeyValueConfig
     {
         private readonly Dictionary<string, List<string>> Data = new Dictionary<string, List<string>>();
@@ -43,96 +147,55 @@ namespace CASCExplorer
             }
             return result;
         }
-
-        public static KeyValueConfig ReadVerBarConfig(Stream stream)
-        {
-            using (var sr = new StreamReader(stream))
-                return ReadVerBarConfig(sr);
-        }
-
-        public static KeyValueConfig ReadVerBarConfig(TextReader reader)
-        {
-            var result = new KeyValueConfig();
-            string line;
-
-            int lineNum = 0;
-
-            while ((line = reader.ReadLine()) != null)
-            {
-                if (String.IsNullOrWhiteSpace(line) || line.StartsWith("#")) // skip empty lines and comments
-                    continue;
-
-                string[] tokens = line.Split(new char[] { '|' });
-
-                if (lineNum == 0) // keys
-                {
-                    foreach (var token in tokens)
-                    {
-                        var tokens2 = token.Split(new char[] { '!' });
-                        result.Data[tokens2[0]] = new List<string>();
-                    }
-                }
-                else // values
-                {
-                    //if (Data.Count != tokens.Length)
-                    //    throw new Exception("VerBarConfig: Data.Count != tokens.Length");
-                    if (result.Data.Count != tokens.Length)
-                        continue;
-
-                    for (int i = 0; i < result.Data.Count; i++)
-                        result.Data.ElementAt(i).Value.Add(tokens[i]);
-                }
-
-                lineNum++;
-            }
-
-            return result;
-        }
     }
 
     internal class CASCConfig
     {
-        KeyValueConfig _BuildInfo;
         KeyValueConfig _BuildConfig;
         KeyValueConfig _CDNConfig;
 
-        KeyValueConfig _CDNData;
-        KeyValueConfig _VersionsData;
+        VerBarConfig<BuildInfoEntry> _BuildInfo;
+        VerBarConfig<CDNConfigEntry> _CDNData;
+        VerBarConfig<VersionsConfigEntry> _VersionsData;
 
-        public static CASCConfig LoadOnlineStorageConfig(string product)
+        string region;
+
+        public static CASCConfig LoadOnlineStorageConfig(string product, string region)
         {
             var config = new CASCConfig { OnlineMode = true };
+
+            config.region = region;
+
             using (var cdnsStream = CDNIndexHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/cdns", product)))
             {
-                config._CDNData = KeyValueConfig.ReadVerBarConfig(cdnsStream);
+                config._CDNData = VerBarConfig<CDNConfigEntry>.ReadVerBarConfig(cdnsStream);
             }
 
             using (var versionsStream = CDNIndexHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/versions", product)))
             {
-                config._VersionsData = KeyValueConfig.ReadVerBarConfig(versionsStream);
+                config._VersionsData = VerBarConfig<VersionsConfigEntry>.ReadVerBarConfig(versionsStream);
             }
 
             int index = 0;
-            int build = 0;
-            for (int i = 0; i < config._VersionsData["BuildId"].Count; ++i)
+
+            for (int i = 0; i < config._VersionsData.Count; ++i)
             {
-                int build2 = Convert.ToInt32(config._VersionsData["BuildId"][i]);
-                if (build2 > build)
+                if (config._VersionsData[i].Region == region)
                 {
-                    build = build2;
                     index = i;
+                    break;
                 }
             }
 
-            config.Build = build;
+            config.Build = config._VersionsData[index].BuildId;
 
-            string buildKey = config._VersionsData["BuildConfig"][index];
+            string buildKey = config._VersionsData[index].BuildConfig;
             using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config.CDNUrl, buildKey))
             {
                 config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(stream);
             }
 
-            string cdnKey = config._VersionsData["CDNConfig"][index];
+            string cdnKey = config._VersionsData[index].CDNConfig;
             using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config.CDNUrl, cdnKey))
             {
                 config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
@@ -148,19 +211,33 @@ namespace CASCExplorer
 
             using (Stream buildInfoStream = new FileStream(buildInfoPath, FileMode.Open))
             {
-                config._BuildInfo = KeyValueConfig.ReadVerBarConfig(buildInfoStream);
+                config._BuildInfo = VerBarConfig<BuildInfoEntry>.ReadVerBarConfig(buildInfoStream);
             }
 
-            config.Build = Convert.ToInt32(config._BuildInfo["Version"][0].Split('.')[3]);
+            BuildInfoEntry bi = null;
 
-            string buildKey = config._BuildInfo["Build Key"][0];
+            for (int i = 0; i < config._BuildInfo.Count; ++i)
+            {
+                if (config._BuildInfo[i].Active == 1)
+                {
+                    bi = config._BuildInfo[i];
+                    break;
+                }
+            }
+
+            if (bi == null)
+                throw new Exception("Can't find active BuildInfoEntry");
+
+            config.Build = Convert.ToInt32(bi.Version.Split('.')[3]);
+
+            string buildKey = bi.BuildKey;
             string buildCfgPath = Path.Combine(basePath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
             using (Stream stream = new FileStream(buildCfgPath, FileMode.Open))
             {
                 config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(stream);
             }
 
-            string cdnKey = config._BuildInfo["CDN Key"][0];
+            string cdnKey = bi.CDNKey;
             string cdnCfgPath = Path.Combine(basePath, "Data\\config\\", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
             using (Stream stream = new FileStream(cdnCfgPath, FileMode.Open))
             {
@@ -197,12 +274,22 @@ namespace CASCExplorer
             {
                 if (OnlineMode)
                 {
-                    // multiple hosts possible!
-                    string cdns = _CDNData["Hosts"][0].Split(' ')[0];
-                    return String.Format("http://{0}/{1}", cdns, _CDNData["Path"][0]);
+                    int index = 0;
+
+                    for (int i = 0; i < _CDNData.Count; ++i)
+                    {
+                        if (_CDNData[i].Name == region)
+                        {
+                            index = i;
+                            break;
+                        }
+                    }
+                    // use first CDN address for now
+                    string cdns = _CDNData[index].Hosts[0];
+                    return String.Format("http://{0}/{1}", cdns, _CDNData[index].Path);
                 }
                 else
-                    return String.Format("http://{0}{1}", _BuildInfo["CDN Hosts"][0], _BuildInfo["CDN Path"][0]);
+                    return String.Format("http://{0}{1}", _BuildInfo[0].CDNHosts[0], _BuildInfo[0].CDNPath);
             }
         }
 

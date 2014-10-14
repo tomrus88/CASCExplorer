@@ -37,10 +37,6 @@ namespace CASCExplorer
 
         private async void Form1_Load(object sender, EventArgs e)
         {
-            CASCHandler CASC = CASCHandler.OpenOnlineStorage("wow_beta");
-            CASC.Root.SetFlags(LocaleFlags.enUS, ContentFlags.None);
-            CASC.SaveFileTo("World/Maps/unused/unused.wdt", ".");
-
             iconsList.Images.Add(Resources.folder);
             iconsList.Images.Add(Resources.openFolder);
             iconsList.Images.Add(SystemIcons.WinLogo);

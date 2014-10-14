@@ -250,7 +250,7 @@ namespace CASCExplorer
 
         public static CASCHandler OpenOnlineStorage(string product, AsyncAction worker = null)
         {
-            CASCConfig config = CASCConfig.LoadOnlineStorageConfig(product);
+            CASCConfig config = CASCConfig.LoadOnlineStorageConfig(product, "us");
 
             return Open(worker, config);
         }
