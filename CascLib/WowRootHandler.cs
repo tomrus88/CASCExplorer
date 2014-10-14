@@ -137,6 +137,9 @@ namespace CASCExplorer
         {
             var rootInfos = GetAllEntries(hash);
 
+            if (rootInfos == null)
+                return null;
+
             var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & locale) != 0);
 
             if (rootInfosLocale.Count() > 1)

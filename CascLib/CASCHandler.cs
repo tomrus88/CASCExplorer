@@ -275,6 +275,8 @@ namespace CASCExplorer
         public EncodingEntry GetEncodingEntry(ulong hash)
         {
             var rootInfos = RootHandler.GetEntries(hash);
+            if (rootInfos == null)
+                return null;
             return EncodingHandler.GetEntry(rootInfos.First().MD5);
         }
 
