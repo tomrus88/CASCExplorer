@@ -396,7 +396,8 @@ namespace CASCExplorer
             {
                 if (key.EqualsTo(CASCConfig.EncodingKey))
                 {
-                    using (Stream s = CDNHandler.OpenDataFileDirect(key, out int len))
+                    int len;
+                    using (Stream s = CDNHandler.OpenDataFileDirect(key, out len))
                     using (BLTEHandler blte = new BLTEHandler(s, len))
                         return blte.OpenFile();
                 }
@@ -443,7 +444,8 @@ namespace CASCExplorer
             {
                 if (key.EqualsTo(CASCConfig.EncodingKey))
                 {
-                    using (Stream s = CDNHandler.OpenDataFileDirect(key, out int len))
+                    int len;
+                    using (Stream s = CDNHandler.OpenDataFileDirect(key, out len))
                     using (BLTEHandler blte = new BLTEHandler(s, len))
                         blte.ExtractToFile(path, name);
                 }
