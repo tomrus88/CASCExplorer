@@ -124,8 +124,8 @@ namespace CASCExplorer
                 stream.Position = idxInfo.Offset;
 
                 stream.Position += 30;
-                //blte.ExtractToFile(".", key.ToHexString());
-                //int __size = reader.ReadInt32();
+                //byte[] compressedMD5 = reader.ReadBytes(16);
+                //int size = reader.ReadInt32();
                 //byte[] unkData1 = reader.ReadBytes(2);
                 //byte[] unkData2 = reader.ReadBytes(8);
 
@@ -181,8 +181,8 @@ namespace CASCExplorer
                 stream.Position = idxInfo.Offset;
 
                 stream.Position += 30;
-                //byte[] unkHash = reader.ReadBytes(16);
-                //int __size = reader.ReadInt32();
+                //byte[] compressedMD5 = reader.ReadBytes(16);
+                //int size = reader.ReadInt32();
                 //byte[] unkData1 = reader.ReadBytes(2);
                 //byte[] unkData2 = reader.ReadBytes(8);
 
