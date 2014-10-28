@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
@@ -53,9 +54,24 @@ namespace CASCExplorer
                 ret[i] = array[i];
             return ret;
         }
+
+        public static string ToBinaryString(this BitArray bits)
+        {
+            if (bits.Count == 0)
+                return String.Empty;
+
+            string result = String.Empty;
+
+            for (int i = 0; i < bits.Count; ++i)
+            {
+                result += bits[i] ? "1" : "0";
+            }
+
+            return result;
+        }
     }
 
-    internal static class CStringExtensions
+    public static class CStringExtensions
     {
         /// <summary> Reads the NULL terminated string from 
         /// the current stream and advances the current position of the stream by string length + 1.

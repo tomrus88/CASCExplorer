@@ -18,6 +18,7 @@ namespace CASCExplorer
         private readonly LocalIndexHandler LocalIndex;
         private readonly CDNIndexHandler CDNIndex;
 
+        private readonly InstallHandler InstallHandler;
         private readonly EncodingHandler EncodingHandler;
         private readonly WowRootHandler RootHandler;
 
@@ -27,6 +28,7 @@ namespace CASCExplorer
 
         private readonly CASCConfig config;
 
+        public InstallHandler Install { get { return InstallHandler; } }
         public EncodingHandler Encoding { get { return EncodingHandler; } }
         public WowRootHandler Root { get { return RootHandler; } }
 
@@ -44,10 +46,37 @@ namespace CASCExplorer
 
             Logger.WriteLine("CASCHandler: loaded {0} encoding data", EncodingHandler.Count);
 
+            using (var fs = OpenInstallFile())
+                InstallHandler = new InstallHandler(fs, worker);
+
+            Logger.WriteLine("CASCHandler: loaded {0} install data", InstallHandler.Count);
+
+            InstallHandler.Print();
+
             using (var fs = OpenRootFile())
                 RootHandler = new WowRootHandler(fs, worker);
 
             Logger.WriteLine("CASCHandler: loaded {0} root data", RootHandler.Count);
+        }
+
+        private Stream OpenInstallFile()
+        {
+            var encInfo = EncodingHandler.GetEntry(config.InstallMD5);
+
+            if (encInfo == null)
+                throw new FileNotFoundException("encoding info for install file missing!");
+
+            Stream s = TryLocalCache(encInfo.Key, config.InstallMD5, Path.Combine("data", config.Build.ToString(), "install"));
+
+            if (s != null)
+                return s;
+
+            s = TryLocalCache(encInfo.Key, config.InstallMD5, Path.Combine("data", config.Build.ToString(), "install"));
+
+            if (s != null)
+                return s;
+
+            return OpenFile(encInfo.Key);
         }
 
         private Stream OpenRootFile()
@@ -164,7 +193,7 @@ namespace CASCExplorer
             }
         }
 
-        private void ExtractFile(byte[] key, string path, string name)
+        public void ExtractFile(byte[] key, string path, string name)
         {
             try
             {

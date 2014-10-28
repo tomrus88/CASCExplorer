@@ -268,6 +268,11 @@ namespace CASCExplorer
             get { return _BuildConfig["root"][0].ToByteArray(); }
         }
 
+        public byte[] InstallMD5
+        {
+            get { return _BuildConfig["install"][0].ToByteArray(); }
+        }
+
         public string CDNUrl
         {
             get
