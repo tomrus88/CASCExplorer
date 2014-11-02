@@ -24,7 +24,15 @@ namespace CASCExplorer
         {
             InitializeComponent();
 
-            comboBox1.Items.AddRange(Enum.GetNames(typeof(LocaleFlags)));
+            // Show locales except All and None
+            var localeFlagValues = Enum.GetValues(typeof(LocaleFlags));
+            foreach (int localeFlagValue in localeFlagValues)
+            {
+                if (localeFlagValue > 0)
+                {
+                    comboBox1.Items.Add(Enum.GetName(typeof(LocaleFlags), localeFlagValue));
+                }
+            }
 
             comboBox1.SelectedIndex = comboBox1.Items.Count - 1;
 
