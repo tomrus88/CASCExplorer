@@ -454,7 +454,10 @@ namespace CASCExplorer
                     var idxInfo = CDNHandler.GetCDNIndexInfo(key);
 
                     if (idxInfo == null)
+                    {
+                        return; //TODO:
                         throw new Exception("CDN index missing");
+                    }
 
                     using (Stream s = CDNHandler.OpenDataFile(key))
                     using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
