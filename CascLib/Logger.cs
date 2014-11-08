@@ -1,4 +1,5 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace CASCExplorer
 {
@@ -9,6 +10,7 @@ namespace CASCExplorer
 
         public static void WriteLine(string format, params object[] args)
         {
+            logger.Write("[{0}]: ", DateTime.Now);
             logger.WriteLine(format, args);
         }
     }

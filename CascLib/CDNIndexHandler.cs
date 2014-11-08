@@ -52,8 +52,6 @@ namespace CASCExplorer
                 }
             }
 
-            Logger.WriteLine("CDNIndexHandler: loaded {0} indexes", handler.Count);
-
             return handler;
         }
 

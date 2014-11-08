@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -36,27 +37,55 @@ namespace CASCExplorer
         {
             this.config = config;
 
+            Logger.WriteLine("CASCHandler: loading CDN indices...");
+
+            Stopwatch sw = new Stopwatch();
+
+            sw.Restart();
             CDNIndex = CDNIndexHandler.Initialize(config, worker);
+            sw.Stop();
+
+            Logger.WriteLine("CASCHandler: loaded {0} CDN indexes in {1}", CDNIndex.Count, sw.Elapsed);
 
             if (!config.OnlineMode)
-                LocalIndex = LocalIndexHandler.Initialize(config, worker);
+            {
+                Logger.WriteLine("CASCHandler: loading local indices...");
 
+                sw.Restart();
+                LocalIndex = LocalIndexHandler.Initialize(config, worker);
+                sw.Stop();
+
+                Logger.WriteLine("CASCHandler: loaded {0} local indexes in {1}", LocalIndex.Count, sw.Elapsed);
+            }
+
+            Logger.WriteLine("CASCHandler: loading encoding data...");
+
+            sw.Restart();
             using (var fs = OpenEncodingFile())
                 EncodingHandler = new EncodingHandler(fs, worker);
+            sw.Stop();
 
-            Logger.WriteLine("CASCHandler: loaded {0} encoding data", EncodingHandler.Count);
+            Logger.WriteLine("CASCHandler: loaded {0} encoding data in {1}", EncodingHandler.Count, sw.Elapsed);
 
+            Logger.WriteLine("CASCHandler: loading install data...");
+
+            sw.Restart();
             using (var fs = OpenInstallFile())
                 InstallHandler = new InstallHandler(fs, worker);
+            sw.Stop();
 
-            Logger.WriteLine("CASCHandler: loaded {0} install data", InstallHandler.Count);
+            Logger.WriteLine("CASCHandler: loaded {0} install data in {1}", InstallHandler.Count, sw.Elapsed);
 
-            InstallHandler.Print();
+            //InstallHandler.Print();
 
+            Logger.WriteLine("CASCHandler: loading root data...");
+
+            sw.Restart();
             using (var fs = OpenRootFile())
                 RootHandler = new WowRootHandler(fs, worker);
+            sw.Stop();
 
-            Logger.WriteLine("CASCHandler: loaded {0} root data", RootHandler.Count);
+            Logger.WriteLine("CASCHandler: loaded {0} root data in {1}", RootHandler.Count, sw.Elapsed);
         }
 
         private Stream OpenInstallFile()

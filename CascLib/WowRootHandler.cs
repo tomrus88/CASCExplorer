@@ -164,6 +164,8 @@ namespace CASCExplorer
             if (!File.Exists(path))
                 throw new FileNotFoundException("list file missing!");
 
+            Logger.WriteLine("WowRootHandler: loading file names...");
+
             using (var sr = new StreamReader(path))
             {
                 string file;
