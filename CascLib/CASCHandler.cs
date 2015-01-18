@@ -32,6 +32,7 @@ namespace CASCExplorer
         public InstallHandler Install { get { return InstallHandler; } }
         public EncodingHandler Encoding { get { return EncodingHandler; } }
         public WowRootHandler Root { get { return RootHandler; } }
+        public CASCConfig Config { get { return config; } }
 
         private CASCHandler(CASCConfig config, AsyncAction worker)
         {

@@ -149,7 +149,7 @@ namespace CASCExplorer
         }
     }
 
-    internal class CASCConfig
+    public class CASCConfig
     {
         KeyValueConfig _BuildConfig;
         KeyValueConfig _CDNConfig;
