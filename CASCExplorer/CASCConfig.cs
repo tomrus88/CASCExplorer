@@ -17,6 +17,9 @@ namespace CASCExplorer
 
                 while ((line = sr.ReadLine()) != null)
                 {
+                    if (line == string.Empty) // skip empty lines
+                        continue;
+
                     if (line.StartsWith("#")) // skip comments
                         continue;
 
