@@ -1,0 +1,2129 @@
+﻿using System;
+using System.Collections.Generic;
+using System.Diagnostics;
+using System.IO;
+using System.Linq;
+using System.Runtime.InteropServices;
+using System.Text;
+
+namespace CASCExplorer
+{
+    struct MNDXHeader
+    {
+        public int Signature;                            // 'MNDX'
+        public int HeaderVersion;                        // Must be <= 2
+        public int FormatVersion;
+    }
+
+    struct MARInfo
+    {
+        public int MarIndex;
+        public int MarDataSize;
+        public int MarDataSizeHi;
+        public int MarDataOffset;
+        public int MarDataOffsetHi;
+    }
+
+    public struct TRIPLET
+    {
+        public int BaseValue;
+        public int Value2;
+        public int Value3;
+    }
+
+    struct NAME_FRAG
+    {
+        public int ItemIndex;   // Back index to various tables
+        public int NextIndex;   // The following item index
+        public int FragOffs;    // Higher 24 bits are 0xFFFFFF00 --> A single matching character
+                                // Otherwise --> Offset to the name fragment table
+    }
+
+    struct CASC_ROOT_ENTRY_MNDX
+    {
+        public int Flags;           // High 8 bits: Flags, low 24 bits: package index
+        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 0x10)]
+        public byte[] EncodingKey;  // Encoding key for the file
+        public int FileSize;        // Uncompressed file size, in bytes
+    }
+
+    public class PATH_STOP
+    {
+        public int ItemIndex { get; set; }
+        public int field_4 { get; set; }
+        public int field_8 { get; set; }
+        public int field_C { get; set; }
+        public int field_10 { get; set; }
+
+        public PATH_STOP()
+        {
+            ItemIndex = 0;
+            field_4 = 0;
+            field_8 = 0;
+            field_C = -1;
+            field_10 = -1;
+        }
+    }
+
+    class MNDXRootHandler : IRootHandler
+    {
+        private const int CASC_MNDX_SIGNATURE = 0x58444E4D;          // 'MNDX'
+        private const int CASC_MAX_MAR_FILES = 3;
+
+        private MARFileNameDB[] MarFiles = new MARFileNameDB[CASC_MAX_MAR_FILES];
+        private static readonly Jenkins96 Hasher = new Jenkins96();
+        private CASCFolder Root;
+
+        private List<CASC_ROOT_ENTRY_MNDX> mndxRootEntries = new List<CASC_ROOT_ENTRY_MNDX>();
+        private List<CASC_ROOT_ENTRY_MNDX> mndxRootEntriesValid;
+
+        private Dictionary<ulong, int> mndxData = new Dictionary<ulong, int>();
+
+        public MNDXRootHandler(Stream stream, AsyncAction worker)
+        {
+            if (worker != null)
+            {
+                worker.ThrowOnCancel();
+                worker.ReportProgress(0, "Loading \"root\"...");
+            }
+
+            using (var br = new BinaryReader(stream))
+            {
+                var header = br.Read<MNDXHeader>();
+
+                if (header.Signature != CASC_MNDX_SIGNATURE || header.FormatVersion > 2 || header.FormatVersion < 1)
+                    throw new Exception("invalid root file");
+
+                if (header.HeaderVersion == 2)
+                {
+                    var build1 = br.ReadInt32(); // build number
+                    var build2 = br.ReadInt32(); // build number
+                }
+
+                int MarInfoOffset = br.ReadInt32();                            // Offset of the first MAR entry info
+                int MarInfoCount = br.ReadInt32();                             // Number of the MAR info entries
+                int MarInfoSize = br.ReadInt32();                              // Size of the MAR info entry
+                int MndxEntriesOffset = br.ReadInt32();
+                int MndxEntriesTotal = br.ReadInt32();                         // Total number of MNDX root entries
+                int MndxEntriesValid = br.ReadInt32();                         // Number of valid MNDX root entries
+                int MndxEntrySize = br.ReadInt32();                            // Size of one MNDX root entry
+
+                if (MarInfoCount > CASC_MAX_MAR_FILES || MarInfoSize != Marshal.SizeOf(typeof(MARInfo)))
+                    throw new Exception("invalid root file (1)");
+
+                for (int i = 0; i < MarInfoCount; i++)
+                {
+                    br.BaseStream.Position = MarInfoOffset + (MarInfoSize * i);
+
+                    MARInfo marInfo = br.Read<MARInfo>();
+
+                    br.BaseStream.Position = marInfo.MarDataOffset;
+
+                    MarFiles[i] = new MARFileNameDB(br);
+
+                    if (br.BaseStream.Position != marInfo.MarDataOffset + marInfo.MarDataSize)
+                        throw new Exception("MAR parsing error!");
+                }
+
+                if (MndxEntrySize != Marshal.SizeOf(typeof(CASC_ROOT_ENTRY_MNDX)))
+                    throw new Exception("invalid root file (2)");
+
+                br.BaseStream.Position = MndxEntriesOffset;
+
+                for (int i = 0; i < MndxEntriesTotal; ++i)
+                    mndxRootEntries.Add(br.Read<CASC_ROOT_ENTRY_MNDX>());
+
+                mndxRootEntriesValid = mndxRootEntries.Where(e => (e.Flags & 0x80000000) != 0).ToList();
+            }
+        }
+
+        public ContentFlags Content
+        {
+            get
+            {
+                return ContentFlags.None;
+            }
+        }
+
+        public int Count
+        {
+            get
+            {
+                return MarFiles[2].NumFiles;
+            }
+        }
+
+        public int PackagesCount
+        {
+            get
+            {
+                return MarFiles[0].NumFiles;
+            }
+        }
+
+        public int CountSelect
+        {
+            get
+            {
+                return MarFiles[2].NumFiles;
+            }
+        }
+
+        public int CountTotal
+        {
+            get
+            {
+                return MarFiles[2].NumFiles;
+            }
+        }
+
+        public int CountUnknown
+        {
+            get
+            {
+                return 0;
+            }
+        }
+
+        public LocaleFlags Locale
+        {
+            get
+            {
+                return LocaleFlags.None;
+            }
+        }
+
+        public HashSet<RootEntry> GetAllEntries(ulong hash)
+        {
+            HashSet<RootEntry> entries = new HashSet<RootEntry>();
+            RootEntry rootEntry = new RootEntry();
+            rootEntry.Hash = hash;
+            rootEntry.MD5 = mndxRootEntries[mndxData[hash]].EncodingKey;
+            entries.Add(rootEntry);
+            return entries;
+        }
+
+        public IEnumerable<RootEntry> GetEntries(ulong hash)
+        {
+            RootEntry rootEntry = new RootEntry();
+            rootEntry.Hash = hash;
+            rootEntry.MD5 = mndxRootEntries[mndxData[hash]].EncodingKey;
+            yield return rootEntry;
+        }
+
+        public void LoadListFile(string path, AsyncAction worker = null)
+        {
+            if (worker != null)
+            {
+                worker.ThrowOnCancel();
+                worker.ReportProgress(0, "Loading \"listfile\"...");
+            }
+
+            Logger.WriteLine("MNDXRootHandler: loading file names...");
+
+            MNDXSearchResult result = new MNDXSearchResult();
+
+            MARFileNameDB marFile2 = MarFiles[2];
+
+            //result.SetSearchPath("mods/heroes.stormmod/base.stormassets/Assets/Textures/tyrael_spec.dds");
+            //bool res = MarFiles[2].FindFileInDatabase(result);
+
+            int i = 0;
+
+            while (marFile2.EnumerateFiles(result))
+            {
+                string file = result.szFoundPath;
+
+                ulong fileHash = Hasher.ComputeHash(file);
+
+                mndxData[fileHash] = result.FileNameIndex;
+
+                if (worker != null)
+                {
+                    worker.ThrowOnCancel();
+                    worker.ReportProgress((int)((float)i++ / (float)marFile2.NumFiles * 100.0f));
+                }
+            }
+
+            Logger.WriteLine("MNDXRootHandler: loaded {0} file names", i);
+        }
+
+        private CASCFolder CreateStorageTree()
+        {
+            var rootHash = Hasher.ComputeHash("root");
+
+            var root = new CASCFolder(rootHash);
+
+            CASCFolder.FolderNames[rootHash] = "root";
+
+            MNDXSearchResult result = new MNDXSearchResult();
+
+            MARFileNameDB marFile2 = MarFiles[2];
+
+            while (marFile2.EnumerateFiles(result))
+            {
+                string file = result.szFoundPath;
+
+                ulong fileHash = Hasher.ComputeHash(file);
+
+                CreateSubTree(root, fileHash, file);
+            }
+
+            return root;
+        }
+
+        private static void CreateSubTree(CASCFolder root, ulong filehash, string file)
+        {
+            string[] parts = file.Split('/');
+
+            CASCFolder folder = root;
+
+            for (int i = 0; i < parts.Length; ++i)
+            {
+                bool isFile = (i == parts.Length - 1);
+
+                ulong hash = isFile ? filehash : Hasher.ComputeHash(parts[i]);
+
+                ICASCEntry entry = folder.GetEntry(hash);
+
+                if (entry == null)
+                {
+                    if (isFile)
+                    {
+                        entry = new CASCFile(hash);
+                        CASCFile.FileNames[hash] = file;
+                    }
+                    else
+                    {
+                        entry = new CASCFolder(hash);
+                        CASCFolder.FolderNames[hash] = parts[i];
+                    }
+
+                    folder.SubEntries[hash] = entry;
+                }
+
+                folder = entry as CASCFolder;
+            }
+        }
+
+        public CASCFolder SetFlags(LocaleFlags locale, ContentFlags content, bool createTree = true)
+        {
+            if (createTree)
+                Root = CreateStorageTree();
+
+            return Root;
+        }
+    }
+
+    class MARFileNameDB
+    {
+        private const int CASC_MAR_SIGNATURE = 0x0052414d;           // 'MAR\0'
+
+        private TSparseArray Struct68_00;
+        private TSparseArray FileNameIndexes;
+        private TSparseArray Struct68_D0;
+        private List<byte> FrgmDist_LoBits;
+        private TBitEntryArray FrgmDist_HiBits;
+        private TNameIndexStruct IndexStruct_174;
+        private MARFileNameDB NextDB;
+        private List<NAME_FRAG> NameFragTable;
+        private int NameFragIndexMask;
+        private int field_214;
+        //private TStruct10 Struct10;
+
+        public int NumFiles { get { return FileNameIndexes.ValidItemCount; } }
+
+        private byte[] table_1BA1818 =
+        {
+            0x07, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x04, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x05, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x04, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x06, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x04, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x05, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x04, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x07, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x04, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x05, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x04, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x06, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x04, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x05, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x04, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00, 0x03, 0x00, 0x01, 0x00, 0x02, 0x00, 0x01, 0x00,
+            0x07, 0x07, 0x07, 0x01, 0x07, 0x02, 0x02, 0x01, 0x07, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x07, 0x04, 0x04, 0x01, 0x04, 0x02, 0x02, 0x01, 0x04, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x07, 0x05, 0x05, 0x01, 0x05, 0x02, 0x02, 0x01, 0x05, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x05, 0x04, 0x04, 0x01, 0x04, 0x02, 0x02, 0x01, 0x04, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x07, 0x06, 0x06, 0x01, 0x06, 0x02, 0x02, 0x01, 0x06, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x06, 0x04, 0x04, 0x01, 0x04, 0x02, 0x02, 0x01, 0x04, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x06, 0x05, 0x05, 0x01, 0x05, 0x02, 0x02, 0x01, 0x05, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x05, 0x04, 0x04, 0x01, 0x04, 0x02, 0x02, 0x01, 0x04, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x07, 0x07, 0x07, 0x01, 0x07, 0x02, 0x02, 0x01, 0x07, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x07, 0x04, 0x04, 0x01, 0x04, 0x02, 0x02, 0x01, 0x04, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x07, 0x05, 0x05, 0x01, 0x05, 0x02, 0x02, 0x01, 0x05, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x05, 0x04, 0x04, 0x01, 0x04, 0x02, 0x02, 0x01, 0x04, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x07, 0x06, 0x06, 0x01, 0x06, 0x02, 0x02, 0x01, 0x06, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x06, 0x04, 0x04, 0x01, 0x04, 0x02, 0x02, 0x01, 0x04, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x06, 0x05, 0x05, 0x01, 0x05, 0x02, 0x02, 0x01, 0x05, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x05, 0x04, 0x04, 0x01, 0x04, 0x02, 0x02, 0x01, 0x04, 0x03, 0x03, 0x01, 0x03, 0x02, 0x02, 0x01,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x02, 0x07, 0x07, 0x07, 0x03, 0x07, 0x03, 0x03, 0x02,
+            0x07, 0x07, 0x07, 0x04, 0x07, 0x04, 0x04, 0x02, 0x07, 0x04, 0x04, 0x03, 0x04, 0x03, 0x03, 0x02,
+            0x07, 0x07, 0x07, 0x05, 0x07, 0x05, 0x05, 0x02, 0x07, 0x05, 0x05, 0x03, 0x05, 0x03, 0x03, 0x02,
+            0x07, 0x05, 0x05, 0x04, 0x05, 0x04, 0x04, 0x02, 0x05, 0x04, 0x04, 0x03, 0x04, 0x03, 0x03, 0x02,
+            0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x02, 0x07, 0x06, 0x06, 0x03, 0x06, 0x03, 0x03, 0x02,
+            0x07, 0x06, 0x06, 0x04, 0x06, 0x04, 0x04, 0x02, 0x06, 0x04, 0x04, 0x03, 0x04, 0x03, 0x03, 0x02,
+            0x07, 0x06, 0x06, 0x05, 0x06, 0x05, 0x05, 0x02, 0x06, 0x05, 0x05, 0x03, 0x05, 0x03, 0x03, 0x02,
+            0x06, 0x05, 0x05, 0x04, 0x05, 0x04, 0x04, 0x02, 0x05, 0x04, 0x04, 0x03, 0x04, 0x03, 0x03, 0x02,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x02, 0x07, 0x07, 0x07, 0x03, 0x07, 0x03, 0x03, 0x02,
+            0x07, 0x07, 0x07, 0x04, 0x07, 0x04, 0x04, 0x02, 0x07, 0x04, 0x04, 0x03, 0x04, 0x03, 0x03, 0x02,
+            0x07, 0x07, 0x07, 0x05, 0x07, 0x05, 0x05, 0x02, 0x07, 0x05, 0x05, 0x03, 0x05, 0x03, 0x03, 0x02,
+            0x07, 0x05, 0x05, 0x04, 0x05, 0x04, 0x04, 0x02, 0x05, 0x04, 0x04, 0x03, 0x04, 0x03, 0x03, 0x02,
+            0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x02, 0x07, 0x06, 0x06, 0x03, 0x06, 0x03, 0x03, 0x02,
+            0x07, 0x06, 0x06, 0x04, 0x06, 0x04, 0x04, 0x02, 0x06, 0x04, 0x04, 0x03, 0x04, 0x03, 0x03, 0x02,
+            0x07, 0x06, 0x06, 0x05, 0x06, 0x05, 0x05, 0x02, 0x06, 0x05, 0x05, 0x03, 0x05, 0x03, 0x03, 0x02,
+            0x06, 0x05, 0x05, 0x04, 0x05, 0x04, 0x04, 0x02, 0x05, 0x04, 0x04, 0x03, 0x04, 0x03, 0x03, 0x02,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x03,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x04, 0x07, 0x07, 0x07, 0x04, 0x07, 0x04, 0x04, 0x03,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x05, 0x07, 0x07, 0x07, 0x05, 0x07, 0x05, 0x05, 0x03,
+            0x07, 0x07, 0x07, 0x05, 0x07, 0x05, 0x05, 0x04, 0x07, 0x05, 0x05, 0x04, 0x05, 0x04, 0x04, 0x03,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06, 0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x03,
+            0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x04, 0x07, 0x06, 0x06, 0x04, 0x06, 0x04, 0x04, 0x03,
+            0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x05, 0x07, 0x06, 0x06, 0x05, 0x06, 0x05, 0x05, 0x03,
+            0x07, 0x06, 0x06, 0x05, 0x06, 0x05, 0x05, 0x04, 0x06, 0x05, 0x05, 0x04, 0x05, 0x04, 0x04, 0x03,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x03,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x04, 0x07, 0x07, 0x07, 0x04, 0x07, 0x04, 0x04, 0x03,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x05, 0x07, 0x07, 0x07, 0x05, 0x07, 0x05, 0x05, 0x03,
+            0x07, 0x07, 0x07, 0x05, 0x07, 0x05, 0x05, 0x04, 0x07, 0x05, 0x05, 0x04, 0x05, 0x04, 0x04, 0x03,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06, 0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x03,
+            0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x04, 0x07, 0x06, 0x06, 0x04, 0x06, 0x04, 0x04, 0x03,
+            0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x05, 0x07, 0x06, 0x06, 0x05, 0x06, 0x05, 0x05, 0x03,
+            0x07, 0x06, 0x06, 0x05, 0x06, 0x05, 0x05, 0x04, 0x06, 0x05, 0x05, 0x04, 0x05, 0x04, 0x04, 0x03,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x04,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x05,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x05, 0x07, 0x07, 0x07, 0x05, 0x07, 0x05, 0x05, 0x04,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06, 0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x04,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06, 0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x05,
+            0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x05, 0x07, 0x06, 0x06, 0x05, 0x06, 0x05, 0x05, 0x04,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x04,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x05,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x05, 0x07, 0x07, 0x07, 0x05, 0x07, 0x05, 0x05, 0x04,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06, 0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x04,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06, 0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x05,
+            0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x05, 0x07, 0x06, 0x06, 0x05, 0x06, 0x05, 0x05, 0x04,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x05,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06, 0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x05,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x05,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06, 0x07, 0x07, 0x07, 0x06, 0x07, 0x06, 0x06, 0x05,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x06,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07,
+            0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07
+        };
+
+        public MARFileNameDB(BinaryReader reader, bool next = false)
+        {
+            if (!next && reader.ReadInt32() != CASC_MAR_SIGNATURE)
+                throw new Exception("invalid MAR file");
+
+            Struct68_00 = new TSparseArray(reader);
+            FileNameIndexes = new TSparseArray(reader);
+            Struct68_D0 = new TSparseArray(reader);
+            FrgmDist_LoBits = reader.Read<byte>(false);
+            FrgmDist_HiBits = new TBitEntryArray(reader);
+            IndexStruct_174 = new TNameIndexStruct(reader);
+
+            if (Struct68_D0.ValidItemCount != 0 && IndexStruct_174.Count == 0)
+            {
+                NextDB = new MARFileNameDB(reader, true);
+            }
+
+            NameFragTable = reader.Read<NAME_FRAG>(false);
+
+            NameFragIndexMask = NameFragTable.Count - 1;
+
+            field_214 = reader.ReadInt32();
+
+            int dwBitMask = reader.ReadInt32();
+            //Struct10 = new TStruct10();
+            //Struct10.sub_1957800(dwBitMask);
+        }
+
+        private int sub_1959CB0(int dwItemIndex)
+        {
+            TRIPLET pTriplet;
+            int dwKeyShifted = (dwItemIndex >> 9);
+            int eax, ebx, ecx, edx, esi, edi;
+
+            // If lower 9 is zero
+            edx = dwItemIndex;
+            if ((edx & 0x1FF) == 0)
+                return Struct68_00.GetArrayValue_38(dwKeyShifted);
+
+            eax = Struct68_00.GetArrayValue_38(dwKeyShifted) >> 9;
+            esi = (Struct68_00.GetArrayValue_38(dwKeyShifted + 1) + 0x1FF) >> 9;
+            dwItemIndex = esi;
+
+            if ((eax + 0x0A) >= esi)
+            {
+                // HOTS: 1959CF7
+                int i = eax + 1;
+                pTriplet = Struct68_00.GetBaseValue(i);
+                i++;
+                edi = (eax << 0x09);
+                ebx = edi - pTriplet.BaseValue + 0x200;
+                while (edx >= ebx)
+                {
+                    // HOTS: 1959D14
+                    edi += 0x200;
+                    pTriplet = Struct68_00.GetBaseValue(i);
+
+                    ebx = edi - pTriplet.BaseValue + 0x200;
+                    eax++;
+                    i++;
+                }
+            }
+            else
+            {
+                // HOTS: 1959D2E
+                while ((eax + 1) < esi)
+                {
+                    // HOTS: 1959D38
+                    // ecx = Struct68_00.BaseValues.TripletArray;
+                    esi = (esi + eax) >> 1;
+                    ebx = (esi << 0x09) - Struct68_00.GetBaseValue(esi).BaseValue;
+                    if (edx < ebx)
+                    {
+                        // HOTS: 01959D4B
+                        dwItemIndex = esi;
+                    }
+                    else
+                    {
+                        // HOTS: 1959D50
+                        eax = esi;
+                        esi = dwItemIndex;
+                    }
+                }
+            }
+
+            // HOTS: 1959D5F
+            pTriplet = Struct68_00.GetBaseValue(eax);
+            edx += pTriplet.BaseValue - (eax << 0x09);
+            edi = (eax << 4);
+
+            eax = pTriplet.Value2;
+            ecx = (eax >> 0x17);
+            ebx = 0x100 - ecx;
+            if (edx < ebx)
+            {
+                // HOTS: 1959D8C
+                ecx = ((eax >> 0x07) & 0xFF);
+                esi = 0x80 - ecx;
+                if (edx < esi)
+                {
+                    // HOTS: 01959DA2
+                    eax = eax & 0x7F;
+                    ecx = 0x40 - eax;
+                    if (edx >= ecx)
+                    {
+                        // HOTS: 01959DB7
+                        edi += 2;
+                        edx = edx + eax - 0x40;
+                    }
+                }
+                else
+                {
+                    // HOTS: 1959DC0
+                    eax = (eax >> 0x0F) & 0xFF;
+                    esi = 0xC0 - eax;
+                    if (edx < esi)
+                    {
+                        // HOTS: 1959DD3
+                        edi += 4;
+                        edx = edx + ecx - 0x80;
+                    }
+                    else
+                    {
+                        // HOTS: 1959DD3
+                        edi += 6;
+                        edx = edx + eax - 0xC0;
+                    }
+                }
+            }
+            else
+            {
+                // HOTS: 1959DE8
+                esi = pTriplet.Value3;
+                eax = ((esi >> 0x09) & 0x1FF);
+                ebx = 0x180 - eax;
+                if (edx < ebx)
+                {
+                    // HOTS: 01959E00
+                    esi = esi & 0x1FF;
+                    eax = (0x140 - esi);
+                    if (edx < eax)
+                    {
+                        // HOTS: 1959E11
+                        edi = edi + 8;
+                        edx = edx + ecx - 0x100;
+                    }
+                    else
+                    {
+                        // HOTS: 1959E1D
+                        edi = edi + 0x0A;
+                        edx = edx + esi - 0x140;
+                    }
+                }
+                else
+                {
+                    // HOTS: 1959E29
+                    esi = (esi >> 0x12) & 0x1FF;
+                    ecx = (0x1C0 - esi);
+                    if (edx < ecx)
+                    {
+                        // HOTS: 1959E3D
+                        edi = edi + 0x0C;
+                        edx = edx + eax - 0x180;
+                    }
+                    else
+                    {
+                        // HOTS: 1959E49
+                        edi = edi + 0x0E;
+                        edx = edx + esi - 0x1C0;
+                    }
+                }
+            }
+
+            // HOTS: 1959E53:
+            // Calculate the number of bits set in the value of "ecx"
+            ecx = ~Struct68_00.GetItemBit(edi);
+            eax = GetNumberOfSetBits(ecx);
+            esi = eax >> 0x18;
+
+            if (edx >= esi)
+            {
+                // HOTS: 1959ea4
+                ecx = ~Struct68_00.GetItemBit(++edi);
+                edx = edx - esi;
+                eax = GetNumberOfSetBits(ecx);
+            }
+
+            // HOTS: 1959eea 
+            // ESI gets the number of set bits in the lower 16 bits of ECX
+            esi = (eax >> 0x08) & 0xFF;
+            edi = edi << 0x05;
+            if (edx < esi)
+            {
+                // HOTS: 1959EFC
+                eax = eax & 0xFF;
+                if (edx >= eax)
+                {
+                    // HOTS: 1959F05
+                    ecx >>= 0x08;
+                    edi += 0x08;
+                    edx -= eax;
+                }
+            }
+            else
+            {
+                // HOTS: 1959F0D
+                eax = (eax >> 0x10) & 0xFF;
+                if (edx < eax)
+                {
+                    // HOTS: 1959F19
+                    ecx >>= 0x10;
+                    edi += 0x10;
+                    edx -= esi;
+                }
+                else
+                {
+                    // HOTS: 1959F23
+                    ecx >>= 0x18;
+                    edi += 0x18;
+                    edx -= eax;
+                }
+            }
+
+            // HOTS: 1959f2b
+            edx = edx << 0x08;
+            ecx = ecx & 0xFF;
+
+            // BUGBUG: Possible buffer overflow here. Happens when dwItemIndex >= 0x9C.
+            // The same happens in Heroes of the Storm (build 29049), so I am not sure
+            // if this is a bug or a case that never happens
+            Debug.Assert((ecx + edx) < table_1BA1818.Length);
+            return table_1BA1818[ecx + edx] + edi;
+        }
+
+        private int sub_1959F50(int arg_0)
+        {
+            TRIPLET pTriplet;
+            int eax, ebx, ecx, edx, esi, edi;
+
+            edx = arg_0;
+            eax = arg_0 >> 0x09;
+            if ((arg_0 & 0x1FF) == 0)
+                return Struct68_00.GetArrayValue_50(eax);
+
+            int item0 = Struct68_00.GetArrayValue_50(eax);
+            int item1 = Struct68_00.GetArrayValue_50(eax + 1);
+            eax = (item0 >> 0x09);
+            edi = (item1 + 0x1FF) >> 0x09;
+
+            if ((eax + 0x0A) > edi)
+            {
+                // HOTS: 01959F94
+                int i = eax + 1;
+                pTriplet = Struct68_00.GetBaseValue(i);
+                i++;
+                while (edx >= pTriplet.BaseValue)
+                {
+                    // HOTS: 1959FA3
+                    pTriplet = Struct68_00.GetBaseValue(i);
+                    eax++;
+                    i++;
+                }
+            }
+            else
+            {
+                // Binary search
+                // HOTS: 1959FAD
+                if ((eax + 1) < edi)
+                {
+                    // HOTS: 1959FB4
+                    esi = (edi + eax) >> 1;
+                    if (edx < Struct68_00.GetBaseValue(esi).BaseValue)
+                    {
+                        // HOTS: 1959FC4
+                        edi = esi;
+                    }
+                    else
+                    {
+                        // HOTS: 1959FC8
+                        eax = esi;
+                    }
+                }
+            }
+
+            // HOTS: 1959FD4
+            pTriplet = Struct68_00.GetBaseValue(eax);
+            edx = edx - pTriplet.BaseValue;
+            edi = eax << 0x04;
+            eax = pTriplet.Value2;
+            ebx = (eax >> 0x17);
+            if (edx < ebx)
+            {
+                // HOTS: 1959FF1
+                esi = (eax >> 0x07) & 0xFF;
+                if (edx < esi)
+                {
+                    // HOTS: 0195A000
+                    eax = eax & 0x7F;
+                    if (edx >= eax)
+                    {
+                        // HOTS: 195A007
+                        edi = edi + 2;
+                        edx = edx - eax;
+                    }
+                }
+                else
+                {
+                    // HOTS: 195A00E
+                    eax = (eax >> 0x0F) & 0xFF;
+                    if (edx < eax)
+                    {
+                        // HOTS: 195A01A
+                        edi += 4;
+                        edx = edx - esi;
+                    }
+                    else
+                    {
+                        // HOTS: 195A01F
+                        edi += 6;
+                        edx = edx - eax;
+                    }
+                }
+            }
+            else
+            {
+                // HOTS: 195A026
+                esi = pTriplet.Value3;
+                eax = (pTriplet.Value3 >> 0x09) & 0x1FF;
+                if (edx < eax)
+                {
+                    // HOTS: 195A037
+                    esi = esi & 0x1FF;
+                    if (edx < esi)
+                    {
+                        // HOTS: 195A041
+                        edi = edi + 8;
+                        edx = edx - ebx;
+                    }
+                    else
+                    {
+                        // HOTS: 195A048
+                        edi = edi + 0x0A;
+                        edx = edx - esi;
+                    }
+                }
+                else
+                {
+                    // HOTS: 195A04D
+                    esi = (esi >> 0x12) & 0x1FF;
+                    if (edx < esi)
+                    {
+                        // HOTS: 195A05A
+                        edi = edi + 0x0C;
+                        edx = edx - eax;
+                    }
+                    else
+                    {
+                        // HOTS: 195A061
+                        edi = edi + 0x0E;
+                        edx = edx - esi;
+                    }
+                }
+            }
+
+            // HOTS: 195A066
+            esi = Struct68_00.GetItemBit(edi);
+            eax = GetNumberOfSetBits(esi);
+            ecx = eax >> 0x18;
+
+            if (edx >= ecx)
+            {
+                // HOTS: 195A0B2
+                esi = Struct68_00.GetItemBit(++edi);
+                edx = edx - ecx;
+                eax = GetNumberOfSetBits(esi);
+            }
+
+            // HOTS: 195A0F6
+            ecx = (eax >> 0x08) & 0xFF;
+
+            edi = (edi << 0x05);
+            if (edx < ecx)
+            {
+                // HOTS: 195A111
+                eax = eax & 0xFF;
+                if (edx >= eax)
+                {
+                    // HOTS: 195A111
+                    edi = edi + 0x08;
+                    esi = esi >> 0x08;
+                    edx = edx - eax;
+                }
+            }
+            else
+            {
+                // HOTS: 195A119
+                eax = (eax >> 0x10) & 0xFF;
+                if (edx < eax)
+                {
+                    // HOTS: 195A125
+                    esi = esi >> 0x10;
+                    edi = edi + 0x10;
+                    edx = edx - ecx;
+                }
+                else
+                {
+                    // HOTS: 195A12F
+                    esi = esi >> 0x18;
+                    edi = edi + 0x18;
+                    edx = edx - eax;
+                }
+            }
+
+            esi = esi & 0xFF;
+            edx = edx << 0x08;
+
+            // BUGBUG: Potential buffer overflow
+            // Happens in Heroes of the Storm when arg_0 == 0x5B
+            Debug.Assert((esi + edx) < table_1BA1818.Length);
+            return table_1BA1818[esi + edx] + edi;
+        }
+
+        bool CheckNextPathFragment(MNDXSearchResult pStruct1C)
+        {
+            SearchBuffer pStruct40 = pStruct1C.Buffer;
+            byte[] pbPathName = Encoding.ASCII.GetBytes(pStruct1C.szSearchMask);
+            int CollisionIndex;
+            int NameFragIndex;
+            int SaveCharIndex;
+            int HiBitsIndex;
+            int FragOffs;
+
+            // Calculate index of the next name fragment in the name fragment table
+            NameFragIndex = ((pStruct40.ItemIndex << 0x05) ^ pStruct40.ItemIndex ^ pbPathName[pStruct40.CharIndex]) & NameFragIndexMask;
+
+            // Does the hash value match?
+            if (NameFragTable[NameFragIndex].ItemIndex == pStruct40.ItemIndex)
+            {
+                // Check if there is single character match
+                if (IsSingleCharMatch(NameFragTable, NameFragIndex))
+                {
+                    pStruct40.ItemIndex = NameFragTable[NameFragIndex].NextIndex;
+                    pStruct40.CharIndex++;
+                    return true;
+                }
+
+                // Check if there is a name fragment match
+                if (NextDB != null)
+                {
+                    if (!NextDB.sub_1957B80(pStruct1C, NameFragTable[NameFragIndex].FragOffs))
+                        return false;
+                }
+                else
+                {
+                    if (!IndexStruct_174.CheckNameFragment(pStruct1C, NameFragTable[NameFragIndex].FragOffs))
+                        return false;
+                }
+
+                pStruct40.ItemIndex = NameFragTable[NameFragIndex].NextIndex;
+                return true;
+            }
+
+            //
+            // Conflict: Multiple hashes give the same table index
+            //
+
+            // HOTS: 1957A0E
+            CollisionIndex = sub_1959CB0(pStruct40.ItemIndex) + 1;
+            if (!Struct68_00.Contains(CollisionIndex))
+                return false;
+
+            pStruct40.ItemIndex = (CollisionIndex - pStruct40.ItemIndex - 1);
+            HiBitsIndex = -1;
+
+            // HOTS: 1957A41:
+            do
+            {
+                // HOTS: 1957A41
+                // Check if the low 8 bits if the fragment offset contain a single character
+                // or an offset to a name fragment 
+                if (Struct68_D0.Contains(pStruct40.ItemIndex))
+                {
+                    if (HiBitsIndex == -1)
+                    {
+                        // HOTS: 1957A6C
+                        HiBitsIndex = Struct68_D0.GetItemValue(pStruct40.ItemIndex);
+                    }
+                    else
+                    {
+                        // HOTS: 1957A7F
+                        HiBitsIndex++;
+                    }
+
+                    // HOTS: 1957A83
+                    SaveCharIndex = pStruct40.CharIndex;
+
+                    // Get the name fragment offset as combined value from lower 8 bits and upper bits
+                    FragOffs = GetNameFragmentOffsetEx(pStruct40.ItemIndex, HiBitsIndex);
+
+                    // Compare the string with the fragment name database
+                    if (NextDB != null)
+                    {
+                        // HOTS: 1957AEC
+                        if (NextDB.sub_1957B80(pStruct1C, FragOffs))
+                            return true;
+                    }
+                    else
+                    {
+                        // HOTS: 1957AF7
+                        if (IndexStruct_174.CheckNameFragment(pStruct1C, FragOffs))
+                            return true;
+                    }
+
+                    // HOTS: 1957B0E
+                    // If there was partial match with the fragment, end the search
+                    if (pStruct40.CharIndex != SaveCharIndex)
+                        return false;
+                }
+                else
+                {
+                    // HOTS: 1957B1C
+                    if (FrgmDist_LoBits[pStruct40.ItemIndex] == pStruct1C.szSearchMask[pStruct40.CharIndex])
+                    {
+                        pStruct40.CharIndex++;
+                        return true;
+                    }
+                }
+
+                // HOTS: 1957B32
+                pStruct40.ItemIndex++;
+                CollisionIndex++;
+            }
+            while (Struct68_00.Contains(CollisionIndex));
+            return false;
+        }
+
+        private bool sub_1957B80(MNDXSearchResult pStruct1C, int dwKey)
+        {
+            SearchBuffer pStruct40 = pStruct1C.Buffer;
+            NAME_FRAG pNameEntry;
+            int FragOffs;
+            int eax, edi;
+
+            edi = dwKey;
+
+            // HOTS: 1957B95
+            for (; ;)
+            {
+                pNameEntry = NameFragTable[(edi & NameFragIndexMask)];
+                if (edi == pNameEntry.NextIndex)
+                {
+                    // HOTS: 01957BB4
+                    if ((pNameEntry.FragOffs & 0xFFFFFF00) != 0xFFFFFF00)
+                    {
+                        // HOTS: 1957BC7
+                        if (NextDB != null)
+                        {
+                            // HOTS: 1957BD3
+                            if (!NextDB.sub_1957B80(pStruct1C, pNameEntry.FragOffs))
+                                return false;
+                        }
+                        else
+                        {
+                            // HOTS: 1957BE0
+                            if (!IndexStruct_174.CheckNameFragment(pStruct1C, pNameEntry.FragOffs))
+                                return false;
+                        }
+                    }
+                    else
+                    {
+                        // HOTS: 1957BEE
+                        if (pStruct1C.szSearchMask[pStruct40.CharIndex] != (byte)pNameEntry.FragOffs)
+                            return false;
+                        pStruct40.CharIndex++;
+                    }
+
+                    // HOTS: 1957C05
+                    edi = pNameEntry.ItemIndex;
+                    if (edi == 0)
+                        return true;
+
+                    if (pStruct40.CharIndex >= pStruct1C.cchSearchMask)
+                        return false;
+                }
+                else
+                {
+                    // HOTS: 1957C30
+                    if (Struct68_D0.Contains(edi))
+                    {
+                        // HOTS: 1957C4C
+                        if (NextDB != null)
+                        {
+                            // HOTS: 1957C58
+                            FragOffs = GetNameFragmentOffset(edi);
+                            if (!NextDB.sub_1957B80(pStruct1C, FragOffs))
+                                return false;
+                        }
+                        else
+                        {
+                            // HOTS: 1957350
+                            FragOffs = GetNameFragmentOffset(edi);
+                            if (!IndexStruct_174.CheckNameFragment(pStruct1C, FragOffs))
+                                return false;
+                        }
+                    }
+                    else
+                    {
+                        // HOTS: 1957C8E
+                        if (FrgmDist_LoBits[edi] != pStruct1C.szSearchMask[pStruct40.CharIndex])
+                            return false;
+
+                        pStruct40.CharIndex++;
+                    }
+
+                    // HOTS: 1957CB2
+                    if (edi <= field_214)
+                        return true;
+
+                    if (pStruct40.CharIndex >= pStruct1C.cchSearchMask)
+                        return false;
+
+                    eax = sub_1959F50(edi);
+                    edi = (eax - edi - 1);
+                }
+            }
+        }
+
+        private void sub_1958D70(MNDXSearchResult pStruct1C, int arg_4)
+        {
+            SearchBuffer pStruct40 = pStruct1C.Buffer;
+            NAME_FRAG pNameEntry;
+
+            // HOTS: 1958D84
+            for (; ;)
+            {
+                pNameEntry = NameFragTable[(arg_4 & NameFragIndexMask)];
+                if (arg_4 == pNameEntry.NextIndex)
+                {
+                    // HOTS: 1958DA6
+                    if ((pNameEntry.FragOffs & 0xFFFFFF00) != 0xFFFFFF00)
+                    {
+                        // HOTS: 1958DBA
+                        if (NextDB != null)
+                        {
+                            NextDB.sub_1958D70(pStruct1C, pNameEntry.FragOffs);
+                        }
+                        else
+                        {
+                            IndexStruct_174.CopyNameFragment(pStruct1C, pNameEntry.FragOffs);
+                        }
+                    }
+                    else
+                    {
+                        // HOTS: 1958DE7
+                        // Insert the low 8 bits to the path being built
+                        pStruct40.Add((byte)(pNameEntry.FragOffs & 0xFF));
+                    }
+
+                    // HOTS: 1958E71
+                    arg_4 = pNameEntry.ItemIndex;
+                    if (arg_4 == 0)
+                        return;
+                }
+                else
+                {
+                    // HOTS: 1958E8E
+                    if (Struct68_D0.Contains(arg_4))
+                    {
+                        int FragOffs;
+
+                        // HOTS: 1958EAF
+                        FragOffs = GetNameFragmentOffset(arg_4);
+                        if (NextDB != null)
+                        {
+                            NextDB.sub_1958D70(pStruct1C, FragOffs);
+                        }
+                        else
+                        {
+                            IndexStruct_174.CopyNameFragment(pStruct1C, FragOffs);
+                        }
+                    }
+                    else
+                    {
+                        // HOTS: 1958F50
+                        // Insert one character to the path being built
+                        pStruct40.Add(FrgmDist_LoBits[arg_4]);
+                    }
+
+                    // HOTS: 1958FDE
+                    if (arg_4 <= field_214)
+                        return;
+
+                    arg_4 = -1 - arg_4 + sub_1959F50(arg_4);
+                }
+            }
+        }
+
+        private bool sub_1959010(MNDXSearchResult pStruct1C, int arg_4)
+        {
+            SearchBuffer pStruct40 = pStruct1C.Buffer;
+            NAME_FRAG pNameEntry;
+
+            // HOTS: 1959024
+            for (; ;)
+            {
+                pNameEntry = NameFragTable[(arg_4 & NameFragIndexMask)];
+                if (arg_4 == pNameEntry.NextIndex)
+                {
+                    // HOTS: 1959047
+                    if ((pNameEntry.FragOffs & 0xFFFFFF00) != 0xFFFFFF00)
+                    {
+                        // HOTS: 195905A
+                        if (NextDB != null)
+                        {
+                            if (!NextDB.sub_1959010(pStruct1C, pNameEntry.FragOffs))
+                                return false;
+                        }
+                        else
+                        {
+                            if (!IndexStruct_174.CheckAndCopyNameFragment(pStruct1C, pNameEntry.FragOffs))
+                                return false;
+                        }
+                    }
+                    else
+                    {
+                        // HOTS: 1959092
+                        if ((byte)(pNameEntry.FragOffs & 0xFF) != pStruct1C.szSearchMask[pStruct40.CharIndex])
+                            return false;
+
+                        // Insert the low 8 bits to the path being built
+                        pStruct40.Add((byte)(pNameEntry.FragOffs & 0xFF));
+                        pStruct40.CharIndex++;
+                    }
+
+                    // HOTS: 195912E
+                    arg_4 = pNameEntry.ItemIndex;
+                    if (arg_4 == 0)
+                        return true;
+                }
+                else
+                {
+                    // HOTS: 1959147
+                    if (Struct68_D0.Contains(arg_4))
+                    {
+                        int FragOffs;
+
+                        // HOTS: 195917C
+                        FragOffs = GetNameFragmentOffset(arg_4);
+                        if (NextDB != null)
+                        {
+                            if (!NextDB.sub_1959010(pStruct1C, FragOffs))
+                                return false;
+                        }
+                        else
+                        {
+                            if (!IndexStruct_174.CheckAndCopyNameFragment(pStruct1C, FragOffs))
+                                return false;
+                        }
+                    }
+                    else
+                    {
+                        // HOTS: 195920E
+                        if (FrgmDist_LoBits[arg_4] != pStruct1C.szSearchMask[pStruct40.CharIndex])
+                            return false;
+
+                        // Insert one character to the path being built
+                        pStruct40.Add(FrgmDist_LoBits[arg_4]);
+                        pStruct40.CharIndex++;
+                    }
+
+                    // HOTS: 19592B6
+                    if (arg_4 <= field_214)
+                        return true;
+
+                    arg_4 = -1 - arg_4 + sub_1959F50(arg_4);
+                }
+
+                // HOTS: 19592D5
+                if (pStruct40.CharIndex >= pStruct1C.cchSearchMask)
+                    break;
+            }
+
+            sub_1958D70(pStruct1C, arg_4);
+            return true;
+        }
+
+        public bool EnumerateFiles(MNDXSearchResult pStruct1C)
+        {
+            SearchBuffer pStruct40 = pStruct1C.Buffer;
+
+            if (pStruct40.SearchPhase == CASCSearchPhase.Finished)
+                return false;
+
+            if (pStruct40.SearchPhase != CASCSearchPhase.Searching)
+            {
+                // HOTS: 1959489
+                pStruct40.InitSearchBuffers();
+
+                // If the caller passed a part of the search path, we need to find that one
+                while (pStruct40.CharIndex < pStruct1C.cchSearchMask)
+                {
+                    if (!sub_1958B00(pStruct1C))
+                    {
+                        pStruct40.Finish();
+                        return false;
+                    }
+                }
+
+                // HOTS: 19594b0
+                PATH_STOP PathStop = new PATH_STOP();
+                PathStop.ItemIndex = pStruct40.ItemIndex;
+                PathStop.field_4 = 0;
+                PathStop.field_8 = pStruct40.NumBytesFound;
+                PathStop.field_C = -1;
+                PathStop.field_10 = -1;
+                pStruct40.AddPathStop(PathStop);
+                pStruct40.ItemCount = 1;
+
+                if (FileNameIndexes.Contains(pStruct40.ItemIndex))
+                {
+                    pStruct1C.SetFindResult(pStruct40.Result, FileNameIndexes.GetItemValue(pStruct40.ItemIndex));
+                    return true;
+                }
+            }
+
+            // HOTS: 1959522
+            for (; ;)
+            {
+                // HOTS: 1959530
+                if (pStruct40.ItemCount == pStruct40.NumPathStops)
+                {
+                    PATH_STOP pLastStop;
+                    int CollisionIndex;
+
+                    pLastStop = pStruct40.GetPathStop(pStruct40.NumPathStops - 1);
+                    CollisionIndex = sub_1959CB0(pLastStop.ItemIndex) + 1;
+
+                    // Insert a new structure
+                    PATH_STOP PathStop = new PATH_STOP();
+                    PathStop.ItemIndex = CollisionIndex - pLastStop.ItemIndex - 1;
+                    PathStop.field_4 = CollisionIndex;
+                    PathStop.field_8 = 0;
+                    PathStop.field_C = -1;
+                    PathStop.field_10 = -1;
+                    pStruct40.AddPathStop(PathStop);
+                }
+
+                // HOTS: 19595BD
+                PATH_STOP pPathStop = pStruct40.GetPathStop(pStruct40.ItemCount);
+
+                // HOTS: 19595CC
+                if (Struct68_00.Contains(pPathStop.field_4++))
+                {
+                    // HOTS: 19595F2
+                    pStruct40.ItemCount++;
+
+                    if (Struct68_D0.Contains(pPathStop.ItemIndex))
+                    {
+                        // HOTS: 1959617
+                        if (pPathStop.field_C == -1)
+                            pPathStop.field_C = Struct68_D0.GetItemValue(pPathStop.ItemIndex);
+                        else
+                            pPathStop.field_C++;
+
+                        // HOTS: 1959630
+                        int FragOffs = GetNameFragmentOffsetEx(pPathStop.ItemIndex, pPathStop.field_C);
+                        if (NextDB != null)
+                        {
+                            // HOTS: 1959649
+                            NextDB.sub_1958D70(pStruct1C, FragOffs);
+                        }
+                        else
+                        {
+                            // HOTS: 1959654
+                            IndexStruct_174.CopyNameFragment(pStruct1C, FragOffs);
+                        }
+                    }
+                    else
+                    {
+                        // HOTS: 1959665
+                        // Insert one character to the path being built
+                        pStruct40.Add(FrgmDist_LoBits[pPathStop.ItemIndex]);
+                    }
+
+                    // HOTS: 19596AE
+                    pPathStop.field_8 = pStruct40.NumBytesFound;
+
+                    // HOTS: 19596b6
+                    if (FileNameIndexes.Contains(pPathStop.ItemIndex))
+                    {
+                        // HOTS: 19596D1
+                        if (pPathStop.field_10 == -1)
+                        {
+                            // HOTS: 19596D9
+                            pPathStop.field_10 = FileNameIndexes.GetItemValue(pPathStop.ItemIndex);
+                        }
+                        else
+                        {
+                            pPathStop.field_10++;
+                        }
+
+                        // HOTS: 1959755
+                        pStruct1C.SetFindResult(pStruct40.Result, pPathStop.field_10);
+                        return true;
+                    }
+                }
+                else
+                {
+                    // HOTS: 19596E9
+                    if (pStruct40.ItemCount == 1)
+                    {
+                        pStruct40.Finish();
+                        return false;
+                    }
+
+                    // HOTS: 19596F5
+                    pPathStop = pStruct40.GetPathStop(pStruct40.ItemCount - 1);
+                    pPathStop.ItemIndex++;
+
+                    pPathStop = pStruct40.GetPathStop(pStruct40.ItemCount - 2);
+                    int edi = pPathStop.field_8;
+
+                    // HOTS: 1959749
+                    pStruct40.RemoveRange(edi);
+                    pStruct40.ItemCount--;
+                }
+            }
+        }
+
+        private bool sub_1958B00(MNDXSearchResult pStruct1C)
+        {
+            SearchBuffer pStruct40 = pStruct1C.Buffer;
+            byte[] pbPathName = Encoding.ASCII.GetBytes(pStruct1C.szSearchMask);
+            int CollisionIndex;
+            int FragmentOffset;
+            int SaveCharIndex;
+            int ItemIndex;
+            int FragOffs;
+            int var_4;
+
+            ItemIndex = pbPathName[pStruct40.CharIndex] ^ (pStruct40.ItemIndex << 0x05) ^ pStruct40.ItemIndex;
+            ItemIndex = ItemIndex & NameFragIndexMask;
+            if (pStruct40.ItemIndex == NameFragTable[ItemIndex].ItemIndex)
+            {
+                // HOTS: 1958B45
+                FragmentOffset = NameFragTable[ItemIndex].FragOffs;
+                if ((FragmentOffset & 0xFFFFFF00) == 0xFFFFFF00)
+                {
+                    // HOTS: 1958B88
+                    pStruct40.Add((byte)FragmentOffset);
+                    pStruct40.ItemIndex = NameFragTable[ItemIndex].NextIndex;
+                    pStruct40.CharIndex++;
+                    return true;
+                }
+
+                // HOTS: 1958B59
+                if (NextDB != null)
+                {
+                    if (!NextDB.sub_1959010(pStruct1C, FragmentOffset))
+                        return false;
+                }
+                else
+                {
+                    if (!IndexStruct_174.CheckAndCopyNameFragment(pStruct1C, FragmentOffset))
+                        return false;
+                }
+
+                // HOTS: 1958BCA
+                pStruct40.ItemIndex = NameFragTable[ItemIndex].NextIndex;
+                return true;
+            }
+
+            // HOTS: 1958BE5
+            CollisionIndex = sub_1959CB0(pStruct40.ItemIndex) + 1;
+            if (!Struct68_00.Contains(CollisionIndex))
+                return false;
+
+            pStruct40.ItemIndex = (CollisionIndex - pStruct40.ItemIndex - 1);
+            var_4 = -1;
+
+            // HOTS: 1958C20
+            for (; ;)
+            {
+                if (Struct68_D0.Contains(pStruct40.ItemIndex))
+                {
+                    // HOTS: 1958C0E
+                    if (var_4 == -1)
+                    {
+                        // HOTS: 1958C4B
+                        var_4 = Struct68_D0.GetItemValue(pStruct40.ItemIndex);
+                    }
+                    else
+                    {
+                        var_4++;
+                    }
+
+                    // HOTS: 1958C62
+                    SaveCharIndex = pStruct40.CharIndex;
+
+                    FragOffs = GetNameFragmentOffsetEx(pStruct40.ItemIndex, var_4);
+                    if (NextDB != null)
+                    {
+                        // HOTS: 1958CCB
+                        if (NextDB.sub_1959010(pStruct1C, FragOffs))
+                            return true;
+                    }
+                    else
+                    {
+                        // HOTS: 1958CD6
+                        if (IndexStruct_174.CheckAndCopyNameFragment(pStruct1C, FragOffs))
+                            return true;
+                    }
+
+                    // HOTS: 1958CED
+                    if (SaveCharIndex != pStruct40.CharIndex)
+                        return false;
+                }
+                else
+                {
+                    // HOTS: 1958CFB
+                    if (FrgmDist_LoBits[pStruct40.ItemIndex] == pStruct1C.szSearchMask[pStruct40.CharIndex])
+                    {
+                        // HOTS: 1958D11
+                        pStruct40.Add(FrgmDist_LoBits[pStruct40.ItemIndex]);
+                        pStruct40.CharIndex++;
+                        return true;
+                    }
+                }
+
+                // HOTS: 1958D11
+                pStruct40.ItemIndex++;
+                CollisionIndex++;
+
+                if (!Struct68_00.Contains(CollisionIndex))
+                    break;
+            }
+
+            return false;
+        }
+
+        public bool FindFileInDatabase(MNDXSearchResult pStruct1C)
+        {
+            SearchBuffer pStruct40 = pStruct1C.Buffer;
+
+            pStruct40.ItemIndex = 0;
+            pStruct40.CharIndex = 0;
+            pStruct40.Init();
+
+            if (pStruct1C.cchSearchMask > 0)
+            {
+                while (pStruct40.CharIndex < pStruct1C.cchSearchMask)
+                {
+                    // HOTS: 01957F12
+                    if (!CheckNextPathFragment(pStruct1C))
+                        return false;
+                }
+            }
+
+            // HOTS: 1957F26
+            if (!FileNameIndexes.Contains(pStruct40.ItemIndex))
+                return false;
+
+            pStruct1C.SetFindResult(pStruct1C.szSearchMask, FileNameIndexes.GetItemValue(pStruct40.ItemIndex));
+            return true;
+        }
+
+        private int GetNameFragmentOffsetEx(int LoBitsIndex, int HiBitsIndex)
+        {
+            return (FrgmDist_HiBits[HiBitsIndex] << 0x08) | FrgmDist_LoBits[LoBitsIndex];
+        }
+
+        private int GetNameFragmentOffset(int LoBitsIndex)
+        {
+            return GetNameFragmentOffsetEx(LoBitsIndex, Struct68_D0.GetItemValue(LoBitsIndex));
+        }
+
+        private bool IsSingleCharMatch(List<NAME_FRAG> Table, int ItemIndex)
+        {
+            return ((Table[ItemIndex].FragOffs & 0xFFFFFF00) == 0xFFFFFF00);
+        }
+
+        private int GetNumberOfSetBits(int Value32)
+        {
+            Value32 = ((Value32 >> 1) & 0x55555555) + (Value32 & 0x55555555);
+            Value32 = ((Value32 >> 2) & 0x33333333) + (Value32 & 0x33333333);
+            Value32 = ((Value32 >> 4) & 0x0F0F0F0F) + (Value32 & 0x0F0F0F0F);
+
+            return (Value32 * 0x01010101);
+        }
+    }
+
+    public class TBitEntryArray : List<int>
+    {
+        private int BitsPerEntry;
+        private int EntryBitMask;
+        private int TotalEntries;
+
+        public new int this[int index]
+        {
+            get
+            {
+                int dwItemIndex = (index * BitsPerEntry) >> 0x05;
+                int dwStartBit = (index * BitsPerEntry) & 0x1F;
+                int dwEndBit = dwStartBit + BitsPerEntry;
+                int dwResult;
+
+                // If the end bit index is greater than 32,
+                // we also need to load from the next 32-bit item
+                if (dwEndBit > 0x20)
+                {
+                    dwResult = (base[dwItemIndex + 1] << (0x20 - dwStartBit)) | (int)((uint)base[dwItemIndex] >> dwStartBit);
+                }
+                else
+                {
+                    dwResult = base[dwItemIndex] >> dwStartBit;
+                }
+
+                // Now we also need to mask the result by the bit mask
+                return dwResult & EntryBitMask;
+            }
+        }
+
+        public TBitEntryArray(BinaryReader reader) : base(reader.Read<int>(false))
+        {
+            BitsPerEntry = reader.ReadInt32();
+            EntryBitMask = reader.ReadInt32();
+            TotalEntries = (int)reader.ReadInt64();
+        }
+    }
+
+    public class TSparseArray
+    {
+        private List<int> ItemBits;                    // Bit array for each item (1 = item is present)
+        private List<TRIPLET> BaseValues;              // Array of base values for item indexes >= 0x200
+        private List<int> ArrayDwords_38;
+        private List<int> ArrayDwords_50;
+
+        public int TotalItemCount { get; private set; } // Total number of items in the array
+        public int ValidItemCount { get; private set; } // Number of present items in the array
+
+        public TSparseArray(BinaryReader reader)
+        {
+            ItemBits = reader.Read<int>(false);
+            TotalItemCount = reader.ReadInt32();
+            ValidItemCount = reader.ReadInt32();
+            BaseValues = reader.Read<TRIPLET>(false);
+            ArrayDwords_38 = reader.Read<int>(false);
+            ArrayDwords_50 = reader.Read<int>(false);
+        }
+
+        public bool Contains(int index)
+        {
+            return (ItemBits[index >> 0x05] & (1 << (index & 0x1F))) != 0;
+        }
+
+        public int GetItemBit(int index)
+        {
+            return ItemBits[index];
+        }
+
+        public TRIPLET GetBaseValue(int index)
+        {
+            return BaseValues[index];
+        }
+
+        public int GetArrayValue_38(int index)
+        {
+            return ArrayDwords_38[index];
+        }
+
+        public int GetArrayValue_50(int index)
+        {
+            return ArrayDwords_50[index];
+        }
+
+        public int GetItemValue(int index)
+        {
+            TRIPLET pTriplet;
+            int DwordIndex;
+            int BaseValue;
+            int BitMask;
+
+            // 
+            // Divide the low-8-bits index to four parts:
+            //
+            // |-----------------------|---|------------|
+            // |       A (23 bits)     | B |      C     |
+            // |-----------------------|---|------------|
+            //
+            // A (23-bits): Index to the table (60 bits per entry)
+            //
+            //    Layout of the table entry:
+            //   |--------------------------------|-------|--------|--------|---------|---------|---------|---------|-----|
+            //   |  Base Value                    | val[0]| val[1] | val[2] | val[3]  | val[4]  | val[5]  | val[6]  |  -  |
+            //   |  32 bits                       | 7 bits| 8 bits | 8 bits | 9 bits  | 9 bits  | 9 bits  | 9 bits  |5bits|
+            //   |--------------------------------|-------|--------|--------|---------|---------|---------|---------|-----|
+            //
+            // B (3 bits) : Index of the variable-bit value in the array (val[#], see above)
+            //
+            // C (32 bits): Number of bits to be checked (up to 0x3F bits).
+            //              Number of set bits is then added to the values obtained from A and B
+
+            // Upper 23 bits contain index to the table
+            pTriplet = BaseValues[index >> 0x09];
+            BaseValue = pTriplet.BaseValue;
+
+            // Next 3 bits contain the index to the VBR
+            switch (((index >> 0x06) & 0x07) - 1)
+            {
+                case 0:     // Add the 1st value (7 bits)
+                    BaseValue += (pTriplet.Value2 & 0x7F);
+                    break;
+
+                case 1:     // Add the 2nd value (8 bits)
+                    BaseValue += (pTriplet.Value2 >> 0x07) & 0xFF;
+                    break;
+
+                case 2:     // Add the 3rd value (8 bits)
+                    BaseValue += (pTriplet.Value2 >> 0x0F) & 0xFF;
+                    break;
+
+                case 3:     // Add the 4th value (9 bits)
+                    BaseValue += (pTriplet.Value2 >> 0x17) & 0x1FF;
+                    break;
+
+                case 4:     // Add the 5th value (9 bits)
+                    BaseValue += (pTriplet.Value3 & 0x1FF);
+                    break;
+
+                case 5:     // Add the 6th value (9 bits)
+                    BaseValue += (pTriplet.Value3 >> 0x09) & 0x1FF;
+                    break;
+
+                case 6:     // Add the 7th value (9 bits)
+                    BaseValue += (pTriplet.Value3 >> 0x12) & 0x1FF;
+                    break;
+            }
+
+            //
+            // Take the upper 27 bits as an index to DWORD array, take lower 5 bits
+            // as number of bits to mask. Then calculate number of set bits in the value
+            // masked value.
+            //
+
+            // Get the index into the array of DWORDs
+            DwordIndex = (index >> 0x05);
+
+            // Add number of set bits in the masked value up to 0x3F bits
+            if ((index & 0x20) != 0)
+                BaseValue += GetNumbrOfSetBits32(ItemBits[DwordIndex - 1]);
+
+            BitMask = (1 << (index & 0x1F)) - 1;
+            return BaseValue + GetNumbrOfSetBits32(ItemBits[DwordIndex] & BitMask);
+        }
+
+        private int GetNumberOfSetBits(int Value32)
+        {
+            Value32 = ((Value32 >> 1) & 0x55555555) + (Value32 & 0x55555555);
+            Value32 = ((Value32 >> 2) & 0x33333333) + (Value32 & 0x33333333);
+            Value32 = ((Value32 >> 4) & 0x0F0F0F0F) + (Value32 & 0x0F0F0F0F);
+
+            return (Value32 * 0x01010101);
+        }
+
+        private int GetNumbrOfSetBits32(int x)
+        {
+            return (GetNumberOfSetBits(x) >> 0x18);
+        }
+    }
+
+    public class TNameIndexStruct
+    {
+        private List<byte> NameFragments;
+        private TSparseArray Struct68;
+
+        public int Count
+        {
+            get { return NameFragments.Count; }
+        }
+
+        public TNameIndexStruct(BinaryReader reader)
+        {
+            NameFragments = reader.Read<byte>(false);
+            Struct68 = new TSparseArray(reader);
+        }
+
+        public bool CheckNameFragment(MNDXSearchResult pStruct1C, int dwFragOffs)
+        {
+            SearchBuffer pStruct40 = pStruct1C.Buffer;
+
+            if (Struct68.TotalItemCount == 0)
+            {
+                // Get the offset of the fragment to compare. For convenience with pStruct40->CharIndex,
+                // subtract the CharIndex from the fragment offset
+                int startIndex = dwFragOffs - pStruct40.CharIndex;
+                string szSearchMask = pStruct1C.szSearchMask;
+
+                // Keep searching as long as the name matches with the fragment
+                while (NameFragments[startIndex + pStruct40.CharIndex] == szSearchMask[pStruct40.CharIndex])
+                {
+                    // Move to the next character
+                    pStruct40.CharIndex++;
+
+                    // Is it the end of the fragment or end of the path?
+                    if (NameFragments[startIndex + pStruct40.CharIndex] == 0)
+                        return true;
+
+                    if (pStruct40.CharIndex >= pStruct1C.cchSearchMask)
+                        return false;
+                }
+
+                return false;
+            }
+            else
+            {
+                // Get the offset of the fragment to compare.
+                string szSearchMask = pStruct1C.szSearchMask;
+
+                // Keep searching as long as the name matches with the fragment
+                while (NameFragments[dwFragOffs] == szSearchMask[pStruct40.CharIndex])
+                {
+                    // Move to the next character
+                    pStruct40.CharIndex++;
+
+                    // Is it the end of the fragment or end of the path?
+                    if (Struct68.Contains(dwFragOffs++))
+                        return true;
+
+                    if (dwFragOffs >= pStruct1C.cchSearchMask)
+                        return false;
+                }
+
+                return false;
+            }
+        }
+
+        public bool CheckAndCopyNameFragment(MNDXSearchResult pStruct1C, int dwFragOffs)
+        {
+            SearchBuffer pStruct40 = pStruct1C.Buffer;
+
+            if (Struct68.TotalItemCount == 0)
+            {
+                // Get the offset of the fragment to compare. For convenience with pStruct40->CharIndex,
+                // subtract the CharIndex from the fragment offset
+                int startIndex = dwFragOffs - pStruct40.CharIndex;
+                string szSearchMask = pStruct1C.szSearchMask;
+
+                // Keep copying as long as we don't reach the end of the search mask
+                while (pStruct40.CharIndex < pStruct1C.cchSearchMask)
+                {
+                    // HOTS: 195A5A0
+                    if (NameFragments[startIndex + pStruct40.CharIndex] != szSearchMask[pStruct40.CharIndex])
+                        return false;
+
+                    // HOTS: 195A5B7
+                    pStruct40.Add(NameFragments[startIndex + pStruct40.CharIndex]);
+                    pStruct40.CharIndex++;
+
+                    if (NameFragments[startIndex + pStruct40.CharIndex] == 0)
+                        return true;
+                }
+
+                // Fixup the address of the fragment
+                startIndex += pStruct40.CharIndex;
+
+                // HOTS: 195A660
+                // Now we need to copy the rest of the fragment
+                while (NameFragments[startIndex] != 0)
+                {
+                    pStruct40.Add(NameFragments[startIndex]);
+                    startIndex++;
+                }
+            }
+            else
+            {
+                // Get the offset of the fragment to compare
+                // HOTS: 195A6B7
+                string szSearchMask = pStruct1C.szSearchMask;
+
+                // Keep copying as long as we don't reach the end of the search mask
+                while (dwFragOffs < pStruct1C.cchSearchMask)
+                {
+                    if (NameFragments[dwFragOffs] != szSearchMask[pStruct40.CharIndex])
+                        return false;
+
+                    pStruct40.Add(NameFragments[dwFragOffs]);
+                    pStruct40.CharIndex++;
+
+                    // Keep going as long as the given bit is not set
+                    if (Struct68.Contains(dwFragOffs++))
+                        return true;
+                }
+
+                // Fixup the address of the fragment
+
+                // Now we need to copy the rest of the fragment
+                while (!Struct68.Contains(dwFragOffs++))
+                {
+                    // HOTS: 195A7A6
+                    pStruct40.Add(NameFragments[dwFragOffs]);
+                }
+            }
+
+            return true;
+        }
+
+        public void CopyNameFragment(MNDXSearchResult pStruct1C, int dwFragOffs)
+        {
+            SearchBuffer pStruct40 = pStruct1C.Buffer;
+
+            // HOTS: 195A3FA
+            if (Struct68.TotalItemCount == 0)
+            {
+                byte b;
+                while ((b = NameFragments[dwFragOffs]) != 0)
+                {
+                    pStruct40.Add(b);
+                    dwFragOffs++;
+                }
+            }
+            else
+            {
+                // HOTS: 195A4B3
+                for (; ;)
+                {
+                    // Insert the character to the path being built
+                    pStruct40.Add(NameFragments[dwFragOffs]);
+
+                    // Keep going as long as the given bit is not set
+                    if (Struct68.Contains(dwFragOffs++))
+                        break;
+                }
+            }
+        }
+    }
+
+    //public class TStruct10
+    //{
+    //    private int field_0;
+    //    private int field_4;
+    //    private int field_8;
+    //    private int field_C;
+
+    //    public TStruct10()
+    //    {
+    //        field_0 = 0x03;
+    //        field_4 = 0x200;
+    //        field_8 = 0x1000;
+    //        field_C = 0x20000;
+    //    }
+
+    //    void CopyFrom(TStruct10 Target)
+    //    {
+    //        field_0 = Target.field_0;
+    //        field_4 = Target.field_4;
+    //        field_8 = Target.field_8;
+    //        field_C = Target.field_C;
+    //    }
+
+    //    void sub_1956FD0(int dwBitMask)
+    //    {
+    //        switch (dwBitMask & 0xF80)
+    //        {
+    //            case 0x00:
+    //                field_4 = 0x200;
+    //                return;
+    //            case 0x80:
+    //                field_4 = 0x80;
+    //                return;
+    //            case 0x100:
+    //                field_4 = 0x100;
+    //                return;
+    //            case 0x200:
+    //                field_4 = 0x200;
+    //                return;
+    //            case 0x400:
+    //                field_4 = 0x400;
+    //                return;
+    //            case 0x800:
+    //                field_4 = 0x800;
+    //                return;
+    //        }
+
+    //        throw new ArgumentOutOfRangeException("dwBitMask");
+    //    }
+
+    //    void sub_1957050(int dwBitMask)
+    //    {
+    //        switch (dwBitMask & 0xF0000)
+    //        {
+    //            case 0x00:
+    //                field_C = 0x20000;
+    //                return;
+    //            case 0x10000:
+    //                field_C = 0x10000;
+    //                return;
+    //            case 0x20000:
+    //                field_C = 0x20000;
+    //                return;
+    //        }
+
+    //        throw new ArgumentOutOfRangeException("dwBitMask");
+    //    }
+
+    //    public void sub_19572E0(int dwBitMask)
+    //    {
+    //        int dwSubMask;
+
+    //        if ((dwBitMask & 0xFFF00000) != 0)
+    //            throw new ArgumentOutOfRangeException("dwBitMask");
+
+    //        dwSubMask = dwBitMask & 0x7F;
+    //        if (dwSubMask != 0)
+    //            field_0 = dwSubMask;
+
+    //        sub_1956FD0(dwBitMask);
+
+    //        dwSubMask = dwBitMask & 0xF000;
+    //        if (dwSubMask == 0 || dwSubMask == 0x1000)
+    //        {
+    //            field_8 = 0x1000;
+    //            sub_1957050(dwBitMask);
+    //            return;
+    //        }
+
+    //        if (dwSubMask == 0x2000)
+    //        {
+    //            field_8 = 0x2000;
+    //            sub_1957050(dwBitMask);
+    //            return;
+    //        }
+
+    //        throw new ArgumentOutOfRangeException("dwBitMask");
+    //    }
+
+    //    public void sub_1957800(int dwBitMask)
+    //    {
+    //        TStruct10 TempStruct = new TStruct10();
+
+    //        TempStruct.sub_19572E0(dwBitMask);
+
+    //        CopyFrom(TempStruct);
+    //    }
+    //}
+
+    public enum CASCSearchPhase
+    {
+        Initializing = 0,
+        Searching = 2,
+        Finished = 4
+    }
+
+    public class SearchBuffer
+    {
+        private List<byte> SearchResult;
+        private List<PATH_STOP> PathStops;   // Array of path checkpoints
+
+        public int ItemIndex { get; set; }  // Current name fragment: Index to various tables
+        public int CharIndex { get; set; }
+        public int ItemCount { get; set; }
+        public CASCSearchPhase SearchPhase { get; private set; }    // 0 = initializing, 2 = searching, 4 = finished
+
+        public string Result
+        {
+            get { return Encoding.ASCII.GetString(SearchResult.ToArray()); }
+        }
+
+        public int NumBytesFound
+        {
+            get { return SearchResult.Count; }
+        }
+
+        public int NumPathStops
+        {
+            get { return PathStops.Count; }
+        }
+
+        public SearchBuffer()
+        {
+            SearchResult = new List<byte>();
+            PathStops = new List<PATH_STOP>();
+            ItemIndex = 0;
+            CharIndex = 0;
+            ItemCount = 0;
+            SearchPhase = CASCSearchPhase.Initializing;
+        }
+
+        public void Add(byte value)
+        {
+            SearchResult.Add(value);
+        }
+
+        public void RemoveRange(int index)
+        {
+            SearchResult.RemoveRange(index, SearchResult.Count - index);
+        }
+
+        public void AddPathStop(PATH_STOP item)
+        {
+            PathStops.Add(item);
+        }
+
+        public PATH_STOP GetPathStop(int index)
+        {
+            return PathStops[index];
+        }
+
+        public void Init()
+        {
+            SearchPhase = CASCSearchPhase.Initializing;
+        }
+
+        public void Finish()
+        {
+            SearchPhase = CASCSearchPhase.Finished;
+        }
+
+        public void InitSearchBuffers()
+        {
+            SearchResult.Clear();
+            PathStops.Clear();
+
+            ItemIndex = 0;
+            CharIndex = 0;
+            ItemCount = 0;
+            SearchPhase = CASCSearchPhase.Searching;
+        }
+    }
+
+    public class MNDXSearchResult
+    {
+        public string szSearchMask { get; private set; }    // Search mask without wildcards
+        public int cchSearchMask { get; private set; }      // Length of the search mask
+        public string szFoundPath { get; private set; }     // Found path name
+        public int FileNameIndex { get; private set; }      // Index of the file name
+        public SearchBuffer Buffer { get; private set; }
+
+        public MNDXSearchResult()
+        {
+            Buffer = new SearchBuffer();
+
+            SetSearchPath(String.Empty);
+        }
+
+        public void SetFindResult(string szFoundPath, int FileNameIndex)
+        {
+            this.szFoundPath = szFoundPath;
+            this.FileNameIndex = FileNameIndex;
+        }
+
+        public void SetSearchPath(string szNewSearchMask)
+        {
+            if (szNewSearchMask == null)
+                throw new ArgumentNullException("szNewSearchMask");
+
+            Buffer.Init();
+
+            szSearchMask = szNewSearchMask;
+            cchSearchMask = szNewSearchMask.Length;
+        }
+    }
+}

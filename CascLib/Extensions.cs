@@ -3,6 +3,7 @@ using System.Collections;
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Runtime.InteropServices;
 using System.Text;
 
 namespace CASCExplorer
@@ -17,6 +18,31 @@ namespace CASCExplorer
         public static uint ReadUInt32BE(this BinaryReader reader)
         {
             return BitConverter.ToUInt32(reader.ReadBytes(4).Reverse().ToArray(), 0);
+        }
+
+        public static T Read<T>(this BinaryReader reader) where T : struct
+        {
+            byte[] result = reader.ReadBytes(Marshal.SizeOf(typeof(T)));
+            GCHandle handle = GCHandle.Alloc(result, GCHandleType.Pinned);
+            T returnObject = (T)Marshal.PtrToStructure(handle.AddrOfPinnedObject(), typeof(T));
+            handle.Free();
+            return returnObject;
+        }
+
+        public static List<T> Read<T>(this BinaryReader reader, bool fake) where T : struct
+        {
+            long numBytes = reader.ReadInt64();
+
+            int itemCount = (int)numBytes / Marshal.SizeOf(typeof(T));
+
+            List<T> data = new List<T>(itemCount);
+
+            for (int i = 0; i < itemCount; ++i)
+                data.Add(reader.Read<T>());
+
+            reader.BaseStream.Position += (0 - (int)numBytes) & 0x07;
+
+            return data;
         }
 
         public static short ReadInt16BE(this BinaryReader reader)

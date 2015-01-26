@@ -21,7 +21,7 @@ namespace CASCExplorer
 
         private readonly InstallHandler InstallHandler;
         private readonly EncodingHandler EncodingHandler;
-        private readonly WowRootHandler RootHandler;
+        private readonly IRootHandler RootHandler;
 
         private static readonly Jenkins96 Hasher = new Jenkins96();
 
@@ -31,7 +31,7 @@ namespace CASCExplorer
 
         public InstallHandler Install { get { return InstallHandler; } }
         public EncodingHandler Encoding { get { return EncodingHandler; } }
-        public WowRootHandler Root { get { return RootHandler; } }
+        public IRootHandler Root { get { return RootHandler; } }
         public CASCConfig Config { get { return config; } }
 
         private CASCHandler(CASCConfig config, AsyncAction worker)
@@ -83,7 +83,16 @@ namespace CASCExplorer
 
             sw.Restart();
             using (var fs = OpenRootFile())
-                RootHandler = new WowRootHandler(fs, worker);
+            {
+                if (config.Product == "hero")
+                {
+                    RootHandler = new MNDXRootHandler(fs, worker);
+                }
+                else
+                {
+                    RootHandler = new WowRootHandler(fs, worker);
+                }
+            }
             sw.Stop();
 
             Logger.WriteLine("CASCHandler: loaded {0} root data in {1}", RootHandler.Count, sw.Elapsed);

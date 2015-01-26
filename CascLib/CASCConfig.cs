@@ -159,12 +159,14 @@ namespace CASCExplorer
         VerBarConfig<VersionsConfigEntry> _VersionsData;
 
         string region;
+        string product;
 
         public static CASCConfig LoadOnlineStorageConfig(string product, string region)
         {
             var config = new CASCConfig { OnlineMode = true };
 
             config.region = region;
+            config.product = product;
 
             using (var cdnsStream = CDNIndexHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/cdns", product)))
             {
@@ -253,6 +255,23 @@ namespace CASCExplorer
 
         public int Build { get; private set; }
 
+        public string Product { get { return product; } }
+
+        public byte[] RootMD5
+        {
+            get { return _BuildConfig["root"][0].ToByteArray(); }
+        }
+
+        public byte[] DownloadMD5
+        {
+            get { return _BuildConfig["download"][0].ToByteArray(); }
+        }
+
+        public byte[] InstallMD5
+        {
+            get { return _BuildConfig["install"][0].ToByteArray(); }
+        }
+
         public byte[] EncodingMD5
         {
             get { return _BuildConfig["encoding"][0].ToByteArray(); }
@@ -261,16 +280,6 @@ namespace CASCExplorer
         public byte[] EncodingKey
         {
             get { return _BuildConfig["encoding"][1].ToByteArray(); }
-        }
-
-        public byte[] RootMD5
-        {
-            get { return _BuildConfig["root"][0].ToByteArray(); }
-        }
-
-        public byte[] InstallMD5
-        {
-            get { return _BuildConfig["install"][0].ToByteArray(); }
         }
 
         public string CDNUrl

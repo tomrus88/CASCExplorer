@@ -57,7 +57,7 @@ namespace CASCExplorer
         }
     }
 
-    public class WowRootHandler
+    public class WowRootHandler : IRootHandler
     {
         private readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
         private readonly HashSet<ulong> UnknownFiles = new HashSet<ulong>();

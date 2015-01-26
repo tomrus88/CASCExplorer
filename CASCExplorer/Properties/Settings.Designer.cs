@@ -25,18 +25,6 @@ namespace CASCExplorer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("c:\\Games\\World of Warcraft Beta\\")]
-        public string WowPath {
-            get {
-                return ((string)(this["WowPath"]));
-            }
-            set {
-                this["WowPath"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("True")]
         public bool OnlineMode {
             get {
@@ -49,7 +37,7 @@ namespace CASCExplorer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("wow")]
+        [global::System.Configuration.DefaultSettingValueAttribute("hero")]
         public string Product {
             get {
                 return ((string)(this["Product"]));
@@ -80,6 +68,18 @@ namespace CASCExplorer.Properties {
             }
             set {
                 this["ContentFlags"] = value;
+            }
+        }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        [global::System.Configuration.DefaultSettingValueAttribute("D:\\Games\\World of Warcraft\\")]
+        public string WowPath {
+            get {
+                return ((string)(this["WowPath"]));
+            }
+            set {
+                this["WowPath"] = value;
             }
         }
     }

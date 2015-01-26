@@ -220,8 +220,11 @@ namespace CASCExplorer
 
                     foreach (var rootInfo in rootInfosLocale)
                     {
-                        localeFlags |= rootInfo.Block.LocaleFlags;
-                        contentFlags |= rootInfo.Block.ContentFlags;
+                        if (rootInfo.Block != null)
+                        {
+                            localeFlags |= rootInfo.Block.LocaleFlags;
+                            contentFlags |= rootInfo.Block.ContentFlags;
+                        }
                     }
                 }
             }
