@@ -301,7 +301,12 @@ namespace CASCExplorer
             if (DataStreams.TryGetValue(index, out stream))
                 return stream;
 
-            string dataFile = Path.Combine(config.BasePath, String.Format("Data\\data\\data.{0:D3}", index));
+            string dataFolder = "Data";
+
+            if (config.Product == "hero")
+                dataFolder = "HeroesData";
+
+            string dataFile = Path.Combine(config.BasePath, String.Format("{0}\\data\\data.{1:D3}", dataFolder, index));
 
             stream = new FileStream(dataFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             DataStreams[index] = stream;
