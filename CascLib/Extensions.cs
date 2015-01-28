@@ -8,7 +8,7 @@ using System.Text;
 
 namespace CASCExplorer
 {
-    static class Extensions
+    public static class Extensions
     {
         public static int ReadInt32BE(this BinaryReader reader)
         {

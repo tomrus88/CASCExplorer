@@ -54,6 +54,8 @@
             this.useLWToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.onlineModeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.scanFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.analyseUnknownFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
@@ -290,7 +292,9 @@
             // toolsToolStripMenuItem
             // 
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.onlineModeToolStripMenuItem});
+            this.onlineModeToolStripMenuItem,
+            this.scanFilesToolStripMenuItem,
+            this.analyseUnknownFilesToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
@@ -298,9 +302,23 @@
             // onlineModeToolStripMenuItem
             // 
             this.onlineModeToolStripMenuItem.Name = "onlineModeToolStripMenuItem";
-            this.onlineModeToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
+            this.onlineModeToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.onlineModeToolStripMenuItem.Text = "Online Mode";
             this.onlineModeToolStripMenuItem.Click += new System.EventHandler(this.onlineModeToolStripMenuItem_Click);
+            // 
+            // scanFilesToolStripMenuItem
+            // 
+            this.scanFilesToolStripMenuItem.Name = "scanFilesToolStripMenuItem";
+            this.scanFilesToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.scanFilesToolStripMenuItem.Text = "Scan Files";
+            this.scanFilesToolStripMenuItem.Click += new System.EventHandler(this.scanFilesToolStripMenuItem_Click);
+            // 
+            // analyseUnknownFilesToolStripMenuItem
+            // 
+            this.analyseUnknownFilesToolStripMenuItem.Name = "analyseUnknownFilesToolStripMenuItem";
+            this.analyseUnknownFilesToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.analyseUnknownFilesToolStripMenuItem.Text = "Analyse Unknown Files";
+            this.analyseUnknownFilesToolStripMenuItem.Click += new System.EventHandler(this.analyseUnknownFilesToolStripMenuItem_Click);
             // 
             // helpToolStripMenuItem
             // 
@@ -371,6 +389,8 @@
         private System.Windows.Forms.ToolStripMenuItem copyNameToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem onlineModeToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem scanFilesToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem analyseUnknownFilesToolStripMenuItem;
         private System.Windows.Forms.ColumnHeader columnHeader4;
         private System.Windows.Forms.ToolStripMenuItem viewToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem localeFlagsToolStripMenuItem;

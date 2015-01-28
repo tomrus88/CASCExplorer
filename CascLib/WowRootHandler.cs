@@ -291,5 +291,10 @@ namespace CASCExplorer
 
             return Root;
         }
+
+        public bool IsUnknownFile(ulong hash)
+        {
+            return UnknownFiles.Contains(hash);
+        }
     }
 }

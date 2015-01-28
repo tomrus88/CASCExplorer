@@ -104,6 +104,7 @@ namespace CASCExplorer
         public string FullName
         {
             get { return FileNames[hash]; }
+            set { FileNames[hash] = value; }
         }
 
         public ulong Hash

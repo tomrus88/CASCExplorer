@@ -39,12 +39,14 @@ namespace CASCExplorer
                                 // Otherwise --> Offset to the name fragment table
     }
 
-    struct CASC_ROOT_ENTRY_MNDX
+    class CASC_ROOT_ENTRY_MNDX
     {
         public int Flags;           // High 8 bits: Flags, low 24 bits: package index
-        [MarshalAs(UnmanagedType.ByValArray, SizeConst = 0x10)]
+        //[MarshalAs(UnmanagedType.ByValArray, SizeConst = 0x10)]
         public byte[] EncodingKey;  // Encoding key for the file
         public int FileSize;        // Uncompressed file size, in bytes
+
+        public CASC_ROOT_ENTRY_MNDX Next;
     }
 
     public class PATH_STOP
@@ -65,19 +67,32 @@ namespace CASCExplorer
         }
     }
 
+    class MNDXRootEntry
+    {
+        public CASC_ROOT_ENTRY_MNDX Data;
+        public int Package;
+        public string Name;
+    }
+
     class MNDXRootHandler : IRootHandler
     {
         private const int CASC_MNDX_SIGNATURE = 0x58444E4D;          // 'MNDX'
         private const int CASC_MAX_MAR_FILES = 3;
 
+        //[0] - package names
+        //[1] - file names stripped off package names
+        //[2] - complete file names
         private MARFileNameDB[] MarFiles = new MARFileNameDB[CASC_MAX_MAR_FILES];
+
         private static readonly Jenkins96 Hasher = new Jenkins96();
         private CASCFolder Root;
 
-        private List<CASC_ROOT_ENTRY_MNDX> mndxRootEntries = new List<CASC_ROOT_ENTRY_MNDX>();
-        private List<CASC_ROOT_ENTRY_MNDX> mndxRootEntriesValid;
+        private Dictionary<int, CASC_ROOT_ENTRY_MNDX> mndxRootEntries = new Dictionary<int, CASC_ROOT_ENTRY_MNDX>();
+        private Dictionary<int, CASC_ROOT_ENTRY_MNDX> mndxRootEntriesValid;
 
-        private Dictionary<ulong, int> mndxData = new Dictionary<ulong, int>();
+        private Dictionary<int, string> Packages = new Dictionary<int, string>();
+
+        private Dictionary<ulong, MNDXRootEntry> mndxData = new Dictionary<ulong, MNDXRootEntry>();
 
         public MNDXRootHandler(Stream stream, AsyncAction worker)
         {
@@ -125,15 +140,80 @@ namespace CASCExplorer
                         throw new Exception("MAR parsing error!");
                 }
 
-                if (MndxEntrySize != Marshal.SizeOf(typeof(CASC_ROOT_ENTRY_MNDX)))
-                    throw new Exception("invalid root file (2)");
+                //if (MndxEntrySize != Marshal.SizeOf(typeof(CASC_ROOT_ENTRY_MNDX)))
+                //    throw new Exception("invalid root file (2)");
 
                 br.BaseStream.Position = MndxEntriesOffset;
 
-                for (int i = 0; i < MndxEntriesTotal; ++i)
-                    mndxRootEntries.Add(br.Read<CASC_ROOT_ENTRY_MNDX>());
+                CASC_ROOT_ENTRY_MNDX prevEntry = null;
 
-                mndxRootEntriesValid = mndxRootEntries.Where(e => (e.Flags & 0x80000000) != 0).ToList();
+                //Dictionary<int, int> p = new Dictionary<int, int>();
+
+                for (int i = 0; i < MndxEntriesTotal; ++i)
+                {
+                    CASC_ROOT_ENTRY_MNDX entry = new CASC_ROOT_ENTRY_MNDX();
+                    if (prevEntry != null) prevEntry.Next = entry;
+                    prevEntry = entry;
+                    entry.Flags = br.ReadInt32();
+                    entry.EncodingKey = br.ReadBytes(0x10);
+                    entry.FileSize = br.ReadInt32();
+                    mndxRootEntries.Add(i, entry);
+
+                    //if ((entry.Flags & 0x80000000) != 0)
+                    //{
+                    //    if (!p.ContainsKey(entry.Flags & 0x00FFFFFF))
+                    //        p[entry.Flags & 0x00FFFFFF] = 1;
+                    //    else
+                    //        p[entry.Flags & 0x00FFFFFF]++;
+                    //}
+                }
+
+                //for (int i = 0; i < MndxEntriesTotal; ++i)
+                //    Console.WriteLine("{0:X8} - {1:X8} - {2}", i, mndxRootEntries[i].Flags, mndxRootEntries[i].EncodingKey.ToHexString());
+
+                mndxRootEntriesValid = new Dictionary<int, CASC_ROOT_ENTRY_MNDX>();// mndxRootEntries.Where(e => (e.Flags & 0x80000000) != 0).ToList();
+
+                //var e1 = mndxRootEntries.Where(e => (e.Value.Flags & 0x80000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+                //var e2 = mndxRootEntries.Where(e => (e.Value.Flags & 0x40000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+                //var e3 = mndxRootEntries.Where(e => (e.Value.Flags & 0x20000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+                //var e4 = mndxRootEntries.Where(e => (e.Value.Flags & 0x10000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+
+                //var e5 = mndxRootEntries.Where(e => (e.Value.Flags & 0x8000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+                //var e6 = mndxRootEntries.Where(e => (e.Value.Flags & 0x4000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+                //var e7 = mndxRootEntries.Where(e => (e.Value.Flags & 0x2000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+                //var e8 = mndxRootEntries.Where(e => (e.Value.Flags & 0x1000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+
+                //var e9 = mndxRootEntries.Where(e => (e.Value.Flags & 0x4000000) == 0).ToDictionary(e => e.Key, e => e.Value);
+
+                //int c = 0;
+                //foreach(var e in e9)
+                //    Console.WriteLine("{0:X8} - {1:X8} - {2:X8} - {3}", c++,e.Key, e.Value.Flags, e.Value.EncodingKey.ToHexString());
+
+                int ValidEntryCount = 1; // edx
+                int index = 0;
+
+                mndxRootEntriesValid[index++] = mndxRootEntries[0];
+
+                for (int i = 0; i < MndxEntriesTotal; i++)
+                {
+                    if (ValidEntryCount >= MndxEntriesValid)
+                        break;
+
+                    if ((mndxRootEntries[i].Flags & 0x80000000) != 0)
+                    {
+                        mndxRootEntriesValid[index++] = mndxRootEntries[i + 1];
+
+                        ValidEntryCount++;
+                    }
+                }
+
+                //for (int i = 0, j = 0; i < MndxEntriesTotal; i++, j++)
+                //{
+                //    if ((mndxRootEntries[i].Flags & 0x80000000) != 0)
+                //    {
+                //        mndxRootEntriesValid[j] = mndxRootEntries[i];
+                //    }
+                //}
             }
         }
 
@@ -198,7 +278,7 @@ namespace CASCExplorer
             HashSet<RootEntry> entries = new HashSet<RootEntry>();
             RootEntry rootEntry = new RootEntry();
             rootEntry.Hash = hash;
-            rootEntry.MD5 = mndxRootEntries[mndxData[hash]].EncodingKey;
+            rootEntry.MD5 = mndxData[hash].Data.EncodingKey;
             entries.Add(rootEntry);
             return entries;
         }
@@ -207,8 +287,85 @@ namespace CASCExplorer
         {
             RootEntry rootEntry = new RootEntry();
             rootEntry.Hash = hash;
-            rootEntry.MD5 = mndxRootEntries[mndxData[hash]].EncodingKey;
+            rootEntry.MD5 = mndxData[hash].Data.EncodingKey;
             yield return rootEntry;
+        }
+
+        private int FindMNDXPackage(string fileName)
+        {
+            int nMaxLength = 0;
+            int pMatching = -1;
+
+            foreach (var package in Packages)
+            {
+                if (package.Value.Length < fileName.Length && package.Value.Length > nMaxLength)
+                {
+                    var pkgName = fileName.Substring(0, package.Value.Length);
+
+                    // Compare the package name
+                    if (pkgName == package.Value)
+                    {
+                        pMatching = package.Key;
+                        nMaxLength = package.Value.Length;
+                    }
+                }
+            }
+
+            return pMatching;
+        }
+
+        private CASC_ROOT_ENTRY_MNDX FindMNDXInfo(string path, int dwPackage)
+        {
+            MNDXSearchResult result = new MNDXSearchResult();
+            result.SetSearchPath(path.Remove(0, Packages[dwPackage].Length + 1).ToLower());
+
+            MARFileNameDB marFile1 = MarFiles[1];
+
+            if (marFile1.FindFileInDatabase(result))
+            {
+                var pRootEntry = mndxRootEntriesValid[result.FileNameIndex];
+
+                while ((pRootEntry.Flags & 0x00FFFFFF) != dwPackage)
+                {
+                    // The highest bit serves as a terminator if set
+                    if ((pRootEntry.Flags & 0x80000000) != 0)
+                        throw new Exception("File not found!");
+
+                    pRootEntry = pRootEntry.Next;
+                }
+
+                // Give the root entry pointer to the caller
+                return pRootEntry;
+            }
+
+            throw new Exception("File not found!");
+        }
+
+        private CASC_ROOT_ENTRY_MNDX FindMNDXInfo2(string path, int dwPackage)
+        {
+            MNDXSearchResult result = new MNDXSearchResult();
+            result.SetSearchPath(path);
+
+            MARFileNameDB marFile2 = MarFiles[2];
+
+            if (marFile2.FindFileInDatabase(result))
+            {
+                var pRootEntry = mndxRootEntries[result.FileNameIndex];
+
+                while ((pRootEntry.Flags & 0x00FFFFFF) != dwPackage)
+                {
+                    // The highest bit serves as a terminator if set
+                    //if ((pRootEntry.Flags & 0x80000000) != 0)
+                    //    throw new Exception("File not found!");
+
+                    pRootEntry = pRootEntry.Next;
+                }
+
+                // Give the root entry pointer to the caller
+                return pRootEntry;
+            }
+
+            throw new Exception("File not found!");
         }
 
         public void LoadListFile(string path, AsyncAction worker = null)
@@ -223,20 +380,44 @@ namespace CASCExplorer
 
             MNDXSearchResult result = new MNDXSearchResult();
 
+            MARFileNameDB marFile0 = MarFiles[0];
+            while (marFile0.EnumerateFiles(result))
+            {
+                Packages.Add(result.FileNameIndex, result.szFoundPath);
+            }
+
+            MNDXSearchResult result2 = new MNDXSearchResult();
+
             MARFileNameDB marFile2 = MarFiles[2];
 
+            //result.SetSearchPath("mods/heroes.stormmod/base.stormassets/Assets/Sounds/Ambient_3D/Amb_3D_Birds_FlyAway01.ogg");
+            //bool res = MarFiles[0].FindFileInDatabase(result);
             //result.SetSearchPath("mods/heroes.stormmod/base.stormassets/Assets/Textures/tyrael_spec.dds");
-            //bool res = MarFiles[2].FindFileInDatabase(result);
+            //bool res = MarFiles[1].FindFileInDatabase(result);
+
+            //int pkg = FindMNDXPackage("mods/heroes.stormmod/eses.stormassets/localizeddata/sounds/vo/tyrael_ping_defendthing00.ogg");
+
+            //var info1 = FindMNDXInfo("mods/heroes.stormmod/eses.stormassets/localizeddata/sounds/vo/tyrael_ping_defendthing00.ogg", pkg);
+
+            //var info2 = FindMNDXInfo2("mods/heroes.stormmod/eses.stormassets/localizeddata/sounds/vo/tyrael_ping_defendthing00.ogg", pkg);
+
+            //var info3 = FindMNDXInfo2("mods/heroes.stormmod/eses.stormassets/LocalizedData/Sounds/VO/Tyrael_Ping_DefendThing00.ogg", pkg);
 
             int i = 0;
 
-            while (marFile2.EnumerateFiles(result))
+            while (marFile2.EnumerateFiles(result2))
             {
-                string file = result.szFoundPath;
+                string file = result2.szFoundPath;
 
                 ulong fileHash = Hasher.ComputeHash(file);
 
-                mndxData[fileHash] = result.FileNameIndex;
+                MNDXRootEntry entry = new MNDXRootEntry();
+                entry.Package = FindMNDXPackage(file);
+                entry.Data = FindMNDXInfo(file, entry.Package);
+                entry.Name = file;
+                mndxData[fileHash] = entry;
+
+                //Console.WriteLine("{0:X8} - {1:X8} - {2} - {3}", result2.FileNameIndex, root.Flags, root.EncodingKey.ToHexString(), file);
 
                 if (worker != null)
                 {
@@ -244,6 +425,10 @@ namespace CASCExplorer
                     worker.ReportProgress((int)((float)i++ / (float)marFile2.NumFiles * 100.0f));
                 }
             }
+
+            //var sorted = data.OrderBy(e => e.Key);
+            //foreach (var e in sorted)
+            //    Console.WriteLine("{0:X8} - {1:X8} - {2}", e.Key, e.Value.Flags, e.Value.EncodingKey.ToHexString());
 
             Logger.WriteLine("MNDXRootHandler: loaded {0} file names", i);
         }
@@ -256,17 +441,9 @@ namespace CASCExplorer
 
             CASCFolder.FolderNames[rootHash] = "root";
 
-            MNDXSearchResult result = new MNDXSearchResult();
-
-            MARFileNameDB marFile2 = MarFiles[2];
-
-            while (marFile2.EnumerateFiles(result))
+            foreach (var entry in mndxData)
             {
-                string file = result.szFoundPath;
-
-                ulong fileHash = Hasher.ComputeHash(file);
-
-                CreateSubTree(root, fileHash, file);
+                CreateSubTree(root, entry.Key, entry.Value.Name);
             }
 
             return root;
@@ -1738,7 +1915,7 @@ namespace CASCExplorer
     public class TNameIndexStruct
     {
         private List<byte> NameFragments;
-        private TSparseArray Struct68;
+        private TSparseArray FragmentEnds;
 
         public int Count
         {
@@ -1748,28 +1925,94 @@ namespace CASCExplorer
         public TNameIndexStruct(BinaryReader reader)
         {
             NameFragments = reader.Read<byte>(false);
-            Struct68 = new TSparseArray(reader);
+            FragmentEnds = new TSparseArray(reader);
+        }
+
+        public bool CheckAndCopyNameFragment(MNDXSearchResult pStruct1C, int dwFragOffs)
+        {
+            SearchBuffer pStruct40 = pStruct1C.Buffer;
+
+            if (FragmentEnds.TotalItemCount == 0)
+            {
+                string szSearchMask = pStruct1C.szSearchMask;
+
+                int startPos = dwFragOffs - pStruct40.CharIndex;
+
+                // Keep copying as long as we don't reach the end of the search mask
+                while (pStruct40.CharIndex < pStruct1C.cchSearchMask)
+                {
+                    // HOTS: 195A5A0
+                    if (NameFragments[startPos + pStruct40.CharIndex] != szSearchMask[pStruct40.CharIndex])
+                        return false;
+
+                    // HOTS: 195A5B7
+                    pStruct40.Add(NameFragments[startPos + pStruct40.CharIndex]);
+                    pStruct40.CharIndex++;
+
+                    if (NameFragments[startPos + pStruct40.CharIndex] == 0)
+                        return true;
+                }
+
+                // HOTS: 195A660
+                // Now we need to copy the rest of the fragment
+                while (NameFragments[startPos + pStruct40.CharIndex] != 0)
+                {
+                    pStruct40.Add(NameFragments[startPos + pStruct40.CharIndex]);
+                    startPos++;
+                }
+            }
+            else
+            {
+                // Get the offset of the fragment to compare
+                // HOTS: 195A6B7
+                string szSearchMask = pStruct1C.szSearchMask;
+
+                // Keep copying as long as we don't reach the end of the search mask
+                while (dwFragOffs < pStruct1C.cchSearchMask)
+                {
+                    if (NameFragments[dwFragOffs] != szSearchMask[pStruct40.CharIndex])
+                        return false;
+
+                    pStruct40.Add(NameFragments[dwFragOffs]);
+                    pStruct40.CharIndex++;
+
+                    // Keep going as long as the given bit is not set
+                    if (FragmentEnds.Contains(dwFragOffs++))
+                        return true;
+                }
+
+                // Now we need to copy the rest of the fragment
+                while (!FragmentEnds.Contains(dwFragOffs))
+                {
+                    // HOTS: 195A7A6
+                    pStruct40.Add(NameFragments[dwFragOffs]);
+                    dwFragOffs++;
+                }
+            }
+
+            return true;
         }
 
         public bool CheckNameFragment(MNDXSearchResult pStruct1C, int dwFragOffs)
         {
             SearchBuffer pStruct40 = pStruct1C.Buffer;
 
-            if (Struct68.TotalItemCount == 0)
+            if (FragmentEnds.TotalItemCount == 0)
             {
                 // Get the offset of the fragment to compare. For convenience with pStruct40->CharIndex,
                 // subtract the CharIndex from the fragment offset
-                int startIndex = dwFragOffs - pStruct40.CharIndex;
                 string szSearchMask = pStruct1C.szSearchMask;
 
+                int startPos = dwFragOffs - pStruct40.CharIndex;
+
                 // Keep searching as long as the name matches with the fragment
-                while (NameFragments[startIndex + pStruct40.CharIndex] == szSearchMask[pStruct40.CharIndex])
+                while (NameFragments[startPos + pStruct40.CharIndex] == szSearchMask[pStruct40.CharIndex])
                 {
                     // Move to the next character
                     pStruct40.CharIndex++;
 
                     // Is it the end of the fragment or end of the path?
-                    if (NameFragments[startIndex + pStruct40.CharIndex] == 0)
+                    if (NameFragments[startPos + pStruct40.CharIndex] == 0)
                         return true;
 
                     if (pStruct40.CharIndex >= pStruct1C.cchSearchMask)
@@ -1790,7 +2033,7 @@ namespace CASCExplorer
                     pStruct40.CharIndex++;
 
                     // Is it the end of the fragment or end of the path?
-                    if (Struct68.Contains(dwFragOffs++))
+                    if (FragmentEnds.Contains(dwFragOffs++))
                         return true;
 
                     if (dwFragOffs >= pStruct1C.cchSearchMask)
@@ -1801,101 +2044,22 @@ namespace CASCExplorer
             }
         }
 
-        public bool CheckAndCopyNameFragment(MNDXSearchResult pStruct1C, int dwFragOffs)
-        {
-            SearchBuffer pStruct40 = pStruct1C.Buffer;
-
-            if (Struct68.TotalItemCount == 0)
-            {
-                // Get the offset of the fragment to compare. For convenience with pStruct40->CharIndex,
-                // subtract the CharIndex from the fragment offset
-                int startIndex = dwFragOffs - pStruct40.CharIndex;
-                string szSearchMask = pStruct1C.szSearchMask;
-
-                // Keep copying as long as we don't reach the end of the search mask
-                while (pStruct40.CharIndex < pStruct1C.cchSearchMask)
-                {
-                    // HOTS: 195A5A0
-                    if (NameFragments[startIndex + pStruct40.CharIndex] != szSearchMask[pStruct40.CharIndex])
-                        return false;
-
-                    // HOTS: 195A5B7
-                    pStruct40.Add(NameFragments[startIndex + pStruct40.CharIndex]);
-                    pStruct40.CharIndex++;
-
-                    if (NameFragments[startIndex + pStruct40.CharIndex] == 0)
-                        return true;
-                }
-
-                // Fixup the address of the fragment
-                startIndex += pStruct40.CharIndex;
-
-                // HOTS: 195A660
-                // Now we need to copy the rest of the fragment
-                while (NameFragments[startIndex] != 0)
-                {
-                    pStruct40.Add(NameFragments[startIndex]);
-                    startIndex++;
-                }
-            }
-            else
-            {
-                // Get the offset of the fragment to compare
-                // HOTS: 195A6B7
-                string szSearchMask = pStruct1C.szSearchMask;
-
-                // Keep copying as long as we don't reach the end of the search mask
-                while (dwFragOffs < pStruct1C.cchSearchMask)
-                {
-                    if (NameFragments[dwFragOffs] != szSearchMask[pStruct40.CharIndex])
-                        return false;
-
-                    pStruct40.Add(NameFragments[dwFragOffs]);
-                    pStruct40.CharIndex++;
-
-                    // Keep going as long as the given bit is not set
-                    if (Struct68.Contains(dwFragOffs++))
-                        return true;
-                }
-
-                // Fixup the address of the fragment
-
-                // Now we need to copy the rest of the fragment
-                while (!Struct68.Contains(dwFragOffs++))
-                {
-                    // HOTS: 195A7A6
-                    pStruct40.Add(NameFragments[dwFragOffs]);
-                }
-            }
-
-            return true;
-        }
-
         public void CopyNameFragment(MNDXSearchResult pStruct1C, int dwFragOffs)
         {
             SearchBuffer pStruct40 = pStruct1C.Buffer;
 
-            // HOTS: 195A3FA
-            if (Struct68.TotalItemCount == 0)
+            if (FragmentEnds.TotalItemCount == 0)
             {
-                byte b;
-                while ((b = NameFragments[dwFragOffs]) != 0)
+                while (NameFragments[dwFragOffs] != 0)
                 {
-                    pStruct40.Add(b);
-                    dwFragOffs++;
+                    pStruct40.Add(NameFragments[dwFragOffs++]);
                 }
             }
             else
             {
-                // HOTS: 195A4B3
-                for (; ;)
+                while (!FragmentEnds.Contains(dwFragOffs))
                 {
-                    // Insert the character to the path being built
-                    pStruct40.Add(NameFragments[dwFragOffs]);
-
-                    // Keep going as long as the given bit is not set
-                    if (Struct68.Contains(dwFragOffs++))
-                        break;
+                    pStruct40.Add(NameFragments[dwFragOffs++]);
                 }
             }
         }

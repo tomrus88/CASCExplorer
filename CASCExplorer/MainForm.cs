@@ -13,10 +13,12 @@ namespace CASCExplorer
 {
     public partial class MainForm : Form
     {
+        private ScanForm scanForm;
         private ExtractProgress extractProgress;
         private CASCHandler CASC;
         private CASCFolder Root;
         private AsyncAction bgAction;
+        private AsyncAction getFileExtensionAction;
         private CASCEntrySorter Sorter;
         private NumberFormatInfo sizeNumberFmt = new NumberFormatInfo()
         {
@@ -284,6 +286,12 @@ namespace CASCExplorer
                             PreviewText(file);
                             break;
                         }
+                    //case ".wav":
+                    //case ".ogg":
+                    //    {
+                    //        PreviewSound(file);
+                    //        break;
+                    //    }
                     default:
                         {
                             MessageBox.Show(string.Format("Preview of {0} is not supported yet", extension), "Not supported file");
@@ -295,27 +303,31 @@ namespace CASCExplorer
 
         private void PreviewText(CASCFile file)
         {
-            var stream = CASC.OpenFile(file.Hash, file.FullName);
-            var text = new StreamReader(stream).ReadToEnd();
-            var form = new Form { FormBorderStyle = FormBorderStyle.SizableToolWindow, StartPosition = FormStartPosition.CenterParent };
-            form.Controls.Add(new TextBox
+            using(var stream = CASC.OpenFile(file.Hash, file.FullName))
             {
-                Multiline = true,
-                ReadOnly = true,
-                Dock = DockStyle.Fill,
-                Text = text,
-                ScrollBars = ScrollBars.Both
-            });
-            form.Show(this);
+                var text = new StreamReader(stream).ReadToEnd();
+                var form = new Form { FormBorderStyle = FormBorderStyle.SizableToolWindow, StartPosition = FormStartPosition.CenterParent };
+                form.Controls.Add(new TextBox
+                {
+                    Multiline = true,
+                    ReadOnly = true,
+                    Dock = DockStyle.Fill,
+                    Text = text,
+                    ScrollBars = ScrollBars.Both
+                });
+                form.Show(this);
+            }
         }
 
         private void PreviewBlp(CASCFile file)
         {
-            var stream = CASC.OpenFile(file.Hash, file.FullName);
-            var blp = new BlpFile(stream);
-            var bitmap = blp.GetBitmap(0);
-            var form = new ImagePreviewForm(bitmap);
-            form.Show(this);
+            using(var stream = CASC.OpenFile(file.Hash, file.FullName))
+            {
+                var blp = new BlpFile(stream);
+                var bitmap = blp.GetBitmap(0);
+                var form = new ImagePreviewForm(bitmap);
+                form.Show(this);
+            }
         }
 
         private void listView1_KeyDown(object sender, KeyEventArgs e)
@@ -416,6 +428,67 @@ namespace CASCExplorer
         private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
         {
             bgAction.Cancel();
+        }
+
+        private void scanFilesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (scanForm == null)
+            {
+                scanForm = new ScanForm();
+                scanForm.Initialize(CASC, Root);
+            }
+            scanForm.Reset();
+            scanForm.ShowDialog();
+        }
+
+        private async void analyseUnknownFilesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            statusProgress.Value = 0;
+            statusProgress.Visible = true;
+            statusLabel.Text = "Processing...";
+            getFileExtensionAction = new AsyncAction(() => GetUnknownFileExtensions());
+            getFileExtensionAction.ProgressChanged += new EventHandler<AsyncActionProgressChangedEventArgs>(getFileExtensionAction_ProgressChanged);
+
+            try
+            {
+                await getFileExtensionAction.DoAction();
+
+                statusProgress.Value = 0;
+                statusProgress.Visible = false;
+                statusLabel.Text = "All unknown files processed.";
+            }
+            catch (OperationCanceledException)
+            {
+
+            }
+            catch (Exception exc)
+            {
+                MessageBox.Show("Error during analysis of unknown files:\n" + exc.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+        }
+
+        private void GetUnknownFileExtensions()
+        {
+            FileScanner scanner = new FileScanner(CASC, Root);
+            ulong unknownHash = 14541926008585051990;
+            CASCFolder unknownFolder = Root.GetEntry(unknownHash) as CASCFolder;
+            int numTotal = unknownFolder.SubEntries.Count;
+            int numDone = 0;
+            foreach (var unknownEntry in unknownFolder.SubEntries)
+            {
+                getFileExtensionAction.ThrowOnCancel();
+                getFileExtensionAction.ReportProgress((int)((float)(++numDone) / (float)numTotal * 100));
+                CASCFile unknownFile = unknownEntry.Value as CASCFile;
+                string ext = scanner.GetFileExtension(unknownFile);
+                unknownFile.FullName += ext;
+            }
+        }
+
+        private void getFileExtensionAction_ProgressChanged(object sender, AsyncActionProgressChangedEventArgs e)
+        {
+            statusProgress.Value = e.Progress;
+            statusLabel.Text = "Processing...";
         }
 
         private void localeToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
