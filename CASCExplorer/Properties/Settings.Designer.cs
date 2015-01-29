@@ -25,7 +25,7 @@ namespace CASCExplorer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
+        [global::System.Configuration.DefaultSettingValueAttribute("False")]
         public bool OnlineMode {
             get {
                 return ((bool)(this["OnlineMode"]));
@@ -73,7 +73,7 @@ namespace CASCExplorer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("D:\\Games\\World of Warcraft\\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("d:\\Games\\Heroes of the Storm\\")]
         public string StoragePath {
             get {
                 return ((string)(this["StoragePath"]));

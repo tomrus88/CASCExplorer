@@ -16,12 +16,12 @@ namespace CASCExplorer
 
     public class CASCHandler
     {
-        private readonly LocalIndexHandler LocalIndex;
-        private readonly CDNIndexHandler CDNIndex;
+        private LocalIndexHandler LocalIndex;
+        private CDNIndexHandler CDNIndex;
 
-        private readonly InstallHandler InstallHandler;
-        private readonly EncodingHandler EncodingHandler;
-        private readonly IRootHandler RootHandler;
+        private InstallHandler InstallHandler;
+        private EncodingHandler EncodingHandler;
+        private IRootHandler RootHandler;
 
         private static readonly Jenkins96 Hasher = new Jenkins96();
 
@@ -397,14 +397,24 @@ namespace CASCExplorer
         public void Clear()
         {
             CDNIndex.Clear();
+            CDNIndex = null;
+
             DataStreams.Clear();
+
             EncodingHandler.Clear();
+            EncodingHandler = null;
+
             InstallHandler.Clear();
+            InstallHandler = null;
 
             if (LocalIndex != null)
+            {
                 LocalIndex.Clear();
+                LocalIndex = null;
+            }
 
             RootHandler.Clear();
+            RootHandler = null;
         }
     }
 }

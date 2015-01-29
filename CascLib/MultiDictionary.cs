@@ -18,5 +18,15 @@ namespace CASCExplorer
                 base[key] = hset;
             }
         }
+
+        public new void Clear()
+        {
+            foreach (var kv in this)
+            {
+                kv.Value.Clear();
+            }
+
+            base.Clear();
+        }
     }
 }

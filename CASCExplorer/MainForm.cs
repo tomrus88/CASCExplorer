@@ -66,6 +66,8 @@ namespace CASCExplorer
 
             useLWToolStripMenuItem.Checked = Settings.Default.ContentFlags == ContentFlags.LowViolence;
 
+            Sorter = new CASCEntrySorter();
+
             bgAction = new AsyncAction(() => LoadData());
             bgAction.ProgressChanged += new EventHandler<AsyncActionProgressChangedEventArgs>(bgAction_ProgressChanged);
 
@@ -75,11 +77,16 @@ namespace CASCExplorer
         private async System.Threading.Tasks.Task LoadStorage()
         {
             if (CASC != null)
+            {
                 CASC.Clear();
+                Sorter.CASC = null;
+            }
 
             CASC = null;
 
             Root = null;
+
+            //GC.Collect();
 
             statusLabel.Text = "Loading...";
             statusProgress.Visible = true;
@@ -145,7 +152,7 @@ namespace CASCExplorer
             CASC.Root.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), bgAction);
             Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
 
-            Sorter = new CASCEntrySorter(CASC);
+            Sorter.CASC = CASC;
         }
 
         private void treeView1_BeforeSelect(object sender, TreeViewCancelEventArgs e)

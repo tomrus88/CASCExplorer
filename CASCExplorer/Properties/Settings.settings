@@ -3,7 +3,7 @@
   <Profiles />
   <Settings>
     <Setting Name="OnlineMode" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="Product" Type="System.String" Scope="User">
       <Value Profile="(Default)">hero</Value>
@@ -15,7 +15,7 @@
       <Value Profile="(Default)">None</Value>
     </Setting>
     <Setting Name="StoragePath" Type="System.String" Scope="User">
-      <Value Profile="(Default)">D:\Games\World of Warcraft\</Value>
+      <Value Profile="(Default)">d:\Games\Heroes of the Storm\</Value>
     </Setting>
   </Settings>
 </SettingsFile>

@@ -5,16 +5,14 @@ namespace CASCExplorer
 {
     class CASCEntrySorter : IComparer<ICASCEntry>
     {
-        private CASCHandler CASC;
-
         public int SortColumn { get; set; }
         public SortOrder Order { get; set; }
+        public CASCHandler CASC { get; set; }
 
-        public CASCEntrySorter(CASCHandler casc)
+        public CASCEntrySorter()
         {
             SortColumn = 0;
             Order = SortOrder.Ascending;
-            CASC = casc;
         }
 
         public int Compare(ICASCEntry x, ICASCEntry y)
