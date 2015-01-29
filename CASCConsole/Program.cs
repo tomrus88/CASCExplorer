@@ -20,7 +20,7 @@ namespace CASCConsole
             }
 
             Console.WriteLine("Settings:");
-            Console.WriteLine("    WowPath: {0}", Settings.Default.WowPath);
+            Console.WriteLine("    WowPath: {0}", Settings.Default.StoragePath);
             Console.WriteLine("    OnlineMode: {0}", Settings.Default.OnlineMode);
 
             Console.WriteLine("Loading...");
@@ -29,7 +29,7 @@ namespace CASCConsole
             bgLoader.ProgressChanged += BgLoader_ProgressChanged;
             CASCHandler cascHandler = Settings.Default.OnlineMode
                 ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, bgLoader)
-                : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, bgLoader);
+                : CASCHandler.OpenLocalStorage(Settings.Default.StoragePath, bgLoader);
 
             string pattern = args[0];
             string dest = args[1];

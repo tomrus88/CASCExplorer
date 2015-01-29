@@ -296,5 +296,14 @@ namespace CASCExplorer
         {
             return UnknownFiles.Contains(hash);
         }
+
+        public void Clear()
+        {
+            RootData.Clear();
+            UnknownFiles.Clear();
+            Root.SubEntries.Clear();
+            CASCFolder.FolderNames.Clear();
+            CASCFile.FileNames.Clear();
+        }
     }
 }

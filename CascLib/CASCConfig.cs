@@ -209,6 +209,8 @@ namespace CASCExplorer
         {
             var config = new CASCConfig { OnlineMode = false, BasePath = basePath };
 
+            bool isHots = File.Exists(Path.Combine(basePath, "Heroes of the Storm.exe"));
+
             string buildInfoPath = Path.Combine(basePath, ".build.info");
 
             using (Stream buildInfoStream = new FileStream(buildInfoPath, FileMode.Open))
@@ -230,17 +232,33 @@ namespace CASCExplorer
             if (bi == null)
                 throw new Exception("Can't find active BuildInfoEntry");
 
-            config.Build = Convert.ToInt32(bi.Version.Split('.')[3]);
+            try
+            {
+                config.Build = Convert.ToInt32(bi.Version.Split('.')[3]);
+            }
+            catch
+            {
+                try
+                {
+                    config.Build = Convert.ToInt32(System.Text.RegularExpressions.Regex.Match(bi.Version, "\\d+").Value);
+                }
+                catch
+                {
+                    config.Build = -1;
+                }
+            }
+
+            string dataFolder = isHots ? "HeroesData" : "Data";
 
             string buildKey = bi.BuildKey;
-            string buildCfgPath = Path.Combine(basePath, "Data\\config\\", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
+            string buildCfgPath = Path.Combine(basePath, String.Format("{0}\\config\\", dataFolder), buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
             using (Stream stream = new FileStream(buildCfgPath, FileMode.Open))
             {
                 config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(stream);
             }
 
             string cdnKey = bi.CDNKey;
-            string cdnCfgPath = Path.Combine(basePath, "Data\\config\\", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
+            string cdnCfgPath = Path.Combine(basePath, String.Format("{0}\\config\\", dataFolder), cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
             using (Stream stream = new FileStream(cdnCfgPath, FileMode.Open))
             {
                 config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
@@ -280,6 +298,11 @@ namespace CASCExplorer
         public byte[] EncodingKey
         {
             get { return _BuildConfig["encoding"][1].ToByteArray(); }
+        }
+
+        public string BuildUID
+        {
+            get { return _BuildConfig["build-uid"][0]; }
         }
 
         public string CDNUrl

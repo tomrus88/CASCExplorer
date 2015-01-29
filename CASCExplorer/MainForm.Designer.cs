@@ -58,6 +58,8 @@
             this.analyseUnknownFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openStorageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.storageFolderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -254,6 +256,7 @@
             // fileToolStripMenuItem
             // 
             this.fileToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.openStorageToolStripMenuItem,
             this.exitToolStripMenuItem});
             this.fileToolStripMenuItem.Name = "fileToolStripMenuItem";
             this.fileToolStripMenuItem.Size = new System.Drawing.Size(37, 20);
@@ -262,7 +265,7 @@
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
-            this.exitToolStripMenuItem.Size = new System.Drawing.Size(92, 22);
+            this.exitToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
             this.exitToolStripMenuItem.Text = "Exit";
             this.exitToolStripMenuItem.Click += new System.EventHandler(this.exitToolStripMenuItem_Click);
             // 
@@ -335,6 +338,13 @@
             this.aboutToolStripMenuItem.Text = "About...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
             // 
+            // openStorageToolStripMenuItem
+            // 
+            this.openStorageToolStripMenuItem.Name = "openStorageToolStripMenuItem";
+            this.openStorageToolStripMenuItem.Size = new System.Drawing.Size(155, 22);
+            this.openStorageToolStripMenuItem.Text = "Open Storage...";
+            this.openStorageToolStripMenuItem.Click += new System.EventHandler(this.openStorageToolStripMenuItem_Click);
+            // 
             // MainForm
             // 
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
@@ -397,6 +407,8 @@
         private System.Windows.Forms.ToolStripMenuItem getSizeToolStripMenuItem;
         private System.Windows.Forms.ColumnHeader columnHeader5;
         private System.Windows.Forms.ToolStripMenuItem useLWToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem openStorageToolStripMenuItem;
+        private System.Windows.Forms.FolderBrowserDialog storageFolderBrowserDialog;
     }
 }
 

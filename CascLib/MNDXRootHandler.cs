@@ -490,6 +490,17 @@ namespace CASCExplorer
 
             return Root;
         }
+
+        public void Clear()
+        {
+            mndxData.Clear();
+            mndxRootEntries.Clear();
+            mndxRootEntriesValid.Clear();
+            Packages.Clear();
+            Root.SubEntries.Clear();
+            CASCFolder.FolderNames.Clear();
+            CASCFile.FileNames.Clear();
+        }
     }
 
     class MARFileNameDB

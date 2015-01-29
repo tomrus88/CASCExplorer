@@ -46,8 +46,10 @@ namespace CASCExplorer
             folderTree.SelectedImageIndex = 1;
 
             onlineModeToolStripMenuItem.Checked = Settings.Default.OnlineMode;
-
-            statusLabel.Text = "Loading...";
+            scanFilesToolStripMenuItem.Enabled = Settings.Default.Product.IndexOf("wow") >= 0;
+            analyseUnknownFilesToolStripMenuItem.Enabled = Settings.Default.Product.IndexOf("wow") >= 0;
+            localeFlagsToolStripMenuItem.Enabled = Settings.Default.Product.IndexOf("wow") >= 0;
+            useLWToolStripMenuItem.Enabled = Settings.Default.Product.IndexOf("wow") >= 0;
 
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
@@ -66,6 +68,25 @@ namespace CASCExplorer
 
             bgAction = new AsyncAction(() => LoadData());
             bgAction.ProgressChanged += new EventHandler<AsyncActionProgressChangedEventArgs>(bgAction_ProgressChanged);
+
+            await LoadStorage();
+        }
+
+        private async System.Threading.Tasks.Task LoadStorage()
+        {
+            if (CASC != null)
+                CASC.Clear();
+
+            CASC = null;
+
+            Root = null;
+
+            statusLabel.Text = "Loading...";
+            statusProgress.Visible = true;
+
+            fileList.VirtualListSize = 0;
+
+            folderTree.Nodes.Clear();
 
             try
             {
@@ -119,7 +140,7 @@ namespace CASCExplorer
         {
             CASC = Settings.Default.OnlineMode
                 ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, bgAction)
-                : CASCHandler.OpenLocalStorage(Settings.Default.WowPath, bgAction);
+                : CASCHandler.OpenLocalStorage(Settings.Default.StoragePath, bgAction);
 
             CASC.Root.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), bgAction);
             Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
@@ -542,6 +563,27 @@ namespace CASCExplorer
 
             Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
             OnStorageChanged();
+        }
+
+        private async void openStorageToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (storageFolderBrowserDialog.ShowDialog() != DialogResult.OK)
+            {
+                MessageBox.Show("Please select storage folder!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            if (!File.Exists(Path.Combine(storageFolderBrowserDialog.SelectedPath, ".build.info")))
+            {
+                MessageBox.Show("Invalid storage folder selected!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            Settings.Default.OnlineMode = false;
+            Settings.Default.StoragePath = storageFolderBrowserDialog.SelectedPath;
+            //Settings.Default.Save();
+
+            await LoadStorage();
         }
     }
 }

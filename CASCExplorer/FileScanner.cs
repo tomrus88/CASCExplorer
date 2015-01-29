@@ -11,6 +11,7 @@ namespace CASCExplorer
         {
             ".ogg", ".mp3", ".wav", ".avi", ".ttf", ".blp", ".sig", ".toc", ".blob", ".anim", ".skin", ".phys"
         };
+
         static readonly Dictionary<byte[], string> MagicNumbers = new Dictionary<byte[], string>()
         {
             { new byte[] { 0x42, 0x4c, 0x50, 0x32 }, ".blp" },
@@ -24,8 +25,8 @@ namespace CASCExplorer
             { new byte[] { 0xff, 0xfb }, ".mp3" },
         };
 
-        CASCHandler CASC;
-        CASCFolder Root;
+        private CASCHandler CASC;
+        private CASCFolder Root;
 
         public FileScanner(CASCHandler casc, CASCFolder root)
         {
@@ -42,8 +43,8 @@ namespace CASCExplorer
                 {
                     using (Stream fileStream = CASC.OpenFile(file.Hash, file.FullName))
                     {
-                        if (fileStream == null)
-                            return null;
+                        //if (fileStream == null)
+                        //    return null;
                         int b;
                         int state = 1;
                         StringBuilder sb = new StringBuilder();

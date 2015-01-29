@@ -102,5 +102,10 @@ namespace CASCExplorer
             EncodingData.TryGetValue(md5, out result);
             return result;
         }
+
+        public void Clear()
+        {
+            EncodingData.Clear();
+        }
     }
 }

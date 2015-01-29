@@ -8,32 +8,35 @@ namespace CASCExplorer
 {
     public partial class ScanForm : Form
     {
-        static readonly Jenkins96 Hasher = new Jenkins96();
+        private static readonly Jenkins96 Hasher = new Jenkins96();
 
         private FileScanner scanner;
         private HashSet<ScanResult> uniqueFileNames = new HashSet<ScanResult>();
         private Dictionary<string, int> extCounter = new Dictionary<string, int>();
 
-        CASCHandler CASC;
-        CASCFolder Root;
+        private CASCHandler CASC;
+        private CASCFolder Root;
 
         private int NumFiles;
         private int NumScanned;
-        bool running = false;
+        private bool running = false;
 
         private class ScanResult
         {
             public string NewFile { get; set; }
             public string FoundInFile { get; set; }
+
             public ScanResult(string newFileName, string foundInFileName)
             {
                 NewFile = newFileName;
                 FoundInFile = foundInFileName;
             }
+
             public override int GetHashCode()
             {
                 return NewFile.ToLower().GetHashCode();
             }
+
             public override bool Equals(object obj)
             {
                 if (obj == null)
@@ -45,6 +48,7 @@ namespace CASCExplorer
                     return false;
                 return true;
             }
+
             public override string ToString()
             {
                 return NewFile + " (in: " + FoundInFile + ")";
@@ -203,6 +207,7 @@ namespace CASCExplorer
             this.BeginInvoke((MethodInvoker)(() => updateExtCounter(ext, 0)));
 
             HashSet<string> fileNames = scanner.ScanFile(file);
+
             if (fileNames != null)
             {
                 // only report progress when not skipping a file, it's faster that way
@@ -216,6 +221,7 @@ namespace CASCExplorer
                 foreach (var fileName in fileNames)
                 {
                     ulong hash = Hasher.ComputeHash(fileName);
+
                     if ((CASC.Root as WowRootHandler).IsUnknownFile(hash))
                     {
                         this.BeginInvoke((MethodInvoker)(() => UpdateFileNames(fileName, file.FullName)));

@@ -15,23 +15,23 @@ namespace CASCExplorer
             Application.EnableVisualStyles();
             Application.SetCompatibleTextRenderingDefault(false);
 
-            if (!Properties.Settings.Default.OnlineMode && !Directory.Exists(Properties.Settings.Default.WowPath))
+            if (!Properties.Settings.Default.OnlineMode && !Directory.Exists(Properties.Settings.Default.StoragePath))
             {
                 var folderBrowser = new FolderBrowserDialog();
 
                 if (folderBrowser.ShowDialog() != DialogResult.OK)
                 {
-                    MessageBox.Show("Please select wow folder!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Please select storage folder!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
                 if (!File.Exists(Path.Combine(folderBrowser.SelectedPath, ".build.info")))
                 {
-                    MessageBox.Show("Invalid folder selected!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Invalid storage folder selected!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
-                Properties.Settings.Default.WowPath = folderBrowser.SelectedPath;
+                Properties.Settings.Default.StoragePath = folderBrowser.SelectedPath;
                 Properties.Settings.Default.Save();
             }
 

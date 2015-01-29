@@ -26,12 +26,12 @@ namespace CASCConsole.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("c:\\Games\\World of Warcraft Beta\\")]
-        public string WowPath {
+        public string StoragePath {
             get {
-                return ((string)(this["WowPath"]));
+                return ((string)(this["StoragePath"]));
             }
             set {
-                this["WowPath"] = value;
+                this["StoragePath"] = value;
             }
         }
         
@@ -49,7 +49,7 @@ namespace CASCConsole.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("wow_beta")]
+        [global::System.Configuration.DefaultSettingValueAttribute("wow")]
         public string Product {
             get {
                 return ((string)(this["Product"]));

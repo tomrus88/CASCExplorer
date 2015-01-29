@@ -105,5 +105,11 @@ namespace CASCExplorer
                 }
             }
         }
+
+        public void Clear()
+        {
+            InstallData.Clear();
+            Mask.Clear();
+        }
     }
 }

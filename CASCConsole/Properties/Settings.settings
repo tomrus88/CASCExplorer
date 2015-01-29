@@ -2,14 +2,14 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="CASCConsole.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="WowPath" Type="System.String" Scope="User">
+    <Setting Name="StoragePath" Type="System.String" Scope="User">
       <Value Profile="(Default)">c:\Games\World of Warcraft Beta\</Value>
     </Setting>
     <Setting Name="OnlineMode" Type="System.Boolean" Scope="User">
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="Product" Type="System.String" Scope="User">
-      <Value Profile="(Default)">wow_beta</Value>
+      <Value Profile="(Default)">wow</Value>
     </Setting>
     <Setting Name="Locale" Type="CASCExplorer.LocaleFlags" Scope="User">
       <Value Profile="(Default)">enUS</Value>

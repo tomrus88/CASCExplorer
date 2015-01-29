@@ -37,7 +37,7 @@ namespace CASCExplorer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("wow")]
+        [global::System.Configuration.DefaultSettingValueAttribute("hero")]
         public string Product {
             get {
                 return ((string)(this["Product"]));
@@ -74,12 +74,12 @@ namespace CASCExplorer.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("D:\\Games\\World of Warcraft\\")]
-        public string WowPath {
+        public string StoragePath {
             get {
-                return ((string)(this["WowPath"]));
+                return ((string)(this["StoragePath"]));
             }
             set {
-                this["WowPath"] = value;
+                this["StoragePath"] = value;
             }
         }
     }

@@ -121,7 +121,10 @@ namespace CASCExplorer
         {
             try
             {
-                var path = Path.Combine(CASCConfig.BasePath, "Data\\indices\\", archive + ".index");
+                string dataFolder = CASCConfig.BuildUID == "hero" ? "HeroesData" : "Data";
+                string indexPath = String.Format("{0}\\indices\\", dataFolder);
+
+                string path = Path.Combine(CASCConfig.BasePath, indexPath, archive + ".index");
 
                 using (FileStream fs = new FileStream(path, FileMode.Open))
                     ParseIndex(fs, i);
@@ -181,6 +184,11 @@ namespace CASCExplorer
                 Logger.WriteLine("CDNIndexHandler: missing index: {0}", key.ToHexString());
 
             return result;
+        }
+
+        public void Clear()
+        {
+            CDNIndexData.Clear();
         }
     }
 }

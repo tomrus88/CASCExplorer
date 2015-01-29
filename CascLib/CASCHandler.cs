@@ -84,7 +84,11 @@ namespace CASCExplorer
             sw.Restart();
             using (var fs = OpenRootFile())
             {
-                if (config.Product == "hero")
+                byte[] magic = new byte[4];
+                fs.Read(magic, 0, magic.Length);
+                fs.Position = 0;
+
+                if (magic[0] == 0x4D && magic[1] == 0x4E && magic[2] == 0x44 && magic[3] == 0x58) // MNDX
                 {
                     RootHandler = new MNDXRootHandler(fs, worker);
                 }
@@ -303,7 +307,7 @@ namespace CASCExplorer
 
             string dataFolder = "Data";
 
-            if (config.Product == "hero")
+            if (RootHandler is MNDXRootHandler)
                 dataFolder = "HeroesData";
 
             string dataFile = Path.Combine(config.BasePath, String.Format("{0}\\data\\data.{1:D3}", dataFolder, index));
@@ -388,6 +392,19 @@ namespace CASCExplorer
             }
 
             throw new FileNotFoundException(fullName);
+        }
+
+        public void Clear()
+        {
+            CDNIndex.Clear();
+            DataStreams.Clear();
+            EncodingHandler.Clear();
+            InstallHandler.Clear();
+
+            if (LocalIndex != null)
+                LocalIndex.Clear();
+
+            RootHandler.Clear();
         }
     }
 }

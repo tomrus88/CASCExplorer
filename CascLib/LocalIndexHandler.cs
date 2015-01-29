@@ -24,7 +24,7 @@ namespace CASCExplorer
         {
             var handler = new LocalIndexHandler();
 
-            var idxFiles = GetIdxFiles(config.BasePath);
+            var idxFiles = GetIdxFiles(config);
 
             if (idxFiles.Count == 0)
                 throw new FileNotFoundException("idx files missing!");
@@ -101,13 +101,16 @@ namespace CASCExplorer
             }
         }
 
-        private static List<string> GetIdxFiles(string wowPath)
+        private static List<string> GetIdxFiles(CASCConfig config)
         {
             List<string> latestIdx = new List<string>();
 
+            string dataFolder = config.BuildUID == "hero" ? "HeroesData" : "Data";
+            string dataPath = String.Format("{0}\\data\\", dataFolder);
+
             for (int i = 0; i < 0x10; ++i)
             {
-                var files = Directory.EnumerateFiles(Path.Combine(wowPath, "Data\\data\\"), String.Format("{0:X2}*.idx", i));
+                var files = Directory.EnumerateFiles(Path.Combine(config.BasePath, dataPath), String.Format("{0:X2}*.idx", i));
 
                 if (files.Count() > 0)
                     latestIdx.Add(files.Last());
@@ -125,6 +128,11 @@ namespace CASCExplorer
                 Logger.WriteLine("LocalIndexHandler: missing index: {0}", key.ToHexString());
 
             return result;
+        }
+
+        public void Clear()
+        {
+            LocalIndexData.Clear();
         }
     }
 }

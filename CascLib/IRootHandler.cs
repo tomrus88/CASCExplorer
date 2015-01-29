@@ -18,5 +18,7 @@ namespace CASCExplorer
         void LoadListFile(string path, AsyncAction worker = null);
 
         CASCFolder SetFlags(LocaleFlags locale, ContentFlags content, bool createTree = true);
+
+        void Clear();
     }
 }
