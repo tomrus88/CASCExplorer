@@ -377,17 +377,16 @@ namespace CASCExplorer
 
             Logger.WriteLine("MNDXRootHandler: loading file names...");
 
-            MNDXSearchResult result = new MNDXSearchResult();
+            //MNDXSearchResult result = new MNDXSearchResult();
 
-            MARFileNameDB marFile0 = MarFiles[0];
-            while (marFile0.EnumerateFiles(result))
-            {
+            //MARFileNameDB marFile0 = MarFiles[0];
+
+            foreach (var result in MarFiles[0].EnumerateFiles())
                 Packages.Add(result.FileNameIndex, result.szFoundPath);
-            }
 
-            MNDXSearchResult result2 = new MNDXSearchResult();
+            //MNDXSearchResult result2 = new MNDXSearchResult();
 
-            MARFileNameDB marFile2 = MarFiles[2];
+            //MARFileNameDB marFile2 = MarFiles[2];
 
             //result.SetSearchPath("mods/heroes.stormmod/base.stormassets/Assets/Sounds/Ambient_3D/Amb_3D_Birds_FlyAway01.ogg");
             //bool res = MarFiles[0].FindFileInDatabase(result);
@@ -404,9 +403,9 @@ namespace CASCExplorer
 
             int i = 0;
 
-            while (marFile2.EnumerateFiles(result2))
+            foreach (var result in MarFiles[2].EnumerateFiles())
             {
-                string file = result2.szFoundPath;
+                string file = result.szFoundPath;
 
                 ulong fileHash = Hasher.ComputeHash(file);
 
@@ -421,7 +420,7 @@ namespace CASCExplorer
                 if (worker != null)
                 {
                     worker.ThrowOnCancel();
-                    worker.ReportProgress((int)((float)i++ / (float)marFile2.NumFiles * 100.0f));
+                    worker.ReportProgress((int)((float)i++ / (float)MarFiles[2].NumFiles * 100.0f));
                 }
             }
 
@@ -1438,7 +1437,7 @@ namespace CASCExplorer
             return true;
         }
 
-        public bool EnumerateFiles(MNDXSearchResult pStruct1C)
+        private bool EnumerateFiles(MNDXSearchResult pStruct1C)
         {
             SearchBuffer pStruct40 = pStruct1C.Buffer;
 
@@ -1716,6 +1715,14 @@ namespace CASCExplorer
 
             pStruct1C.SetFindResult(pStruct1C.szSearchMask, FileNameIndexes.GetItemValue(pStruct40.ItemIndex));
             return true;
+        }
+
+        public IEnumerable<MNDXSearchResult> EnumerateFiles()
+        {
+            MNDXSearchResult pStruct1C = new MNDXSearchResult();
+
+            while (EnumerateFiles(pStruct1C))
+                yield return pStruct1C;
         }
 
         private int GetNameFragmentOffsetEx(int LoBitsIndex, int HiBitsIndex)
