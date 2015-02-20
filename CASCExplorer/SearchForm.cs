@@ -13,7 +13,6 @@ namespace CASCExplorer
     public partial class SearchForm : Form
     {
         private NoFlickerListView filelist;
-        private int SearchIndex;
 
         public SearchForm(NoFlickerListView filelist)
         {
@@ -24,11 +23,6 @@ namespace CASCExplorer
 
         private void button1_Click(object sender, EventArgs e)
         {
-            CASCFolder folder = filelist.Tag as CASCFolder;
-
-            if (SearchIndex >= folder.SubEntries.Count)
-                SearchIndex = 0;
-
             var item = filelist.FindItemWithText(textBox1.Text, false, filelist.SelectedIndex, true);
 
             if (item != null)
