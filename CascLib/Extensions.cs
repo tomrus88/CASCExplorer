@@ -65,6 +65,14 @@ namespace CASCExplorer
             return true;
         }
 
+        public static bool EqualsToIgnoreLength(this byte[] array, byte[] other)
+        {
+            for (var i = 0; i < array.Length; ++i)
+                if (array[i] != other[i])
+                    return false;
+            return true;
+        }
+
         public static bool IsZeroed(this byte[] array)
         {
             for (var i = 0; i < array.Length; ++i)

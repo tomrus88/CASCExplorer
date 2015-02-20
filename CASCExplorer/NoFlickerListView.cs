@@ -2,7 +2,7 @@
 
 namespace CASCExplorer
 {
-    class NoFlickerListView : ListView
+    public class NoFlickerListView : ListView
     {
         public NoFlickerListView()
         {

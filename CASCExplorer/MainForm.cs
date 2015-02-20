@@ -592,5 +592,52 @@ namespace CASCExplorer
 
             await LoadStorage();
         }
+
+        private void findToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            SearchForm sf = new SearchForm(fileList);
+            sf.Show();
+        }
+
+        private void fileList_SearchForVirtualItem(object sender, SearchForVirtualItemEventArgs e)
+        {
+            bool ignoreCase = true;
+            bool searchUp = false;
+            int SelectedIndex = fileList.SelectedIndex;
+
+            if (SelectedIndex < 0)
+                return;
+
+            CASCFolder folder = fileList.Tag as CASCFolder;
+
+            var comparisonType = ignoreCase
+                                    ? StringComparison.InvariantCultureIgnoreCase
+                                    : StringComparison.InvariantCulture;
+
+            if (searchUp)
+            {
+                for (var i = SelectedIndex - 1; i >= 0; --i)
+                {
+                    var op = folder.SubEntries.ElementAt(i).Value.Name;
+                    if (op.IndexOf(e.Text, comparisonType) != -1)
+                    {
+                        e.Index = i;
+                        break;
+                    }
+                }
+            }
+            else
+            {
+                for (int i = SelectedIndex + 1; i < fileList.Items.Count; ++i)
+                {
+                    var op = folder.SubEntries.ElementAt(i).Value.Name;
+                    if (op.IndexOf(e.Text, comparisonType) != -1)
+                    {
+                        e.Index = i;
+                        break;
+                    }
+                }
+            }
+        }
     }
 }

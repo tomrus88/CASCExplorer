@@ -128,12 +128,11 @@ namespace CASCExplorer
                 {
                     byte[] magic = new byte[4];
 
-                    for (int i = 0; i < 4; i++)
-                        magic[i] = (byte)stream.ReadByte();
+                    stream.Read(magic, 0, 4);
 
                     foreach (var number in MagicNumbers)
                     {
-                        if (magic.EqualsTo(number.Key))
+                        if (number.Key.EqualsToIgnoreLength(magic))
                         {
                             return number.Value;
                         }
