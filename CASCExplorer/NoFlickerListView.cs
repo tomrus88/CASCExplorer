@@ -1,4 +1,5 @@
 ﻿using System.Windows.Forms;
+using System.Linq;
 
 namespace CASCExplorer
 {
@@ -21,13 +22,16 @@ namespace CASCExplorer
 
         public int SelectedIndex
         {
-            get { return HasSingleSelection ? SelectedIndices[0] : -1; }
+            get { return HasSingleSelection ? SelectedIndices[0] : SelectedIndices.Cast<int>().Max(); }
             set
             {
                 SelectedIndices.Clear();
 
                 if (value >= 0)
+                {
                     SelectedIndices.Add(value);
+                    Items[value].Selected = true;
+                }
             }
         }
     }

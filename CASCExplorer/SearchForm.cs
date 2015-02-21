@@ -1,11 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
-using System.Threading.Tasks;
 using System.Windows.Forms;
 
 namespace CASCExplorer
@@ -28,8 +21,8 @@ namespace CASCExplorer
             if (item != null)
             {
                 filelist.EnsureVisible(item.Index);
-                filelist.SelectedIndices.Clear();
-                filelist.SelectedIndices.Add(item.Index);
+                filelist.SelectedIndex = item.Index;
+                filelist.FocusedItem = item;
             }
             else
             {
@@ -37,6 +30,16 @@ namespace CASCExplorer
                                 "CASCExplorer",
                                 MessageBoxButtons.OK,
                                 MessageBoxIcon.Information);
+            }
+        }
+
+        private void SearchForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            if (e.CloseReason == CloseReason.UserClosing)
+            {
+                e.Cancel = true;
+                Hide();
+                Owner.Activate();
             }
         }
     }

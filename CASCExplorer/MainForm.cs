@@ -14,6 +14,7 @@ namespace CASCExplorer
     public partial class MainForm : Form
     {
         private ScanForm scanForm;
+        private SearchForm searchForm;
         private ExtractProgress extractProgress;
         private CASCHandler CASC;
         private CASCFolder Root;
@@ -595,8 +596,10 @@ namespace CASCExplorer
 
         private void findToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            SearchForm sf = new SearchForm(fileList);
-            sf.Show();
+            if (searchForm == null)
+                searchForm = new SearchForm(fileList);
+
+            searchForm.Show(this);
         }
 
         private void fileList_SearchForVirtualItem(object sender, SearchForVirtualItemEventArgs e)
@@ -604,9 +607,6 @@ namespace CASCExplorer
             bool ignoreCase = true;
             bool searchUp = false;
             int SelectedIndex = fileList.SelectedIndex;
-
-            if (SelectedIndex < 0)
-                return;
 
             CASCFolder folder = fileList.Tag as CASCFolder;
 
