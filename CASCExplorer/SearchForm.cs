@@ -16,6 +16,9 @@ namespace CASCExplorer
 
         private void button1_Click(object sender, EventArgs e)
         {
+            if (filelist.SelectedIndex < 0)
+                return;
+
             var item = filelist.FindItemWithText(textBox1.Text, false, filelist.SelectedIndex, true);
 
             if (item != null)
