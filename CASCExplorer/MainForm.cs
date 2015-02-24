@@ -577,13 +577,13 @@ namespace CASCExplorer
         {
             if (storageFolderBrowserDialog.ShowDialog() != DialogResult.OK)
             {
-                MessageBox.Show("Please select storage folder!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Please select storage folder!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
             if (!File.Exists(Path.Combine(storageFolderBrowserDialog.SelectedPath, ".build.info")))
             {
-                MessageBox.Show("Invalid storage folder selected!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Invalid storage folder selected!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
 
@@ -665,7 +665,7 @@ namespace CASCExplorer
             finally
             {
                 dumpInstallToolStripMenuItem.Enabled = true;
-                MessageBox.Show("Install files saved!", "CASCExplorer", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Install files saved!", "CASCExplorer", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
     }

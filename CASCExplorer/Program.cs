@@ -21,13 +21,13 @@ namespace CASCExplorer
 
                 if (folderBrowser.ShowDialog() != DialogResult.OK)
                 {
-                    MessageBox.Show("Please select storage folder!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Please select storage folder!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
                 if (!File.Exists(Path.Combine(folderBrowser.SelectedPath, ".build.info")))
                 {
-                    MessageBox.Show("Invalid storage folder selected!", "Error", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                    MessageBox.Show("Invalid storage folder selected!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                     return;
                 }
 
