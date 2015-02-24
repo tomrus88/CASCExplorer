@@ -49,6 +49,7 @@
     <Compile Include="CASCHandler.cs" />
     <Compile Include="CDNIndexHandler.cs" />
     <Compile Include="AsyncAction.cs" />
+    <Compile Include="D3RootHandler.cs" />
     <Compile Include="EncodingHandler.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="InstallHandler.cs" />

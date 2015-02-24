@@ -90,6 +90,10 @@ namespace CASCExplorer
                 {
                     RootHandler = new MNDXRootHandler(fs, worker);
                 }
+                else if (config.BuildUID == "d3t")
+                {
+                    RootHandler = new D3RootHandler(fs, worker);
+                }
                 else
                 {
                     RootHandler = new WowRootHandler(fs, worker);
