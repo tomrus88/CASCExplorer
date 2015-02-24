@@ -10,19 +10,20 @@ namespace CASCExplorer
         public string Name;
         public byte[] MD5;
         public int Size;
+
+        public List<InstallTag> Tags = new List<InstallTag>();
     }
 
-    public class InstallMask
+    public class InstallTag
     {
         public string Name;
         public short Type;
-        public BitArray Array;
+        public BitArray Bits;
     }
 
     public class InstallHandler
     {
         private readonly List<InstallEntry> InstallData = new List<InstallEntry>();
-        private readonly Dictionary<string, InstallMask> Mask = new Dictionary<string, InstallMask>();
 
         public int Count
         {
@@ -46,21 +47,24 @@ namespace CASCExplorer
                 short numMasks = br.ReadInt16BE();
                 int numFiles = br.ReadInt32BE();
 
+                int numMaskBytes = numFiles / 8 + (numFiles % 8 > 0 ? 1 : 0);
+
+                List<InstallTag> Tags = new List<InstallTag>();
+
                 for (int i = 0; i < numMasks; ++i)
                 {
-                    InstallMask mask = new InstallMask();
+                    InstallTag mask = new InstallTag();
                     mask.Name = br.ReadCString();
                     mask.Type = br.ReadInt16BE();
 
-                    //int[] bits = new int[7];
-                    //for (int j = 0; j < bits.Length; ++j)
-                    //{
-                    //    bits[j] = br.ReadInt32BE();
-                    //}
-                    //mask.Array = new BitArray(bits.Reverse().ToArray());
-                    mask.Array = new BitArray(br.ReadBytes(28).Reverse().ToArray());
+                    byte[] bits = br.ReadBytes(numMaskBytes);
 
-                    Mask.Add(mask.Name, mask);
+                    for (int j = 0; j < numMaskBytes;++j)
+                        bits[j] = (byte)((bits[j] * 0x0202020202 & 0x010884422010) % 1023);
+
+                    mask.Bits = new BitArray(bits);
+
+                    Tags.Add(mask);
                 }
 
                 for (int i = 0; i < numFiles; ++i)
@@ -72,6 +76,10 @@ namespace CASCExplorer
 
                     InstallData.Add(entry);
 
+                    foreach (InstallTag tag in Tags)
+                        if (tag.Bits[i])
+                            entry.Tags.Add(tag);
+
                     if (worker != null)
                     {
                         worker.ThrowOnCancel();
@@ -79,6 +87,8 @@ namespace CASCExplorer
                     }
                 }
             }
+
+            Print();
         }
 
         public InstallEntry GetEntry(string name)
@@ -86,30 +96,28 @@ namespace CASCExplorer
             return InstallData.Where(i => i.Name == name).FirstOrDefault();
         }
 
+        public IEnumerable<InstallEntry> GetEntries(string tag)
+        {
+            foreach (var entry in InstallData)
+                if (entry.Tags.Any(t => t.Name == tag))
+                    yield return entry;
+        }
+
         public void Print()
         {
-            foreach (var type in Mask)
+            for (int i = 0; i < InstallData.Count; ++i)
             {
-                Logger.WriteLine("Install Files for {0}:", type.Key);
+                var data = InstallData[i];
 
-                var bits = Mask[type.Key].Array;
+                Logger.WriteLine("{0:D4}: {1} {2}", i, data.MD5.ToHexString(), data.Name);
 
-                Logger.WriteLine("Bits: {0}", bits.ToBinaryString());
-
-                for (int i = 0; i < bits.Count; i++)
-                {
-                    if (bits[i] && i < InstallData.Count)
-                    {
-                        Logger.WriteLine(InstallData[i].Name);
-                    }
-                }
+                Logger.WriteLine("    {0}", string.Join(",", data.Tags.Select(t => t.Name)));
             }
         }
 
         public void Clear()
         {
             InstallData.Clear();
-            Mask.Clear();
         }
     }
 }

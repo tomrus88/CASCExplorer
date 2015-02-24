@@ -77,8 +77,6 @@ namespace CASCExplorer
 
             Logger.WriteLine("CASCHandler: loaded {0} install data in {1}", InstallHandler.Count, sw.Elapsed);
 
-            //InstallHandler.Print();
-
             Logger.WriteLine("CASCHandler: loading root data...");
 
             sw.Restart();

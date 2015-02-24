@@ -639,5 +639,16 @@ namespace CASCExplorer
                 }
             }
         }
+
+        private void dumpInstallToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var installFiles = CASC.Install.GetEntries("Windows");
+            var build = CASC.Config.Build.ToString();
+
+            foreach (var file in installFiles)
+            {
+                CASC.ExtractFile(CASC.Encoding.GetEntry(file.MD5).Key, "data\\" + build + "\\install_files", file.Name);
+            }
+        }
     }
 }

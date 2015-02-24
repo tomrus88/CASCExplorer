@@ -37,7 +37,7 @@ namespace CASCExplorer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("hero")]
+        [global::System.Configuration.DefaultSettingValueAttribute("wow")]
         public string Product {
             get {
                 return ((string)(this["Product"]));
@@ -73,7 +73,7 @@ namespace CASCExplorer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("d:\\Games\\Heroes of the Storm\\")]
+        [global::System.Configuration.DefaultSettingValueAttribute("d:\\Games\\World of Warcraft\\")]
         public string StoragePath {
             get {
                 return ((string)(this["StoragePath"]));
