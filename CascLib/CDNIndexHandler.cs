@@ -88,7 +88,7 @@ namespace CASCExplorer
 
         private void DownloadFile(string archive, int i)
         {
-            var rootPath = Path.Combine("data", CASCConfig.Build.ToString(), "indices");
+            var rootPath = Path.Combine("data", CASCConfig.BuildName.ToString(), "indices");
 
             if (!Directory.Exists(rootPath))
                 Directory.CreateDirectory(rootPath);

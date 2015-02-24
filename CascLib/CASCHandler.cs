@@ -107,12 +107,12 @@ namespace CASCExplorer
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for install file missing!");
 
-            Stream s = TryLocalCache(encInfo.Key, config.InstallMD5, Path.Combine("data", config.Build.ToString(), "install"));
+            Stream s = TryLocalCache(encInfo.Key, config.InstallMD5, Path.Combine("data", config.BuildName.ToString(), "install"));
 
             if (s != null)
                 return s;
 
-            s = TryLocalCache(encInfo.Key, config.InstallMD5, Path.Combine("data", config.Build.ToString(), "install"));
+            s = TryLocalCache(encInfo.Key, config.InstallMD5, Path.Combine("data", config.BuildName.ToString(), "install"));
 
             if (s != null)
                 return s;
@@ -127,12 +127,12 @@ namespace CASCExplorer
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for root file missing!");
 
-            Stream s = TryLocalCache(encInfo.Key, config.RootMD5, Path.Combine("data", config.Build.ToString(), "root"));
+            Stream s = TryLocalCache(encInfo.Key, config.RootMD5, Path.Combine("data", config.BuildName.ToString(), "root"));
 
             if (s != null)
                 return s;
 
-            s = TryLocalCache(encInfo.Key, config.RootMD5, Path.Combine("data", config.Build.ToString(), "root"));
+            s = TryLocalCache(encInfo.Key, config.RootMD5, Path.Combine("data", config.BuildName.ToString(), "root"));
 
             if (s != null)
                 return s;
@@ -142,12 +142,12 @@ namespace CASCExplorer
 
         private Stream OpenEncodingFile()
         {
-            Stream s = TryLocalCache(config.EncodingKey, config.EncodingMD5, Path.Combine("data", config.Build.ToString(), "encoding"));
+            Stream s = TryLocalCache(config.EncodingKey, config.EncodingMD5, Path.Combine("data", config.BuildName.ToString(), "encoding"));
 
             if (s != null)
                 return s;
 
-            s = TryLocalCache(config.EncodingKey, config.EncodingMD5, Path.Combine("data", config.Build.ToString(), "encoding"));
+            s = TryLocalCache(config.EncodingKey, config.EncodingMD5, Path.Combine("data", config.BuildName.ToString(), "encoding"));
 
             if (s != null)
                 return s;

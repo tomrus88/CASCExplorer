@@ -273,6 +273,8 @@ namespace CASCExplorer
 
         public int Build { get; private set; }
 
+        public string BuildName { get { return _BuildConfig["build-name"][0]; } }
+
         public string Product { get { return product; } }
 
         public byte[] RootMD5

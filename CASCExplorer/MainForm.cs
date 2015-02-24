@@ -332,7 +332,7 @@ namespace CASCExplorer
 
         private void PreviewText(CASCFile file)
         {
-            using(var stream = CASC.OpenFile(file.Hash, file.FullName))
+            using (var stream = CASC.OpenFile(file.Hash, file.FullName))
             {
                 var text = new StreamReader(stream).ReadToEnd();
                 var form = new Form { FormBorderStyle = FormBorderStyle.SizableToolWindow, StartPosition = FormStartPosition.CenterParent };
@@ -350,7 +350,7 @@ namespace CASCExplorer
 
         private void PreviewBlp(CASCFile file)
         {
-            using(var stream = CASC.OpenFile(file.Hash, file.FullName))
+            using (var stream = CASC.OpenFile(file.Hash, file.FullName))
             {
                 var blp = new BlpFile(stream);
                 var bitmap = blp.GetBitmap(0);
@@ -640,14 +640,32 @@ namespace CASCExplorer
             }
         }
 
-        private void dumpInstallToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void dumpInstallToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            var installFiles = CASC.Install.GetEntries("Windows");
-            var build = CASC.Config.Build.ToString();
+            AsyncAction action = new AsyncAction(() =>
+                {
+                    var installFiles = CASC.Install.GetEntries("Windows");
+                    var build = CASC.Config.BuildName.ToString();
 
-            foreach (var file in installFiles)
+                    foreach (var file in installFiles)
+                    {
+                        CASC.ExtractFile(CASC.Encoding.GetEntry(file.MD5).Key, "data\\" + build + "\\install_files", file.Name);
+                    }
+                });
+
+            try
             {
-                CASC.ExtractFile(CASC.Encoding.GetEntry(file.MD5).Key, "data\\" + build + "\\install_files", file.Name);
+                dumpInstallToolStripMenuItem.Enabled = false;
+                await action.DoAction();
+            }
+            catch (Exception exc)
+            {
+                MessageBox.Show(exc.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+            }
+            finally
+            {
+                dumpInstallToolStripMenuItem.Enabled = true;
+                MessageBox.Show("Install files saved!", "CASCExplorer", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
         }
     }
