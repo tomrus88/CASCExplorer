@@ -125,7 +125,7 @@ namespace CASCExplorer
             }
         }
 
-        public HashSet<RootEntry> GetAllEntries(ulong hash)
+        public IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
             HashSet<RootEntry> result;
             RootData.TryGetValue(hash, out result);

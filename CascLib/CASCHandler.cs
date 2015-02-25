@@ -348,7 +348,7 @@ namespace CASCExplorer
         public bool FileExists(ulong hash)
         {
             var rootInfos = RootHandler.GetAllEntries(hash);
-            return rootInfos != null && rootInfos.Count > 0;
+            return rootInfos != null && rootInfos.Any();
         }
 
         public EncodingEntry GetEncodingEntry(ulong hash)

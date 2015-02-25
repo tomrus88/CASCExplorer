@@ -11,7 +11,7 @@ namespace CASCExplorer
         LocaleFlags Locale { get; }
         ContentFlags Content { get; }
 
-        HashSet<RootEntry> GetAllEntries(ulong hash);
+        IEnumerable<RootEntry> GetAllEntries(ulong hash);
 
         IEnumerable<RootEntry> GetEntries(ulong hash);
 

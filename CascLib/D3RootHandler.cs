@@ -95,34 +95,26 @@ namespace CASCExplorer
             
         }
 
-        public HashSet<RootEntry> GetAllEntries(ulong hash)
+        public IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
-            HashSet<RootEntry> hs = new HashSet<RootEntry>();
-
             foreach (var kv in data)
             {
                 RootEntry entry = new RootEntry();
                 entry.MD5 = kv.Value;
 
-                hs.Add(entry);
+                yield return entry;
             }
-
-            return hs;
         }
 
         public IEnumerable<RootEntry> GetEntries(ulong hash)
         {
-            HashSet<RootEntry> hs = new HashSet<RootEntry>();
-
             foreach (var kv in data)
             {
                 RootEntry entry = new RootEntry();
                 entry.MD5 = kv.Value;
 
-                hs.Add(entry);
+                yield return entry;
             }
-
-            return hs;
         }
 
         public void LoadListFile(string path, AsyncAction worker = null)

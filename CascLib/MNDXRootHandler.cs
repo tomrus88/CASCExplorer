@@ -272,14 +272,12 @@ namespace CASCExplorer
             }
         }
 
-        public HashSet<RootEntry> GetAllEntries(ulong hash)
+        public IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
-            HashSet<RootEntry> entries = new HashSet<RootEntry>();
             RootEntry rootEntry = new RootEntry();
             rootEntry.Hash = hash;
             rootEntry.MD5 = mndxData[hash].Data.EncodingKey;
-            entries.Add(rootEntry);
-            return entries;
+            yield return rootEntry;
         }
 
         public IEnumerable<RootEntry> GetEntries(ulong hash)
