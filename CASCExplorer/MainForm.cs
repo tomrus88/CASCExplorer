@@ -101,11 +101,11 @@ namespace CASCExplorer
                 await bgAction.DoAction();
 
                 //var e = CASC.Root.GetAllEntries(0);
-
-                //foreach(var entry in e)
+                //var build = CASC.Config.BuildName.ToString();
+                //foreach (var entry in e)
                 //{
                 //    var enc = CASC.Encoding.GetEntry(entry.MD5);
-                //    CASC.ExtractFile(enc.Key, ".", entry.MD5.ToHexString());
+                //    CASC.ExtractFile(enc.Key, "data\\" + build + "\\rootfiles", entry.MD5.ToHexString());
                 //}
 
                 OnStorageChanged();

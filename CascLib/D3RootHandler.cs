@@ -9,13 +9,12 @@ namespace CASCExplorer
 {
     public class D3RootHandler : IRootHandler
     {
-        Dictionary<string, byte[]> data = new Dictionary<string, byte[]>();
+        private Dictionary<string, byte[]> data = new Dictionary<string, byte[]>();
+        private static readonly Jenkins96 Hasher = new Jenkins96();
         private CASCFolder Root;
 
         public D3RootHandler(Stream stream, AsyncAction worker)
         {
-            Root = new CASCFolder(0);
-
             if (worker != null)
             {
                 worker.ThrowOnCancel();
@@ -131,8 +130,22 @@ namespace CASCExplorer
             
         }
 
+        private CASCFolder CreateStorageTree()
+        {
+            var rootHash = Hasher.ComputeHash("root");
+
+            var root = new CASCFolder(rootHash);
+
+            CASCFolder.FolderNames[rootHash] = "root";
+
+            return root;
+        }
+
         public CASCFolder SetFlags(LocaleFlags locale, ContentFlags content, bool createTree = true)
         {
+            if (createTree)
+                Root = CreateStorageTree();
+
             return Root;
         }
     }
