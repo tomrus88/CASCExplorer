@@ -51,7 +51,7 @@ namespace CASCExplorer
         public RootBlock Block;
         public int Unk1;
         public byte[] MD5;
-        public ulong Hash;
+        //public ulong Hash;
 
         public override string ToString()
         {
@@ -113,7 +113,7 @@ namespace CASCExplorer
                         entries[i].MD5 = br.ReadBytes(16);
 
                         ulong hash = br.ReadUInt64();
-                        entries[i].Hash = hash;
+                        //entries[i].Hash = hash;
 
                         RootData.Add(hash, entries[i]);
                     }

@@ -6,17 +6,10 @@ using System.Runtime.InteropServices;
 
 namespace CASCExplorer
 {
-    public class D3RootEntry
-    {
-        public byte[] MD5;
-        public string Name;
-        public LocaleFlags LocaleFlags;
-    }
-
     public class D3RootHandler : IRootHandler
     {
         private Dictionary<string, byte[]> data = new Dictionary<string, byte[]>();
-        private readonly MultiDictionary<ulong, D3RootEntry> RootData = new MultiDictionary<ulong, D3RootEntry>();
+        private readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
         private static readonly Jenkins96 Hasher = new Jenkins96();
         private LocaleFlags locale;
         private CASCFolder Root;
@@ -74,66 +67,64 @@ namespace CASCExplorer
 
                                 for (int i = 0; i < nEntries0; i++)
                                 {
-                                    D3RootEntry entry = new D3RootEntry();
-                                    entry.MD5 = br2.ReadBytes(16);
+                                    byte[] md5 = br2.ReadBytes(16);
                                     int snoId = br2.ReadInt32();
                                     var sno = tocParser.GetSNO(snoId);
-                                    entry.Name = String.Format("{0}\\{1}{2}", sno.groupid, sno.name, sno.ext);
 
-                                    LocaleFlags locale;
+                                    string name = String.Format("{0}\\{1}{2}", sno.GroupId, sno.Name, sno.Ext);
 
-                                    if (Enum.TryParse<LocaleFlags>(kv.Key, out locale))
-                                        entry.LocaleFlags = locale;
-                                    else
-                                        entry.LocaleFlags = LocaleFlags.All;
-
-                                    RootData.Add(Hasher.ComputeHash(entry.Name), entry);
+                                    AddFile(kv.Key, md5, name);
                                 }
 
                                 int nEntries1 = br2.ReadInt32();
 
                                 for (int i = 0; i < nEntries1; i++)
                                 {
-                                    D3RootEntry entry = new D3RootEntry();
-                                    entry.MD5 = br2.ReadBytes(16);
+                                    byte[] md5 = br2.ReadBytes(16);
                                     int snoId = br2.ReadInt32();
                                     int fileNumber = br2.ReadInt32();
                                     var sno = tocParser.GetSNO(snoId);
+
                                     //file extensions are wrong in this case
-                                    entry.Name = String.Format("{0}\\{1}\\{2:D4}{3}", sno.groupid, sno.name, fileNumber, sno.ext);
+                                    string name = String.Format("{0}\\{1}\\{2:D4}{3}", sno.GroupId, sno.Name, fileNumber, ".xxx");
 
-                                    LocaleFlags locale;
-
-                                    if (Enum.TryParse<LocaleFlags>(kv.Key, out locale))
-                                        entry.LocaleFlags = locale;
-                                    else
-                                        entry.LocaleFlags = LocaleFlags.All;
-
-                                    RootData.Add(Hasher.ComputeHash(entry.Name), entry);
+                                    AddFile(kv.Key, md5, name);
                                 }
 
                                 int nNamedEntries = br2.ReadInt32();
 
                                 for (int i = 0; i < nNamedEntries; i++)
                                 {
-                                    D3RootEntry entry = new D3RootEntry();
-                                    entry.MD5 = br2.ReadBytes(16);
-                                    entry.Name = br2.ReadCString();
+                                    byte[] md5 = br2.ReadBytes(16);
+                                    string name = br2.ReadCString();
 
-                                    LocaleFlags locale;
-
-                                    if (Enum.TryParse<LocaleFlags>(kv.Key, out locale))
-                                        entry.LocaleFlags = locale;
-                                    else
-                                        entry.LocaleFlags = LocaleFlags.All;
-
-                                    RootData.Add(Hasher.ComputeHash(entry.Name), entry);
+                                    AddFile(kv.Key, md5, name);
                                 }
                             }
                         }
                     }
                 }
             }
+        }
+
+        private void AddFile(string pkg, byte[] md5, string name)
+        {
+            RootEntry entry = new RootEntry();
+            entry.MD5 = md5;
+
+            LocaleFlags locale;
+
+            entry.Block = new RootBlock();
+
+            if (Enum.TryParse<LocaleFlags>(pkg, out locale))
+                entry.Block.LocaleFlags = locale;
+            else
+                entry.Block.LocaleFlags = LocaleFlags.All;
+
+            ulong fileHash = Hasher.ComputeHash(name);
+            CASCFile.FileNames[fileHash] = name;
+
+            RootData.Add(fileHash, entry);
         }
 
         private Stream OpenD3SubRootFile(CASCHandler casc, byte[] key, byte[] md5, string name)
@@ -175,7 +166,6 @@ namespace CASCExplorer
 
                         for (int i = 0; i < nNamedEntries; i++)
                         {
-                            D3RootEntry entry = new D3RootEntry();
                             byte[] md5 = br2.ReadBytes(16);
                             string name = br2.ReadCString();
 
@@ -198,35 +188,16 @@ namespace CASCExplorer
 
         public IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
-            HashSet<D3RootEntry> result;
+            HashSet<RootEntry> result;
             RootData.TryGetValue(hash, out result);
-
-            foreach (var e in result)
-            {
-                var re = new RootEntry();
-                re.MD5 = e.MD5;
-                re.Hash = hash;
-                re.Block = new RootBlock();
-                re.Block.LocaleFlags = e.LocaleFlags;
-                yield return re;
-            }
+            return result;
         }
 
         public IEnumerable<RootEntry> GetEntries(ulong hash)
         {
-            HashSet<D3RootEntry> result;
+            HashSet<RootEntry> result;
             RootData.TryGetValue(hash, out result);
-
-            foreach (var e in result)
-            {
-                var re = new RootEntry();
-                re.MD5 = e.MD5;
-                re.Hash = hash;
-                re.Block = new RootBlock();
-                re.Block.LocaleFlags = e.LocaleFlags;
-                yield return re;
-            }
-
+            return result;
         }
 
         public void LoadListFile(string path, AsyncAction worker = null)
@@ -247,7 +218,7 @@ namespace CASCExplorer
             // Create new tree based on specified locale
             foreach (var rootEntry in RootData)
             {
-                var rootInfosLocale = rootEntry.Value.Where(re => (re.LocaleFlags & locale) != 0);
+                var rootInfosLocale = rootEntry.Value.Where(re => (re.Block.LocaleFlags & locale) != 0);
 
                 //if (rootInfosLocale.Count() > 1)
                 //{
@@ -260,14 +231,14 @@ namespace CASCExplorer
                 if (!rootInfosLocale.Any())
                     continue;
 
-                string file = rootEntry.Value.First().Name;
+                string file;
 
-                //if (!CASCFile.FileNames.TryGetValue(rootEntry.Key, out file))
-                //{
-                //    file = "unknown\\" + rootEntry.Key.ToString("X16");
+                if (!CASCFile.FileNames.TryGetValue(rootEntry.Key, out file))
+                {
+                    file = "unknown\\" + rootEntry.Key.ToString("X16");
                 //    CountUnknown++;
                 //    UnknownFiles.Add(rootEntry.Key);
-                //}
+                }
 
                 CreateSubTree(root, rootEntry.Key, file);
                 CountSelect++;
@@ -328,9 +299,9 @@ namespace CASCExplorer
 
     public struct SNOInfo
     {
-        public SNOGroup groupid;
-        public string name;
-        public string ext;
+        public SNOGroup GroupId;
+        public string Name;
+        public string Ext;
     }
 
     public enum SNOGroup
@@ -517,7 +488,7 @@ namespace CASCExplorer
                             string name = br.ReadCString();
                             br.BaseStream.Position = oldPos;
 
-                            snoDic.Add(snoId, new SNOInfo() { groupid = snoGroup, name = name, ext = extensions[snoGroup] });
+                            snoDic.Add(snoId, new SNOInfo() { GroupId = snoGroup, Name = name, Ext = extensions[snoGroup] });
                         }
                     }
                 }

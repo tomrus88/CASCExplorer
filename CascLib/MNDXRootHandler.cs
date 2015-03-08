@@ -275,7 +275,7 @@ namespace CASCExplorer
         public IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
             RootEntry rootEntry = new RootEntry();
-            rootEntry.Hash = hash;
+            //rootEntry.Hash = hash;
             rootEntry.MD5 = mndxData[hash].Data.EncodingKey;
             yield return rootEntry;
         }
@@ -283,7 +283,7 @@ namespace CASCExplorer
         public IEnumerable<RootEntry> GetEntries(ulong hash)
         {
             RootEntry rootEntry = new RootEntry();
-            rootEntry.Hash = hash;
+            //rootEntry.Hash = hash;
             rootEntry.MD5 = mndxData[hash].Data.EncodingKey;
             yield return rootEntry;
         }
