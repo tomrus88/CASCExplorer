@@ -56,14 +56,13 @@ namespace CASCExplorer
                     Logger.WriteLine("{0}: {1} {2}", i, hash.ToHexString(), name);
                 }
 
-                // we need to parse CoreTOC.dat for sno stuff...
                 ParseCoreTOC(casc);
 
                 foreach (var kv in data)
                 {
                     EncodingEntry enc = casc.Encoding.GetEntry(kv.Value);
 
-                    using(Stream s = OpenD3SubRootFile(casc, enc.Key, kv.Value, "data\\" + casc.Config.BuildName + "\\subroot\\" + kv.Key))
+                    using (Stream s = OpenD3SubRootFile(casc, enc.Key, kv.Value, "data\\" + casc.Config.BuildName + "\\subroot\\" + kv.Key))
                     {
                         if (s != null)
                         {
@@ -80,7 +79,7 @@ namespace CASCExplorer
                                     int snoId = br2.ReadInt32();
                                     //filename can be inferred with format str %s\%s%s, using SNOGroup, AssetName and file extension (from SNOGroup)
                                     var sno = tocParser.GetSNO(snoId);
-                                    entry.Name = String.Format("group_{0}\\{1}", sno.groupid, sno.name);
+                                    entry.Name = String.Format("{0}\\{1}", sno.groupid, sno.name);
 
                                     LocaleFlags locale;
 
@@ -207,6 +206,9 @@ namespace CASCExplorer
             {
                 var re = new RootEntry();
                 re.MD5 = e.MD5;
+                re.Hash = hash;
+                re.Block = new RootBlock();
+                re.Block.LocaleFlags = e.LocaleFlags;
                 yield return re;
             }
         }
@@ -220,6 +222,9 @@ namespace CASCExplorer
             {
                 var re = new RootEntry();
                 re.MD5 = e.MD5;
+                re.Hash = hash;
+                re.Block = new RootBlock();
+                re.Block.LocaleFlags = e.LocaleFlags;
                 yield return re;
             }
 
@@ -227,7 +232,7 @@ namespace CASCExplorer
 
         public void LoadListFile(string path, AsyncAction worker = null)
         {
-            
+
         }
 
         private CASCFolder CreateStorageTree()
@@ -333,71 +338,71 @@ namespace CASCExplorer
         Code = -2,
         None = -1,
         Actor = 1,
-        adventure = 2,
-        aibehavior = 3,
-        aistate = 4,
-        ambientsound = 5,
-        animation = 6,
-        animation2d = 7,
-        animset = 8,
-        appearance = 9,
-        hero = 10,
-        cloth = 11,
-        conversation = 12,
-        conversationlist = 13,
-        effectgroup = 14,
-        encounter = 15,
-        explosion = 17,
-        flagset = 18,
-        font = 19,
-        gamebalance = 20,
-        global = 21,
-        levelarea = 22,
-        light = 23,
-        markerset = 24,
-        monster = 25,
-        observer = 26,
-        particle = 27,
-        physics = 28,
-        power = 29,
-        quest = 31,
-        rope = 32,
-        scene = 33,
-        scenegroup = 34,
-        script = 35,
-        shadermap = 36,
-        shader = 37,
-        shake = 38,
-        skillkit = 39,
-        sound = 40,
-        soundbank = 41,
-        stringlist = 42,
-        surface = 43,
-        texture = 44,
-        trail = 45,
-        ui = 46,
-        weather = 47,
-        world = 48,
-        recipe = 49,
-        condition = 51,
-        treasureclass = 52,
-        account = 53,
-        conductor = 54,
-        timedevent = 55,
-        act = 56,
-        material = 57,
-        questrange = 58,
-        lore = 59,
-        reverb = 60,
-        physmesh = 61,
-        music = 62,
-        tutorial = 63,
-        bossencounter = 64,
-        controlscheme = 65,
-        accolade = 66,
-        animtree = 67,
-        vibration = 68,
-        dungeonfinder = 69,
+        Adventure = 2,
+        AiBehavior = 3,
+        AiState = 4,
+        AmbientSound = 5,
+        Animation = 6,
+        Animation2D = 7,
+        AnimSet = 8,
+        Appearance = 9,
+        Hero = 10,
+        Cloth = 11,
+        Conversation = 12,
+        ConversationList = 13,
+        EffectGroup = 14,
+        Encounter = 15,
+        Explosion = 17,
+        FlagSet = 18,
+        Font = 19,
+        GameBalance = 20,
+        Global = 21,
+        LevelArea = 22,
+        Light = 23,
+        MarkerSet = 24,
+        Monster = 25,
+        Observer = 26,
+        Particle = 27,
+        Physics = 28,
+        Power = 29,
+        Quest = 31,
+        Rope = 32,
+        Scene = 33,
+        SceneGroup = 34,
+        Script = 35,
+        ShaderMap = 36,
+        Shader = 37,
+        Shake = 38,
+        SkillKit = 39,
+        Sound = 40,
+        SoundBank = 41,
+        StringList = 42,
+        Surface = 43,
+        Texture = 44,
+        Trail = 45,
+        UI = 46,
+        Weather = 47,
+        World = 48,
+        Recipe = 49,
+        Condition = 51,
+        TreasureClass = 52,
+        Account = 53,
+        Conductor = 54,
+        TimedEvent = 55,
+        Act = 56,
+        Material = 57,
+        QuestRange = 58,
+        Lore = 59,
+        Reverb = 60,
+        PhysMesh = 61,
+        Music = 62,
+        Tutorial = 63,
+        BossEncounter = 64,
+        ControlScheme = 65,
+        Accolade = 66,
+        AnimTree = 67,
+        Vibration = 68,
+        DungeonFinder = 69,
     }
 
     public class CoreTOCParser
@@ -427,8 +432,6 @@ namespace CASCExplorer
                 {
                     if (hdr.entryCounts[i] > 0)
                     {
-                        //long oldPos = br.BaseStream.Position;
-
                         br.BaseStream.Position = hdr.entryOffsets[i] + Marshal.SizeOf(hdr);
 
                         for (int j = 0; j < hdr.entryCounts[i]; j++)
@@ -437,18 +440,13 @@ namespace CASCExplorer
                             int snoId = br.ReadInt32();
                             int pName = br.ReadInt32();
 
-                            long oldPos2 = br.BaseStream.Position;
-                            long namePos = hdr.entryOffsets[i] + Marshal.SizeOf(hdr) + 12 * hdr.entryCounts[i] + pName;
-                            br.BaseStream.Position = namePos;
+                            long oldPos = br.BaseStream.Position;
+                            br.BaseStream.Position = hdr.entryOffsets[i] + Marshal.SizeOf(hdr) + 12 * hdr.entryCounts[i] + pName;
                             string name = br.ReadCString();
+                            br.BaseStream.Position = oldPos;
 
-                            var sno = new SNOInfo() { groupid = snoGroup, name = name };
-                            snoDic.Add(snoId, sno);
-
-                            br.BaseStream.Position = oldPos2;
+                            snoDic.Add(snoId, new SNOInfo() { groupid = snoGroup, name = name });
                         }
-
-                        //br.BaseStream.Position = oldPos;
                     }
                 }
             }
