@@ -102,7 +102,7 @@ namespace CASCExplorer
                                     int fileNumber = br2.ReadInt32();
                                     //filename can be inferred as above but with format %s\%s\%04d%s, using SNOGroup, AssetName, fileNumber and an extension, which can be .fsb, .ogg, .svr...
                                     var sno = tocParser.GetSNO(snoId);
-                                    entry.Name = String.Format("group_{0}\\{1}\\{2:D4}", sno.groupid, sno.name, fileNumber);
+                                    entry.Name = String.Format("{0}\\{1}\\{2:D4}", sno.groupid, sno.name, fileNumber);
 
                                     LocaleFlags locale;
 
@@ -324,9 +324,80 @@ namespace CASCExplorer
 
     public struct SNOInfo
     {
-        public int groupid;
-        public int snoid;
+        public SNOGroup groupid;
         public string name;
+    }
+
+    public enum SNOGroup
+    {
+        Code = -2,
+        None = -1,
+        Actor = 1,
+        adventure = 2,
+        aibehavior = 3,
+        aistate = 4,
+        ambientsound = 5,
+        animation = 6,
+        animation2d = 7,
+        animset = 8,
+        appearance = 9,
+        hero = 10,
+        cloth = 11,
+        conversation = 12,
+        conversationlist = 13,
+        effectgroup = 14,
+        encounter = 15,
+        explosion = 17,
+        flagset = 18,
+        font = 19,
+        gamebalance = 20,
+        global = 21,
+        levelarea = 22,
+        light = 23,
+        markerset = 24,
+        monster = 25,
+        observer = 26,
+        particle = 27,
+        physics = 28,
+        power = 29,
+        quest = 31,
+        rope = 32,
+        scene = 33,
+        scenegroup = 34,
+        script = 35,
+        shadermap = 36,
+        shader = 37,
+        shake = 38,
+        skillkit = 39,
+        sound = 40,
+        soundbank = 41,
+        stringlist = 42,
+        surface = 43,
+        texture = 44,
+        trail = 45,
+        ui = 46,
+        weather = 47,
+        world = 48,
+        recipe = 49,
+        condition = 51,
+        treasureclass = 52,
+        account = 53,
+        conductor = 54,
+        timedevent = 55,
+        act = 56,
+        material = 57,
+        questrange = 58,
+        lore = 59,
+        reverb = 60,
+        physmesh = 61,
+        music = 62,
+        tutorial = 63,
+        bossencounter = 64,
+        controlscheme = 65,
+        accolade = 66,
+        animtree = 67,
+        vibration = 68,
+        dungeonfinder = 69,
     }
 
     public class CoreTOCParser
@@ -344,7 +415,6 @@ namespace CASCExplorer
             public int unk;
         }
 
-        //List<SNOInfo> snos = new List<SNOInfo>();
         Dictionary<int, SNOInfo> snoDic = new Dictionary<int, SNOInfo>();
 
         public CoreTOCParser(Stream stream)
@@ -363,7 +433,7 @@ namespace CASCExplorer
 
                         for (int j = 0; j < hdr.entryCounts[i]; j++)
                         {
-                            int snoGroup = br.ReadInt32();
+                            SNOGroup snoGroup = (SNOGroup)br.ReadInt32();
                             int snoId = br.ReadInt32();
                             int pName = br.ReadInt32();
 
@@ -372,9 +442,8 @@ namespace CASCExplorer
                             br.BaseStream.Position = namePos;
                             string name = br.ReadCString();
 
-                            var sno = new SNOInfo() { groupid = snoGroup, name = name, snoid = snoId };
-                            //snos.Add(sno);
-                            snoDic.Add(sno.snoid, sno);
+                            var sno = new SNOInfo() { groupid = snoGroup, name = name };
+                            snoDic.Add(snoId, sno);
 
                             br.BaseStream.Position = oldPos2;
                         }
