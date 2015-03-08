@@ -88,7 +88,7 @@ namespace CASCExplorer
                 }
             }
 
-            Print();
+            //Print();
         }
 
         public InstallEntry GetEntry(string name)

@@ -653,7 +653,7 @@ namespace CASCExplorer
             AsyncAction action = new AsyncAction(() =>
                 {
                     var installFiles = CASC.Install.GetEntries("Windows");
-                    var build = CASC.Config.BuildName.ToString();
+                    var build = CASC.Config.BuildName;
 
                     foreach (var file in installFiles)
                     {

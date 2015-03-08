@@ -90,9 +90,9 @@ namespace CASCExplorer
                 {
                     RootHandler = new MNDXRootHandler(fs, worker);
                 }
-                else if (config.BuildUID == "d3t")
+                else if (config.BuildUID.StartsWith("d3"))
                 {
-                    RootHandler = new D3RootHandler(fs, worker);
+                    RootHandler = new D3RootHandler(fs, worker, this);
                 }
                 else
                 {
@@ -111,12 +111,12 @@ namespace CASCExplorer
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for install file missing!");
 
-            Stream s = TryLocalCache(encInfo.Key, config.InstallMD5, Path.Combine("data", config.BuildName.ToString(), "install"));
+            Stream s = TryLocalCache(encInfo.Key, config.InstallMD5, Path.Combine("data", config.BuildName, "install"));
 
             if (s != null)
                 return s;
 
-            s = TryLocalCache(encInfo.Key, config.InstallMD5, Path.Combine("data", config.BuildName.ToString(), "install"));
+            s = TryLocalCache(encInfo.Key, config.InstallMD5, Path.Combine("data", config.BuildName, "install"));
 
             if (s != null)
                 return s;
@@ -131,12 +131,12 @@ namespace CASCExplorer
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for root file missing!");
 
-            Stream s = TryLocalCache(encInfo.Key, config.RootMD5, Path.Combine("data", config.BuildName.ToString(), "root"));
+            Stream s = TryLocalCache(encInfo.Key, config.RootMD5, Path.Combine("data", config.BuildName, "root"));
 
             if (s != null)
                 return s;
 
-            s = TryLocalCache(encInfo.Key, config.RootMD5, Path.Combine("data", config.BuildName.ToString(), "root"));
+            s = TryLocalCache(encInfo.Key, config.RootMD5, Path.Combine("data", config.BuildName, "root"));
 
             if (s != null)
                 return s;
@@ -146,12 +146,12 @@ namespace CASCExplorer
 
         private Stream OpenEncodingFile()
         {
-            Stream s = TryLocalCache(config.EncodingKey, config.EncodingMD5, Path.Combine("data", config.BuildName.ToString(), "encoding"));
+            Stream s = TryLocalCache(config.EncodingKey, config.EncodingMD5, Path.Combine("data", config.BuildName, "encoding"));
 
             if (s != null)
                 return s;
 
-            s = TryLocalCache(config.EncodingKey, config.EncodingMD5, Path.Combine("data", config.BuildName.ToString(), "encoding"));
+            s = TryLocalCache(config.EncodingKey, config.EncodingMD5, Path.Combine("data", config.BuildName, "encoding"));
 
             if (s != null)
                 return s;
@@ -159,7 +159,7 @@ namespace CASCExplorer
             return OpenFile(config.EncodingKey);
         }
 
-        private Stream TryLocalCache(byte[] key, byte[] md5, string name)
+        public Stream TryLocalCache(byte[] key, byte[] md5, string name)
         {
             if (File.Exists(name))
             {
@@ -181,7 +181,7 @@ namespace CASCExplorer
             return null;
         }
 
-        private Stream OpenFile(byte[] key)
+        public Stream OpenFile(byte[] key)
         {
             try
             {
