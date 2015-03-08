@@ -77,9 +77,8 @@ namespace CASCExplorer
                                     D3RootEntry entry = new D3RootEntry();
                                     entry.MD5 = br2.ReadBytes(16);
                                     int snoId = br2.ReadInt32();
-                                    //filename can be inferred with format str %s\%s%s, using SNOGroup, AssetName and file extension (from SNOGroup)
                                     var sno = tocParser.GetSNO(snoId);
-                                    entry.Name = String.Format("{0}\\{1}", sno.groupid, sno.name);
+                                    entry.Name = String.Format("{0}\\{1}{2}", sno.groupid, sno.name, sno.ext);
 
                                     LocaleFlags locale;
 
@@ -99,9 +98,9 @@ namespace CASCExplorer
                                     entry.MD5 = br2.ReadBytes(16);
                                     int snoId = br2.ReadInt32();
                                     int fileNumber = br2.ReadInt32();
-                                    //filename can be inferred as above but with format %s\%s\%04d%s, using SNOGroup, AssetName, fileNumber and an extension, which can be .fsb, .ogg, .svr...
                                     var sno = tocParser.GetSNO(snoId);
-                                    entry.Name = String.Format("{0}\\{1}\\{2:D4}", sno.groupid, sno.name, fileNumber);
+                                    //file extensions are wrong in this case
+                                    entry.Name = String.Format("{0}\\{1}\\{2:D4}{3}", sno.groupid, sno.name, fileNumber, sno.ext);
 
                                     LocaleFlags locale;
 
@@ -331,6 +330,7 @@ namespace CASCExplorer
     {
         public SNOGroup groupid;
         public string name;
+        public string ext;
     }
 
     public enum SNOGroup
@@ -342,7 +342,7 @@ namespace CASCExplorer
         AiBehavior = 3,
         AiState = 4,
         AmbientSound = 5,
-        Animation = 6,
+        Anim = 6,
         Animation2D = 7,
         AnimSet = 8,
         Appearance = 9,
@@ -356,7 +356,7 @@ namespace CASCExplorer
         FlagSet = 18,
         Font = 19,
         GameBalance = 20,
-        Global = 21,
+        Globals = 21,
         LevelArea = 22,
         Light = 23,
         MarkerSet = 24,
@@ -371,18 +371,18 @@ namespace CASCExplorer
         SceneGroup = 34,
         Script = 35,
         ShaderMap = 36,
-        Shader = 37,
-        Shake = 38,
+        Shaders = 37,
+        Shakes = 38,
         SkillKit = 39,
         Sound = 40,
         SoundBank = 41,
         StringList = 42,
         Surface = 43,
-        Texture = 44,
+        Textures = 44,
         Trail = 45,
         UI = 46,
         Weather = 47,
-        World = 48,
+        Worlds = 48,
         Recipe = 49,
         Condition = 51,
         TreasureClass = 52,
@@ -422,6 +422,78 @@ namespace CASCExplorer
 
         Dictionary<int, SNOInfo> snoDic = new Dictionary<int, SNOInfo>();
 
+        Dictionary<SNOGroup, string> extensions = new Dictionary<SNOGroup, string>()
+        {
+            { SNOGroup.Code, "" },
+            { SNOGroup.None, "" },
+            { SNOGroup.Actor, ".acr" },
+            { SNOGroup.Adventure, ".adv" },
+            { SNOGroup.AiBehavior, "" },
+            { SNOGroup.AiState, "" },
+            { SNOGroup.AmbientSound, ".ams" },
+            { SNOGroup.Anim, ".ani" },
+            { SNOGroup.Animation2D, ".an2" },
+            { SNOGroup.AnimSet, ".ans" },
+            { SNOGroup.Appearance, ".app" },
+            { SNOGroup.Hero, "" },
+            { SNOGroup.Cloth, ".clt" },
+            { SNOGroup.Conversation, ".cnv" },
+            { SNOGroup.ConversationList, "" },
+            { SNOGroup.EffectGroup, ".efg" },
+            { SNOGroup.Encounter, ".enc" },
+            { SNOGroup.Explosion, ".xpl" },
+            { SNOGroup.FlagSet, "" },
+            { SNOGroup.Font, ".fnt" },
+            { SNOGroup.GameBalance, ".gam" },
+            { SNOGroup.Globals, ".glo" },
+            { SNOGroup.LevelArea, ".lvl" },
+            { SNOGroup.Light, ".lit" },
+            { SNOGroup.MarkerSet, ".mrk" },
+            { SNOGroup.Monster, ".mon" },
+            { SNOGroup.Observer, ".obs" },
+            { SNOGroup.Particle, ".prt" },
+            { SNOGroup.Physics, ".phy" },
+            { SNOGroup.Power, ".pow" },
+            { SNOGroup.Quest, ".qst" },
+            { SNOGroup.Rope, ".rop" },
+            { SNOGroup.Scene, ".scn" },
+            { SNOGroup.SceneGroup, ".scg" },
+            { SNOGroup.Script, "" },
+            { SNOGroup.ShaderMap, ".shm" },
+            { SNOGroup.Shaders, ".shd" },
+            { SNOGroup.Shakes, ".shk" },
+            { SNOGroup.SkillKit, ".skl" },
+            { SNOGroup.Sound, ".snd" },
+            { SNOGroup.SoundBank, ".sbk" },
+            { SNOGroup.StringList, ".stl" },
+            { SNOGroup.Surface, ".srf" },
+            { SNOGroup.Textures, ".tex" },
+            { SNOGroup.Trail, ".trl" },
+            { SNOGroup.UI, ".ui" },
+            { SNOGroup.Weather, ".wth" },
+            { SNOGroup.Worlds, ".wrl" },
+            { SNOGroup.Recipe, ".rcp" },
+            { SNOGroup.Condition, ".cnd" },
+            { SNOGroup.TreasureClass, "" },
+            { SNOGroup.Account, "" },
+            { SNOGroup.Conductor, "" },
+            { SNOGroup.TimedEvent, "" },
+            { SNOGroup.Act, ".act" },
+            { SNOGroup.Material, ".mat" },
+            { SNOGroup.QuestRange, ".qsr" },
+            { SNOGroup.Lore, ".lor" },
+            { SNOGroup.Reverb, ".rev" },
+            { SNOGroup.PhysMesh, ".phm" },
+            { SNOGroup.Music, ".mus" },
+            { SNOGroup.Tutorial, ".tut" },
+            { SNOGroup.BossEncounter, ".bos" },
+            { SNOGroup.ControlScheme, "" },
+            { SNOGroup.Accolade, ".aco" },
+            { SNOGroup.AnimTree, ".ant" },
+            { SNOGroup.Vibration, "" },
+            { SNOGroup.DungeonFinder, "" },
+        };
+
         public CoreTOCParser(Stream stream)
         {
             using (var br = new BinaryReader(stream))
@@ -445,7 +517,7 @@ namespace CASCExplorer
                             string name = br.ReadCString();
                             br.BaseStream.Position = oldPos;
 
-                            snoDic.Add(snoId, new SNOInfo() { groupid = snoGroup, name = name });
+                            snoDic.Add(snoId, new SNOInfo() { groupid = snoGroup, name = name, ext = extensions[snoGroup] });
                         }
                     }
                 }
