@@ -42,7 +42,7 @@ namespace CASCExplorer
     {
         public int Flags;           // High 8 bits: Flags, low 24 bits: package index
         //[MarshalAs(UnmanagedType.ByValArray, SizeConst = 0x10)]
-        public byte[] EncodingKey;  // Encoding key for the file
+        public byte[] MD5;          // Encoding key for the file
         public int FileSize;        // Uncompressed file size, in bytes
 
         public CASC_ROOT_ENTRY_MNDX Next;
@@ -91,7 +91,7 @@ namespace CASCExplorer
 
         private Dictionary<int, string> Packages = new Dictionary<int, string>();
 
-        private Dictionary<ulong, MNDXRootEntry> mndxData = new Dictionary<ulong, MNDXRootEntry>();
+        private Dictionary<ulong, RootEntry> mndxData = new Dictionary<ulong, RootEntry>();
 
         public MNDXRootHandler(Stream stream, AsyncAction worker)
         {
@@ -154,7 +154,7 @@ namespace CASCExplorer
                     if (prevEntry != null) prevEntry.Next = entry;
                     prevEntry = entry;
                     entry.Flags = br.ReadInt32();
-                    entry.EncodingKey = br.ReadBytes(0x10);
+                    entry.MD5 = br.ReadBytes(0x10);
                     entry.FileSize = br.ReadInt32();
                     mndxRootEntries.Add(i, entry);
 
@@ -274,17 +274,15 @@ namespace CASCExplorer
 
         public IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
-            RootEntry rootEntry = new RootEntry();
-            //rootEntry.Hash = hash;
-            rootEntry.MD5 = mndxData[hash].Data.EncodingKey;
+            RootEntry rootEntry;
+            mndxData.TryGetValue(hash, out rootEntry);
             yield return rootEntry;
         }
 
         public IEnumerable<RootEntry> GetEntries(ulong hash)
         {
-            RootEntry rootEntry = new RootEntry();
-            //rootEntry.Hash = hash;
-            rootEntry.MD5 = mndxData[hash].Data.EncodingKey;
+            RootEntry rootEntry;
+            mndxData.TryGetValue(hash, out rootEntry);
             yield return rootEntry;
         }
 
@@ -407,10 +405,13 @@ namespace CASCExplorer
 
                 ulong fileHash = Hasher.ComputeHash(file);
 
-                MNDXRootEntry entry = new MNDXRootEntry();
-                entry.Package = FindMNDXPackage(file);
-                entry.Data = FindMNDXInfo(file, entry.Package);
-                entry.Name = file;
+                //MNDXRootEntry entry = new MNDXRootEntry();
+                //entry.Package = FindMNDXPackage(file);
+                //entry.Data = FindMNDXInfo(file, entry.Package);
+                //entry.Name = file;
+                CASCFile.FileNames[fileHash] = file;
+                RootEntry entry = new RootEntry();
+                entry.MD5 = FindMNDXInfo(file, FindMNDXPackage(file)).MD5;
                 mndxData[fileHash] = entry;
 
                 //Console.WriteLine("{0:X8} - {1:X8} - {2} - {3}", result2.FileNameIndex, root.Flags, root.EncodingKey.ToHexString(), file);
@@ -439,7 +440,7 @@ namespace CASCExplorer
 
             foreach (var entry in mndxData)
             {
-                CreateSubTree(root, entry.Key, entry.Value.Name);
+                CreateSubTree(root, entry.Key, CASCFile.FileNames[entry.Key]);
             }
 
             return root;
