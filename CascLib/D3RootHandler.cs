@@ -8,7 +8,6 @@ namespace CASCExplorer
 {
     public class D3RootHandler : IRootHandler
     {
-        private Dictionary<string, byte[]> data = new Dictionary<string, byte[]>();
         private readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
         private static readonly Jenkins96 Hasher = new Jenkins96();
         private LocaleFlags locale;
@@ -39,6 +38,8 @@ namespace CASCExplorer
 
                 int count = br.ReadInt32();
 
+                Dictionary<string, byte[]> data = new Dictionary<string, byte[]>();
+
                 for (int i = 0; i < count; ++i)
                 {
                     byte[] hash = br.ReadBytes(16);
@@ -49,7 +50,7 @@ namespace CASCExplorer
                     Logger.WriteLine("{0}: {1} {2}", i, hash.ToHexString(), name);
                 }
 
-                ParseCoreTOC(casc);
+                ParseCoreTOC(casc, data["Base"]);
 
                 foreach (var kv in data)
                 {
@@ -142,11 +143,11 @@ namespace CASCExplorer
             return casc.OpenFile(key);
         }
 
-        private void ParseCoreTOC(CASCHandler casc)
+        private void ParseCoreTOC(CASCHandler casc, byte[] md5)
         {
-            EncodingEntry enc = casc.Encoding.GetEntry(data["Base"]);
+            EncodingEntry enc = casc.Encoding.GetEntry(md5);
 
-            using (Stream s = OpenD3SubRootFile(casc, enc.Key, data["Base"], "data\\" + casc.Config.BuildName + "\\subroot\\Base"))
+            using (Stream s = OpenD3SubRootFile(casc, enc.Key, md5, "data\\" + casc.Config.BuildName + "\\subroot\\Base"))
             {
                 if (s != null)
                 {
@@ -166,12 +167,12 @@ namespace CASCExplorer
 
                         for (int i = 0; i < nNamedEntries; i++)
                         {
-                            byte[] md5 = br2.ReadBytes(16);
+                            byte[] md5_2 = br2.ReadBytes(16);
                             string name = br2.ReadCString();
 
                             if (name == "CoreTOC.dat")
                             {
-                                EncodingEntry enc2 = casc.Encoding.GetEntry(md5);
+                                EncodingEntry enc2 = casc.Encoding.GetEntry(md5_2);
                                 tocParser = new CoreTOCParser(casc.OpenFile(enc2.Key));
                             }
                         }
@@ -182,7 +183,6 @@ namespace CASCExplorer
 
         public void Clear()
         {
-            data.Clear();
             RootData.Clear();
         }
 
