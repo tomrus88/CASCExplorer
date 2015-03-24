@@ -46,11 +46,14 @@ namespace CASCExplorer
 
             folderTree.SelectedImageIndex = 1;
 
+            bool isWoW = Settings.Default.Product.IndexOf("wow") >= 0;
+            bool isD3 = Settings.Default.Product.IndexOf("d3") >= 0;
+
             onlineModeToolStripMenuItem.Checked = Settings.Default.OnlineMode;
-            scanFilesToolStripMenuItem.Enabled = Settings.Default.Product.IndexOf("wow") >= 0;
-            analyseUnknownFilesToolStripMenuItem.Enabled = Settings.Default.Product.IndexOf("wow") >= 0;
-            localeFlagsToolStripMenuItem.Enabled = Settings.Default.Product.IndexOf("wow") >= 0;
-            useLWToolStripMenuItem.Enabled = Settings.Default.Product.IndexOf("wow") >= 0;
+            scanFilesToolStripMenuItem.Enabled = isWoW;
+            analyseUnknownFilesToolStripMenuItem.Enabled = isWoW;
+            localeFlagsToolStripMenuItem.Enabled = isWoW || isD3;
+            useLWToolStripMenuItem.Enabled = isWoW;
 
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
@@ -94,7 +97,9 @@ namespace CASCExplorer
 
             fileList.VirtualListSize = 0;
 
-            folderTree.Nodes.Clear();
+            //folderTree.Nodes.Clear();
+
+            //cDNToolStripMenuItem.DropDownItems.Clear();
 
             try
             {
@@ -148,15 +153,35 @@ namespace CASCExplorer
             node.Expand();
             folderTree.SelectedNode = node;
 
+            cDNToolStripMenuItem.DropDownItems.Clear();
+
+            if (Settings.Default.OnlineMode)
+            {
+                foreach (var cfg in CASC.Config.Builds)
+                {
+                    cDNToolStripMenuItem.DropDownItems.Add(cfg["build-name"][0]);
+                }
+            }
+
             statusProgress.Visible = false;
             statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.Root.CountSelect - CASC.Root.CountUnknown, CASC.Root.CountUnknown);
         }
 
         private void LoadData()
         {
-            CASC = Settings.Default.OnlineMode
-                ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, bgAction)
-                : CASCHandler.OpenLocalStorage(Settings.Default.StoragePath, bgAction);
+            CASCConfig config = Settings.Default.OnlineMode
+                ? CASCConfig.LoadOnlineStorageConfig(Settings.Default.Product, "us")
+                : CASCConfig.LoadLocalStorageConfig(Settings.Default.StoragePath);
+
+            SelectBuildForm sb = new SelectBuildForm(config);
+            var result = sb.ShowDialog();
+
+            if (result != DialogResult.OK || sb.SelectedIndex == -1)
+                throw new Exception("Please select build!");
+
+            config.ActiveCDNBuild = sb.SelectedIndex;
+
+            CASC = CASCHandler.OpenStorage(config, bgAction);
 
             CASC.Root.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), bgAction);
             Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);

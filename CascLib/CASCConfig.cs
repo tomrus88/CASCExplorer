@@ -109,7 +109,7 @@ namespace CASCExplorer
         }
     }
 
-    internal class KeyValueConfig
+    public class KeyValueConfig
     {
         private readonly Dictionary<string, List<string>> Data = new Dictionary<string, List<string>>();
 
@@ -151,8 +151,10 @@ namespace CASCExplorer
 
     public class CASCConfig
     {
-        KeyValueConfig _BuildConfig;
+        //KeyValueConfig _BuildConfig;
         KeyValueConfig _CDNConfig;
+
+        List<KeyValueConfig> _Builds;
 
         VerBarConfig<BuildInfoEntry> _BuildInfo;
         VerBarConfig<CDNConfigEntry> _CDNData;
@@ -191,17 +193,38 @@ namespace CASCExplorer
 
             config.Build = config._VersionsData[index].BuildId;
 
-            string buildKey = config._VersionsData[index].BuildConfig;
-            using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config.CDNUrl, buildKey))
-            {
-                config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(stream);
-            }
+            //string buildKey = config._VersionsData[index].BuildConfig;
+            //using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config.CDNUrl, buildKey))
+            //{
+            //    config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(stream);
+            //}
 
             string cdnKey = config._VersionsData[index].CDNConfig;
             using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config.CDNUrl, cdnKey))
             {
                 config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
             }
+
+            config.ActiveCDNBuild = 0;
+
+            config._Builds = new List<KeyValueConfig>();
+
+            for (int i = 0; i < config._CDNConfig["builds"].Count; i++)
+            {
+                try
+                {
+                    using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config.CDNUrl, config._CDNConfig["builds"][i]))
+                    {
+                        var cfg = KeyValueConfig.ReadKeyValueConfig(stream);
+                        config._Builds.Add(cfg);
+                    }
+                }
+                catch
+                {
+
+                }
+            }
+
             return config;
         }
 
@@ -250,11 +273,12 @@ namespace CASCExplorer
 
             string dataFolder = isHots ? "HeroesData" : "Data";
 
+            config.ActiveCDNBuild = 0;
             string buildKey = bi.BuildKey;
             string buildCfgPath = Path.Combine(basePath, String.Format("{0}\\config\\", dataFolder), buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
             using (Stream stream = new FileStream(buildCfgPath, FileMode.Open))
             {
-                config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(stream);
+                config._Builds.Add(KeyValueConfig.ReadKeyValueConfig(stream));
             }
 
             string cdnKey = bi.CDNKey;
@@ -273,38 +297,40 @@ namespace CASCExplorer
 
         public int Build { get; private set; }
 
-        public string BuildName { get { return _BuildConfig["build-name"][0]; } }
+        public int ActiveCDNBuild { get; set; }
+
+        public string BuildName { get { return _Builds[ActiveCDNBuild]["build-name"][0]; } }
 
         public string Product { get { return product; } }
 
         public byte[] RootMD5
         {
-            get { return _BuildConfig["root"][0].ToByteArray(); }
+            get { return _Builds[ActiveCDNBuild]["root"][0].ToByteArray(); }
         }
 
         public byte[] DownloadMD5
         {
-            get { return _BuildConfig["download"][0].ToByteArray(); }
+            get { return _Builds[ActiveCDNBuild]["download"][0].ToByteArray(); }
         }
 
         public byte[] InstallMD5
         {
-            get { return _BuildConfig["install"][0].ToByteArray(); }
+            get { return _Builds[ActiveCDNBuild]["install"][0].ToByteArray(); }
         }
 
         public byte[] EncodingMD5
         {
-            get { return _BuildConfig["encoding"][0].ToByteArray(); }
+            get { return _Builds[ActiveCDNBuild]["encoding"][0].ToByteArray(); }
         }
 
         public byte[] EncodingKey
         {
-            get { return _BuildConfig["encoding"][1].ToByteArray(); }
+            get { return _Builds[ActiveCDNBuild]["encoding"][1].ToByteArray(); }
         }
 
         public string BuildUID
         {
-            get { return _BuildConfig["build-uid"][0]; }
+            get { return _Builds[ActiveCDNBuild]["build-uid"][0]; }
         }
 
         public string CDNUrl
@@ -335,6 +361,26 @@ namespace CASCExplorer
         public List<string> Archives
         {
             get { return _CDNConfig["archives"]; }
+        }
+
+        public string ArchiveGroup
+        {
+            get { return _CDNConfig["archive-group"][0]; }
+        }
+
+        public List<string> PatchArchives
+        {
+            get { return _CDNConfig["patch-archives"]; }
+        }
+
+        public string PatchArchiveGroup
+        {
+            get { return _CDNConfig["patch-archive-group"][0]; }
+        }
+
+        public List<KeyValueConfig> Builds
+        {
+            get { return _Builds; }
         }
     }
 }

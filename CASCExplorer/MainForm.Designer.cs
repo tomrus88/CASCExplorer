@@ -53,6 +53,7 @@
             this.onlineModeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.scanFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.analyseUnknownFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.dumpInstallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.storageFolderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
@@ -62,7 +63,7 @@
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.dumpInstallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.cDNToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -272,7 +273,8 @@
             this.onlineModeToolStripMenuItem,
             this.scanFilesToolStripMenuItem,
             this.analyseUnknownFilesToolStripMenuItem,
-            this.dumpInstallToolStripMenuItem});
+            this.dumpInstallToolStripMenuItem,
+            this.cDNToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
@@ -297,6 +299,13 @@
             this.analyseUnknownFilesToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.analyseUnknownFilesToolStripMenuItem.Text = "Analyse Unknown Files";
             this.analyseUnknownFilesToolStripMenuItem.Click += new System.EventHandler(this.analyseUnknownFilesToolStripMenuItem_Click);
+            // 
+            // dumpInstallToolStripMenuItem
+            // 
+            this.dumpInstallToolStripMenuItem.Name = "dumpInstallToolStripMenuItem";
+            this.dumpInstallToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.dumpInstallToolStripMenuItem.Text = "Dump install";
+            this.dumpInstallToolStripMenuItem.Click += new System.EventHandler(this.dumpInstallToolStripMenuItem_Click);
             // 
             // helpToolStripMenuItem
             // 
@@ -366,12 +375,11 @@
             this.columnHeader4.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.columnHeader4.Width = 80;
             // 
-            // dumpInstallToolStripMenuItem
+            // cDNToolStripMenuItem
             // 
-            this.dumpInstallToolStripMenuItem.Name = "dumpInstallToolStripMenuItem";
-            this.dumpInstallToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
-            this.dumpInstallToolStripMenuItem.Text = "Dump install";
-            this.dumpInstallToolStripMenuItem.Click += new System.EventHandler(this.dumpInstallToolStripMenuItem_Click);
+            this.cDNToolStripMenuItem.Name = "cDNToolStripMenuItem";
+            this.cDNToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.cDNToolStripMenuItem.Text = "CDN";
             // 
             // MainForm
             // 
@@ -440,6 +448,7 @@
         private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem findToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem dumpInstallToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem cDNToolStripMenuItem;
     }
 }
 

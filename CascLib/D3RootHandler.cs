@@ -50,6 +50,7 @@ namespace CASCExplorer
                     Logger.WriteLine("{0}: {1} {2}", i, hash.ToHexString(), name);
                 }
 
+                // check Packages.dat for names too?
                 ParseCoreTOC(casc, data["Base"]);
 
                 foreach (var kv in data)

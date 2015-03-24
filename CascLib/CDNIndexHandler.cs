@@ -2,10 +2,11 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+using System.Threading.Tasks;
 
 namespace CASCExplorer
 {
-    internal class CDNIndexHandler
+    public class CDNIndexHandler
     {
         private static readonly ByteArrayComparer comparer = new ByteArrayComparer();
         private readonly Dictionary<byte[], IndexEntry> CDNIndexData = new Dictionary<byte[], IndexEntry>(comparer);

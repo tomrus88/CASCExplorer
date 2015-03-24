@@ -4,10 +4,11 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
+using System.Threading.Tasks;
 
 namespace CASCExplorer
 {
-    internal class IndexEntry
+    public class IndexEntry
     {
         public int Index;
         public int Offset;
@@ -318,6 +319,11 @@ namespace CASCExplorer
             DataStreams[index] = stream;
 
             return stream;
+        }
+
+        public static CASCHandler OpenStorage(CASCConfig config, AsyncAction worker = null)
+        {
+            return Open(worker, config);
         }
 
         public static CASCHandler OpenLocalStorage(string basePath, AsyncAction worker = null)
