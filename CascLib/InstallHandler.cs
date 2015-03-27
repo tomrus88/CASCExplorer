@@ -24,6 +24,7 @@ namespace CASCExplorer
     public class InstallHandler
     {
         private readonly List<InstallEntry> InstallData = new List<InstallEntry>();
+        private static readonly Jenkins96 Hasher = new Jenkins96();
 
         public int Count
         {
@@ -103,6 +104,19 @@ namespace CASCExplorer
                     yield return entry;
         }
 
+        public IEnumerable<InstallEntry> GetEntries(ulong hash)
+        {
+            foreach (var entry in InstallData)
+                if (Hasher.ComputeHash(entry.Name) == hash)
+                    yield return entry;
+        }
+
+        public IEnumerable<InstallEntry> GetEntries()
+        {
+            foreach (var entry in InstallData)
+                yield return entry;
+        }
+
         public void Print()
         {
             for (int i = 0; i < InstallData.Count; ++i)
@@ -112,6 +126,48 @@ namespace CASCExplorer
                 Logger.WriteLine("{0:D4}: {1} {2}", i, data.MD5.ToHexString(), data.Name);
 
                 Logger.WriteLine("    {0}", string.Join(",", data.Tags.Select(t => t.Name)));
+            }
+        }
+
+        public void MergeData(CASCFolder folder)
+        {
+            foreach (var entry in InstallData)
+            {
+                CreateSubTree(folder, Hasher.ComputeHash(entry.Name), entry.Name);
+            }
+        }
+
+        private static void CreateSubTree(CASCFolder root, ulong filehash, string file)
+        {
+            string[] parts = file.Split('\\');
+
+            CASCFolder folder = root;
+
+            for (int i = 0; i < parts.Length; ++i)
+            {
+                bool isFile = (i == parts.Length - 1);
+
+                ulong hash = isFile ? filehash : Hasher.ComputeHash(parts[i]);
+
+                ICASCEntry entry = folder.GetEntry(hash);
+
+                if (entry == null)
+                {
+                    if (isFile)
+                    {
+                        entry = new CASCFile(hash);
+                        CASCFile.FileNames[hash] = file;
+                    }
+                    else
+                    {
+                        entry = new CASCFolder(hash);
+                        CASCFolder.FolderNames[hash] = parts[i];
+                    }
+
+                    folder.SubEntries[hash] = entry;
+                }
+
+                folder = entry as CASCFolder;
             }
         }
 

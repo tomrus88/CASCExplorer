@@ -186,6 +186,11 @@ namespace CASCExplorer
             CASC.Root.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), bgAction);
             Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
 
+            if (true)
+            {
+                CASC.Install.MergeData(Root);
+            }
+
             Sorter.CASC = CASC;
         }
 
@@ -289,6 +294,29 @@ namespace CASCExplorer
                             localeFlags |= rootInfo.Block.LocaleFlags;
                             contentFlags |= rootInfo.Block.ContentFlags;
                         }
+                    }
+                }
+                else
+                {
+                    var installInfos = CASC.Install.GetEntries(entry.Hash);
+
+                    if (installInfos != null && installInfos.Any())
+                    {
+                        var enc = CASC.Encoding.GetEntry(installInfos.First().MD5);
+
+                        if (enc != null)
+                            size = enc.Size.ToString("N", sizeNumberFmt);
+                        else
+                            size = "0";
+
+                        //foreach (var rootInfo in rootInfosLocale)
+                        //{
+                        //    if (rootInfo.Block != null)
+                        //    {
+                        //        localeFlags |= rootInfo.Block.LocaleFlags;
+                        //        contentFlags |= rootInfo.Block.ContentFlags;
+                        //    }
+                        //}
                     }
                 }
             }

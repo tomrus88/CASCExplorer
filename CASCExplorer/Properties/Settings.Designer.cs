@@ -37,7 +37,7 @@ namespace CASCExplorer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("wow")]
+        [global::System.Configuration.DefaultSettingValueAttribute("d3t")]
         public string Product {
             get {
                 return ((string)(this["Product"]));

@@ -360,9 +360,14 @@ namespace CASCExplorer
         public EncodingEntry GetEncodingEntry(ulong hash)
         {
             var rootInfos = RootHandler.GetEntries(hash);
-            if (rootInfos == null)
-                return null;
-            return EncodingHandler.GetEntry(rootInfos.First().MD5);
+            if (rootInfos != null)
+                return EncodingHandler.GetEntry(rootInfos.First().MD5);
+
+            var installInfos = Install.GetEntries().Where(e => Hasher.ComputeHash(e.Name) == hash).FirstOrDefault();
+            if (installInfos != null)
+                return EncodingHandler.GetEntry(installInfos.MD5);
+
+            return null;
         }
 
         public Stream OpenFile(string fullName)

@@ -13,6 +13,7 @@ namespace CASCExplorer
         private LocaleFlags locale;
         private CASCFolder Root;
         private CoreTOCParser tocParser;
+        private PackagesParser pkgParser;
 
         public int Count { get { return RootData.Count; } }
         public int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
@@ -50,8 +51,9 @@ namespace CASCExplorer
                     Logger.WriteLine("{0}: {1} {2}", i, hash.ToHexString(), name);
                 }
 
-                // check Packages.dat for names too?
                 ParseCoreTOC(casc, data["Base"]);
+
+                ParsePackages(casc, data["Base"]);
 
                 foreach (var kv in data)
                 {
@@ -88,7 +90,18 @@ namespace CASCExplorer
                                     var sno = tocParser.GetSNO(snoId);
 
                                     //file extensions are wrong in this case
-                                    string name = String.Format("{0}\\{1}\\{2:D4}{3}", sno.GroupId, sno.Name, fileNumber, ".xxx");
+                                    //string name = String.Format("{0}\\{1}\\{2:D4}{3}", sno.GroupId, sno.Name, fileNumber, ".xxx");
+                                    string name = String.Format("{0}\\{1}\\{2:D4}", sno.GroupId, sno.Name, fileNumber);
+
+                                    string name2 = pkgParser.GetProperName(Hasher.ComputeHash(name));
+
+                                    if (name2 != null)
+                                        name = name2;
+                                    else
+                                    {
+                                        CountUnknown++;
+                                        name += ".xxx";
+                                    }
 
                                     AddFile(kv.Key, md5, name);
                                 }
@@ -175,6 +188,44 @@ namespace CASCExplorer
                             {
                                 EncodingEntry enc2 = casc.Encoding.GetEntry(md5_2);
                                 tocParser = new CoreTOCParser(casc.OpenFile(enc2.Key));
+                            }
+                        }
+                    }
+                }
+            }
+        }
+
+        private void ParsePackages(CASCHandler casc, byte[] md5)
+        {
+            EncodingEntry enc = casc.Encoding.GetEntry(md5);
+
+            using (Stream s = OpenD3SubRootFile(casc, enc.Key, md5, "data\\" + casc.Config.BuildName + "\\subroot\\Base"))
+            {
+                if (s != null)
+                {
+                    using (var br2 = new BinaryReader(s))
+                    {
+                        uint magic = br2.ReadUInt32();
+
+                        int nEntries0 = br2.ReadInt32();
+
+                        br2.BaseStream.Position += nEntries0 * (16 + 4);
+
+                        int nEntries1 = br2.ReadInt32();
+
+                        br2.BaseStream.Position += nEntries1 * (16 + 4 + 4);
+
+                        int nNamedEntries = br2.ReadInt32();
+
+                        for (int i = 0; i < nNamedEntries; i++)
+                        {
+                            byte[] md5_2 = br2.ReadBytes(16);
+                            string name = br2.ReadCString();
+
+                            if (name == "Data_D3\\PC\\Misc\\Packages.dat")
+                            {
+                                EncodingEntry enc2 = casc.Encoding.GetEntry(md5_2);
+                                pkgParser = new PackagesParser(casc.OpenFile(enc2.Key));
                             }
                         }
                     }
@@ -501,6 +552,35 @@ namespace CASCExplorer
             SNOInfo sno;
             snoDic.TryGetValue(id, out sno);
             return sno;
+        }
+    }
+
+    public class PackagesParser
+    {
+        Dictionary<ulong, string> namesDic = new Dictionary<ulong, string>();
+        private static readonly Jenkins96 Hasher = new Jenkins96();
+
+        public PackagesParser(Stream stream)
+        {
+            using (var br = new BinaryReader(stream))
+            {
+                int sign = br.ReadInt32();
+                int namesCount = br.ReadInt32();
+
+                for (int i = 0; i < namesCount; i++)
+                {
+                    string name = br.ReadCString();
+                    ulong hash = Hasher.ComputeHash(name.Remove(name.Length - 4, 4));
+                    namesDic[hash] = name;
+                }
+            }
+        }
+
+        public string GetProperName(ulong hash)
+        {
+            string name;
+            namesDic.TryGetValue(hash, out name);
+            return name;
         }
     }
 }
