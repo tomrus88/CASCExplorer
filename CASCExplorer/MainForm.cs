@@ -278,7 +278,7 @@ namespace CASCExplorer
             {
                 var rootInfosLocale = CASC.Root.GetEntries(entry.Hash);
 
-                if (rootInfosLocale != null && rootInfosLocale.Any())
+                if (rootInfosLocale.Any())
                 {
                     var enc = CASC.Encoding.GetEntry(rootInfosLocale.First().MD5);
 
@@ -300,7 +300,7 @@ namespace CASCExplorer
                 {
                     var installInfos = CASC.Install.GetEntries(entry.Hash);
 
-                    if (installInfos != null && installInfos.Any())
+                    if (installInfos.Any())
                     {
                         var enc = CASC.Encoding.GetEntry(installInfos.First().MD5);
 

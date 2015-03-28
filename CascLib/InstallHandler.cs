@@ -139,6 +139,7 @@ namespace CASCExplorer
 
         private static void CreateSubTree(CASCFolder root, ulong filehash, string file)
         {
+            file = file.Replace('/', '\\');
             string[] parts = file.Split('\\');
 
             CASCFolder folder = root;

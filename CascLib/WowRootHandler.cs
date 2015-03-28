@@ -140,7 +140,7 @@ namespace CASCExplorer
             var rootInfos = GetAllEntries(hash);
 
             if (rootInfos == null)
-                return null;
+                yield break;
 
             var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & locale) != 0);
 
@@ -152,7 +152,8 @@ namespace CASCExplorer
                     rootInfosLocale = rootInfosLocaleAndContent;
             }
 
-            return rootInfosLocale;
+            foreach (var entry in rootInfosLocale)
+                yield return entry;
         }
 
         public void LoadListFile(string path, AsyncAction worker = null)

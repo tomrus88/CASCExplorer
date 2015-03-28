@@ -242,14 +242,24 @@ namespace CASCExplorer
         {
             HashSet<RootEntry> result;
             RootData.TryGetValue(hash, out result);
-            return result;
+
+            if (result == null)
+                yield break;
+
+            foreach (var entry in result)
+                yield return entry;
         }
 
         public IEnumerable<RootEntry> GetEntries(ulong hash)
         {
             HashSet<RootEntry> result;
             RootData.TryGetValue(hash, out result);
-            return result;
+
+            if (result == null)
+                yield break;
+
+            foreach (var entry in result)
+                yield return entry;
         }
 
         public void LoadListFile(string path, AsyncAction worker = null)

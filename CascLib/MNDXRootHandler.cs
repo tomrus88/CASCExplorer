@@ -276,14 +276,22 @@ namespace CASCExplorer
         {
             RootEntry rootEntry;
             mndxData.TryGetValue(hash, out rootEntry);
-            yield return rootEntry;
+
+            if (rootEntry != null)
+                yield return rootEntry;
+            else
+                yield break;
         }
 
         public IEnumerable<RootEntry> GetEntries(ulong hash)
         {
             RootEntry rootEntry;
             mndxData.TryGetValue(hash, out rootEntry);
-            yield return rootEntry;
+
+            if (rootEntry != null)
+                yield return rootEntry;
+            else
+                yield break;
         }
 
         private int FindMNDXPackage(string fileName)
