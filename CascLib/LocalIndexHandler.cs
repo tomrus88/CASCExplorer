@@ -105,7 +105,7 @@ namespace CASCExplorer
         {
             List<string> latestIdx = new List<string>();
 
-            string dataFolder = config.BuildUID == "hero" ? "HeroesData" : "Data";
+            string dataFolder = CASCGame.GetDataFolder(config.GameType);
             string dataPath = String.Format("{0}\\data\\", dataFolder);
 
             for (int i = 0; i < 0x10; ++i)

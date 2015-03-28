@@ -173,13 +173,16 @@ namespace CASCExplorer
                 ? CASCConfig.LoadOnlineStorageConfig(Settings.Default.Product, "us")
                 : CASCConfig.LoadLocalStorageConfig(Settings.Default.StoragePath);
 
-            SelectBuildForm sb = new SelectBuildForm(config);
-            var result = sb.ShowDialog();
+            if (Settings.Default.OnlineMode)
+            {
+                SelectBuildForm sb = new SelectBuildForm(config);
+                var result = sb.ShowDialog();
 
-            if (result != DialogResult.OK || sb.SelectedIndex == -1)
-                throw new Exception("Please select build!");
+                if (result != DialogResult.OK || sb.SelectedIndex == -1)
+                    throw new Exception("Please select build!");
 
-            config.ActiveCDNBuild = sb.SelectedIndex;
+                config.ActiveCDNBuild = sb.SelectedIndex;
+            }
 
             CASC = CASCHandler.OpenStorage(config, bgAction);
 

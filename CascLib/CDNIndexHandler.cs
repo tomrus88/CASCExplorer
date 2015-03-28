@@ -2,7 +2,6 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
-using System.Threading.Tasks;
 
 namespace CASCExplorer
 {
@@ -122,7 +121,7 @@ namespace CASCExplorer
         {
             try
             {
-                string dataFolder = CASCConfig.BuildUID == "hero" ? "HeroesData" : "Data";
+                string dataFolder = CASCGame.GetDataFolder(CASCConfig.GameType);
                 string indexPath = String.Format("{0}\\indices\\", dataFolder);
 
                 string path = Path.Combine(CASCConfig.BasePath, indexPath, archive + ".index");

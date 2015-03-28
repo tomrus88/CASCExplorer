@@ -4,7 +4,6 @@ using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Threading.Tasks;
 
 namespace CASCExplorer
 {
@@ -28,16 +27,14 @@ namespace CASCExplorer
 
         private readonly Dictionary<int, FileStream> DataStreams = new Dictionary<int, FileStream>();
 
-        private readonly CASCConfig config;
-
         public InstallHandler Install { get { return InstallHandler; } }
         public EncodingHandler Encoding { get { return EncodingHandler; } }
         public IRootHandler Root { get { return RootHandler; } }
-        public CASCConfig Config { get { return config; } }
+        public CASCConfig Config { get; private set; }
 
         private CASCHandler(CASCConfig config, AsyncAction worker)
         {
-            this.config = config;
+            this.Config = config;
 
             Logger.WriteLine("CASCHandler: loading CDN indices...");
 
@@ -107,17 +104,17 @@ namespace CASCExplorer
 
         private Stream OpenInstallFile()
         {
-            var encInfo = EncodingHandler.GetEntry(config.InstallMD5);
+            var encInfo = EncodingHandler.GetEntry(Config.InstallMD5);
 
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for install file missing!");
 
-            Stream s = TryLocalCache(encInfo.Key, config.InstallMD5, Path.Combine("data", config.BuildName, "install"));
+            Stream s = TryLocalCache(encInfo.Key, Config.InstallMD5, Path.Combine("data", Config.BuildName, "install"));
 
             if (s != null)
                 return s;
 
-            s = TryLocalCache(encInfo.Key, config.InstallMD5, Path.Combine("data", config.BuildName, "install"));
+            s = TryLocalCache(encInfo.Key, Config.InstallMD5, Path.Combine("data", Config.BuildName, "install"));
 
             if (s != null)
                 return s;
@@ -127,17 +124,17 @@ namespace CASCExplorer
 
         private Stream OpenRootFile()
         {
-            var encInfo = EncodingHandler.GetEntry(config.RootMD5);
+            var encInfo = EncodingHandler.GetEntry(Config.RootMD5);
 
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for root file missing!");
 
-            Stream s = TryLocalCache(encInfo.Key, config.RootMD5, Path.Combine("data", config.BuildName, "root"));
+            Stream s = TryLocalCache(encInfo.Key, Config.RootMD5, Path.Combine("data", Config.BuildName, "root"));
 
             if (s != null)
                 return s;
 
-            s = TryLocalCache(encInfo.Key, config.RootMD5, Path.Combine("data", config.BuildName, "root"));
+            s = TryLocalCache(encInfo.Key, Config.RootMD5, Path.Combine("data", Config.BuildName, "root"));
 
             if (s != null)
                 return s;
@@ -147,17 +144,17 @@ namespace CASCExplorer
 
         private Stream OpenEncodingFile()
         {
-            Stream s = TryLocalCache(config.EncodingKey, config.EncodingMD5, Path.Combine("data", config.BuildName, "encoding"));
+            Stream s = TryLocalCache(Config.EncodingKey, Config.EncodingMD5, Path.Combine("data", Config.BuildName, "encoding"));
 
             if (s != null)
                 return s;
 
-            s = TryLocalCache(config.EncodingKey, config.EncodingMD5, Path.Combine("data", config.BuildName, "encoding"));
+            s = TryLocalCache(Config.EncodingKey, Config.EncodingMD5, Path.Combine("data", Config.BuildName, "encoding"));
 
             if (s != null)
                 return s;
 
-            return OpenFile(config.EncodingKey);
+            return OpenFile(Config.EncodingKey);
         }
 
         public Stream TryLocalCache(byte[] key, byte[] md5, string name)
@@ -186,7 +183,7 @@ namespace CASCExplorer
         {
             try
             {
-                if (config.OnlineMode)
+                if (Config.OnlineMode)
                     throw new Exception("OnlineMode=true");
 
                 var idxInfo = LocalIndex.GetIndexInfo(key);
@@ -243,7 +240,7 @@ namespace CASCExplorer
         {
             try
             {
-                if (config.OnlineMode)
+                if (Config.OnlineMode)
                     throw new Exception("OnlineMode=true");
 
                 var idxInfo = LocalIndex.GetIndexInfo(key);
@@ -308,12 +305,9 @@ namespace CASCExplorer
             if (DataStreams.TryGetValue(index, out stream))
                 return stream;
 
-            string dataFolder = "Data";
+            string dataFolder = CASCGame.GetDataFolder(Config.GameType);
 
-            if (RootHandler is MNDXRootHandler)
-                dataFolder = "HeroesData";
-
-            string dataFile = Path.Combine(config.BasePath, String.Format("{0}\\data\\data.{1:D3}", dataFolder, index));
+            string dataFile = Path.Combine(Config.BasePath, String.Format("{0}\\data\\data.{1:D3}", dataFolder, index));
 
             stream = new FileStream(dataFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
             DataStreams[index] = stream;

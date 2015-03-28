@@ -151,7 +151,6 @@ namespace CASCExplorer
 
     public class CASCConfig
     {
-        //KeyValueConfig _BuildConfig;
         KeyValueConfig _CDNConfig;
 
         List<KeyValueConfig> _Builds;
@@ -160,15 +159,15 @@ namespace CASCExplorer
         VerBarConfig<CDNConfigEntry> _CDNData;
         VerBarConfig<VersionsConfigEntry> _VersionsData;
 
-        string region;
-        string product;
+        public string Region { get; private set; }
+        public CASCGameType GameType { get; private set; }
 
         public static CASCConfig LoadOnlineStorageConfig(string product, string region)
         {
             var config = new CASCConfig { OnlineMode = true };
 
-            config.region = region;
-            config.product = product;
+            config.Region = region;
+            config.Product = product;
 
             using (var cdnsStream = CDNIndexHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/cdns", product)))
             {
@@ -193,11 +192,7 @@ namespace CASCExplorer
 
             config.Build = config._VersionsData[index].BuildId;
 
-            //string buildKey = config._VersionsData[index].BuildConfig;
-            //using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config.CDNUrl, buildKey))
-            //{
-            //    config._BuildConfig = KeyValueConfig.ReadKeyValueConfig(stream);
-            //}
+            config.GameType = CASCGame.DetectOnlineGame(product);
 
             string cdnKey = config._VersionsData[index].CDNConfig;
             using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config.CDNUrl, cdnKey))
@@ -231,8 +226,6 @@ namespace CASCExplorer
         public static CASCConfig LoadLocalStorageConfig(string basePath)
         {
             var config = new CASCConfig { OnlineMode = false, BasePath = basePath };
-
-            bool isHots = File.Exists(Path.Combine(basePath, "Heroes of the Storm.exe"));
 
             string buildInfoPath = Path.Combine(basePath, ".build.info");
 
@@ -271,9 +264,13 @@ namespace CASCExplorer
                 }
             }
 
-            string dataFolder = isHots ? "HeroesData" : "Data";
+            config.GameType = CASCGame.DetectLocalGame(basePath);
+            string dataFolder = CASCGame.GetDataFolder(config.GameType);
 
             config.ActiveCDNBuild = 0;
+
+            config._Builds = new List<KeyValueConfig>();
+
             string buildKey = bi.BuildKey;
             string buildCfgPath = Path.Combine(basePath, String.Format("{0}\\config\\", dataFolder), buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
             using (Stream stream = new FileStream(buildCfgPath, FileMode.Open))
@@ -301,7 +298,7 @@ namespace CASCExplorer
 
         public string BuildName { get { return _Builds[ActiveCDNBuild]["build-name"][0]; } }
 
-        public string Product { get { return product; } }
+        public string Product { get; private set; }
 
         public byte[] RootMD5
         {
@@ -343,7 +340,7 @@ namespace CASCExplorer
 
                     for (int i = 0; i < _CDNData.Count; ++i)
                     {
-                        if (_CDNData[i].Name == region)
+                        if (_CDNData[i].Name == Region)
                         {
                             index = i;
                             break;
