@@ -3,10 +3,10 @@
   <Profiles />
   <Settings>
     <Setting Name="OnlineMode" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
+      <Value Profile="(Default)">False</Value>
     </Setting>
     <Setting Name="Product" Type="System.String" Scope="User">
-      <Value Profile="(Default)">d3t</Value>
+      <Value Profile="(Default)">wowt</Value>
     </Setting>
     <Setting Name="LocaleFlags" Type="CASCExplorer.LocaleFlags" Scope="User">
       <Value Profile="(Default)">enUS</Value>
@@ -15,7 +15,7 @@
       <Value Profile="(Default)">None</Value>
     </Setting>
     <Setting Name="StoragePath" Type="System.String" Scope="User">
-      <Value Profile="(Default)">d:\Games\World of Warcraft\</Value>
+      <Value Profile="(Default)">d:\Games\World of Warcraft Public Test\</Value>
     </Setting>
   </Settings>
 </SettingsFile>

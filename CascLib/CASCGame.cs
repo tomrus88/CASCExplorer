@@ -28,6 +28,12 @@ namespace CASCExplorer
 
                 if (File.Exists(Path.Combine(path, "Wow.exe")))
                     return CASCGameType.WoW;
+
+                if (File.Exists(Path.Combine(path, "WowT.exe")))
+                    return CASCGameType.WoW;
+
+                if (File.Exists(Path.Combine(path, "WowB.exe")))
+                    return CASCGameType.WoW;
             }
 
             return CASCGameType.Unknown;
