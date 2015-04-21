@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace CASCExplorer
@@ -22,12 +24,67 @@ namespace CASCExplorer
             switch (SortColumn)
             {
                 case 0: // Name
-                case 1: // Type
-                case 2: // Locale Flags
-                case 3: // Content Flags
                     if (x is CASCFile && y is CASCFile)
                     {
                         result = x.Name.CompareTo(y.Name);
+                    }
+                    else if (x is CASCFolder && y is CASCFolder)
+                    {
+                        result = x.Name.CompareTo(y.Name);
+                    }
+                    else if (x is CASCFile) // x is CASCFile && y is CASCFolder
+                    {
+                        result = 1;
+                    }
+                    else // x is CASCFolder && y is CASCFile
+                    {
+                        result = -1;
+                    }
+                    break;
+                case 1: // Type
+                    if (x is CASCFile && y is CASCFile)
+                    {
+                        result = Path.GetExtension(x.Name).CompareTo(Path.GetExtension(y.Name));
+                    }
+                    else if (x is CASCFolder && y is CASCFolder)
+                    {
+                        result = x.Name.CompareTo(y.Name);
+                    }
+                    else if (x is CASCFile) // x is CASCFile && y is CASCFolder
+                    {
+                        result = 1;
+                    }
+                    else // x is CASCFolder && y is CASCFile
+                    {
+                        result = -1;
+                    }
+                    break;
+                case 2: // Locale Flags
+                    if (x is CASCFile && y is CASCFile)
+                    {
+                        var flags1 = CASC.Root.GetEntries(x.Hash).First().Block.LocaleFlags;
+                        var flags2 = CASC.Root.GetEntries(y.Hash).First().Block.LocaleFlags;
+                        result = flags1.CompareTo(flags2);
+                    }
+                    else if (x is CASCFolder && y is CASCFolder)
+                    {
+                        result = x.Name.CompareTo(y.Name);
+                    }
+                    else if (x is CASCFile) // x is CASCFile && y is CASCFolder
+                    {
+                        result = 1;
+                    }
+                    else // x is CASCFolder && y is CASCFile
+                    {
+                        result = -1;
+                    }
+                    break;
+                case 3: // Content Flags
+                    if (x is CASCFile && y is CASCFile)
+                    {
+                        var flags1 = CASC.Root.GetEntries(x.Hash).First().Block.ContentFlags;
+                        var flags2 = CASC.Root.GetEntries(y.Hash).First().Block.ContentFlags;
+                        result = flags1.CompareTo(flags2);
                     }
                     else if (x is CASCFolder && y is CASCFolder)
                     {

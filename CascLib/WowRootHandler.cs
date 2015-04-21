@@ -42,6 +42,7 @@ namespace CASCExplorer
 
     public class RootBlock
     {
+        public static RootBlock Empty = new RootBlock();
         public ContentFlags ContentFlags;
         public LocaleFlags LocaleFlags;
     }
@@ -61,7 +62,7 @@ namespace CASCExplorer
     public class WowRootHandler : IRootHandler
     {
         private readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
-        //private readonly Dictionary<int, ulong> FileDataStore = new Dictionary<int, ulong>();
+        private readonly Dictionary<int, ulong> FileDataStore = new Dictionary<int, ulong>();
         private readonly HashSet<ulong> UnknownFiles = new HashSet<ulong>();
         private static readonly Jenkins96 Hasher = new Jenkins96();
         private LocaleFlags locale;
@@ -124,19 +125,13 @@ namespace CASCExplorer
 
                         //Console.WriteLine("File: {0:X8} {1:X16} {2}", entries[i].FileDataId, hash, entries[i].MD5.ToHexString());
 
-                        //if (FileDataStore.ContainsKey(entries[i].FileDataId))
-                        //{
-                        //    Console.WriteLine("1 {0:X8} {1:X16}", entries[i].FileDataId, hash);
-                        //    continue;
-                        //}
+                        if (FileDataStore.ContainsKey(entries[i].FileDataId) && FileDataStore[entries[i].FileDataId] == hash)
+                        {
+                            //Console.WriteLine("2 {0:X8} {1:X16}", entries[i].FileDataId, hash);
+                            continue;
+                        }
 
-                        //if (FileDataStore.ContainsKey(entries[i].FileDataId) && FileDataStore[entries[i].FileDataId] != hash)
-                        //{
-                        //    Console.WriteLine("2 {0:X8} {1:X16}", entries[i].FileDataId, hash);
-                        //    continue;
-                        //}
-
-                        //FileDataStore.Add(entries[i].FileDataId, hash);
+                        FileDataStore.Add(entries[i].FileDataId, hash);
                     }
 
                     if (worker != null)
@@ -148,11 +143,25 @@ namespace CASCExplorer
             }
         }
 
+        public IEnumerable<RootEntry> GetAllEntriesByFileDataId(int fileDataId)
+        {
+            ulong hash;
+            FileDataStore.TryGetValue(fileDataId, out hash);
+            return GetAllEntries(hash);
+        }
+
         public IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
             HashSet<RootEntry> result;
             RootData.TryGetValue(hash, out result);
             return result;
+        }
+
+        public IEnumerable<RootEntry> GetEntriesByFileDataId(int fileDataId)
+        {
+            ulong hash;
+            FileDataStore.TryGetValue(fileDataId, out hash);
+            return GetEntries(hash);
         }
 
         // Returns only entries that match current locale and content flags
@@ -213,8 +222,6 @@ namespace CASCExplorer
 
                     //if (dirIndex >= 0)
                     //    dirs[file.ToLower().Substring(0, dirIndex)] = true;
-                    //else
-                    //    dirs[file.ToLower()] = true;
 
                     if (worker != null)
                     {

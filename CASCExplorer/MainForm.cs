@@ -327,7 +327,7 @@ namespace CASCExplorer
             var item = new ListViewItem(new string[]
             {
                 entry.Name,
-                entry is CASCFolder ? "Folder" : "File",
+                entry is CASCFolder ? "Folder" : Path.GetExtension(entry.Name),
                 localeFlags.ToString(),
                 contentFlags.ToString(),
                 size
