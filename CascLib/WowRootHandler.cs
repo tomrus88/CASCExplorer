@@ -49,19 +49,19 @@ namespace CASCExplorer
     public class RootEntry
     {
         public RootBlock Block;
-        public int Unk1;
+        public int FileDataId;
         public byte[] MD5;
-        //public ulong Hash;
 
         public override string ToString()
         {
-            return String.Format("RootBlock: {0:X8} {1:X8}, File: {2:X8} {3}", Block.ContentFlags, Block.LocaleFlags, Unk1, MD5.ToHexString());
+            return String.Format("RootBlock: {0:X8} {1:X8}, File: {2:X8} {3}", Block.ContentFlags, Block.LocaleFlags, FileDataId, MD5.ToHexString());
         }
     }
 
     public class WowRootHandler : IRootHandler
     {
         private readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
+        //private readonly Dictionary<int, ulong> FileDataStore = new Dictionary<int, ulong>();
         private readonly HashSet<ulong> UnknownFiles = new HashSet<ulong>();
         private static readonly Jenkins96 Hasher = new Jenkins96();
         private LocaleFlags locale;
@@ -101,21 +101,42 @@ namespace CASCExplorer
 
                     RootEntry[] entries = new RootEntry[count];
 
+                    int fileDataIndex = 0;
+
                     for (var i = 0; i < count; ++i)
                     {
                         entries[i] = new RootEntry();
                         entries[i].Block = block;
-                        entries[i].Unk1 = br.ReadInt32();
+                        entries[i].FileDataId = fileDataIndex + br.ReadInt32();
+
+                        fileDataIndex = entries[i].FileDataId + 1;
                     }
+
+                    //Console.WriteLine("Block: {0} {1} (size {2})", block.ContentFlags, block.LocaleFlags, count);
 
                     for (var i = 0; i < count; ++i)
                     {
                         entries[i].MD5 = br.ReadBytes(16);
 
                         ulong hash = br.ReadUInt64();
-                        //entries[i].Hash = hash;
 
                         RootData.Add(hash, entries[i]);
+
+                        //Console.WriteLine("File: {0:X8} {1:X16} {2}", entries[i].FileDataId, hash, entries[i].MD5.ToHexString());
+
+                        //if (FileDataStore.ContainsKey(entries[i].FileDataId))
+                        //{
+                        //    Console.WriteLine("1 {0:X8} {1:X16}", entries[i].FileDataId, hash);
+                        //    continue;
+                        //}
+
+                        //if (FileDataStore.ContainsKey(entries[i].FileDataId) && FileDataStore[entries[i].FileDataId] != hash)
+                        //{
+                        //    Console.WriteLine("2 {0:X8} {1:X16}", entries[i].FileDataId, hash);
+                        //    continue;
+                        //}
+
+                        //FileDataStore.Add(entries[i].FileDataId, hash);
                     }
 
                     if (worker != null)
@@ -169,6 +190,8 @@ namespace CASCExplorer
 
             Logger.WriteLine("WowRootHandler: loading file names...");
 
+            //Dictionary<string, bool> dirs = new Dictionary<string, bool>();
+
             using (var sr = new StreamReader(path))
             {
                 string file;
@@ -186,12 +209,22 @@ namespace CASCExplorer
 
                     CASCFile.FileNames[fileHash] = file;
 
+                    //int dirIndex = file.LastIndexOf('\\');
+
+                    //if (dirIndex >= 0)
+                    //    dirs[file.ToLower().Substring(0, dirIndex)] = true;
+                    //else
+                    //    dirs[file.ToLower()] = true;
+
                     if (worker != null)
                     {
                         worker.ThrowOnCancel();
                         worker.ReportProgress((int)((float)sr.BaseStream.Position / (float)sr.BaseStream.Length * 100));
                     }
                 }
+
+                //foreach (var dir in dirs)
+                //    Console.WriteLine(dir.Key);
 
                 Logger.WriteLine("WowRootHandler: loaded {0} valid file names", CASCFile.FileNames.Count);
             }
@@ -233,7 +266,8 @@ namespace CASCExplorer
 
                 if (!CASCFile.FileNames.TryGetValue(rootEntry.Key, out file))
                 {
-                    file = "unknown\\" + rootEntry.Key.ToString("X16");
+                    file = "unknown\\" + rootEntry.Key.ToString("X16") + "_" + rootEntry.Value.First().FileDataId;
+
                     CountUnknown++;
                     UnknownFiles.Add(rootEntry.Key);
                 }
