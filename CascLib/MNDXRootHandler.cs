@@ -93,7 +93,7 @@ namespace CASCExplorer
 
         private Dictionary<ulong, RootEntry> mndxData = new Dictionary<ulong, RootEntry>();
 
-        public MNDXRootHandler(Stream stream, AsyncAction worker)
+        public MNDXRootHandler(MMStream stream, AsyncAction worker)
         {
             if (worker != null)
             {
@@ -101,119 +101,116 @@ namespace CASCExplorer
                 worker.ReportProgress(0, "Loading \"root\"...");
             }
 
-            using (var br = new BinaryReader(stream))
+            var header = stream.Read<MNDXHeader>();
+
+            if (header.Signature != CASC_MNDX_SIGNATURE || header.FormatVersion > 2 || header.FormatVersion < 1)
+                throw new Exception("invalid root file");
+
+            if (header.HeaderVersion == 2)
             {
-                var header = br.Read<MNDXHeader>();
+                var build1 = stream.ReadInt32(); // build number
+                var build2 = stream.ReadInt32(); // build number
+            }
 
-                if (header.Signature != CASC_MNDX_SIGNATURE || header.FormatVersion > 2 || header.FormatVersion < 1)
-                    throw new Exception("invalid root file");
+            int MarInfoOffset = stream.ReadInt32();                            // Offset of the first MAR entry info
+            int MarInfoCount = stream.ReadInt32();                             // Number of the MAR info entries
+            int MarInfoSize = stream.ReadInt32();                              // Size of the MAR info entry
+            int MndxEntriesOffset = stream.ReadInt32();
+            int MndxEntriesTotal = stream.ReadInt32();                         // Total number of MNDX root entries
+            int MndxEntriesValid = stream.ReadInt32();                         // Number of valid MNDX root entries
+            int MndxEntrySize = stream.ReadInt32();                            // Size of one MNDX root entry
 
-                if (header.HeaderVersion == 2)
-                {
-                    var build1 = br.ReadInt32(); // build number
-                    var build2 = br.ReadInt32(); // build number
-                }
+            if (MarInfoCount > CASC_MAX_MAR_FILES || MarInfoSize != Marshal.SizeOf(typeof(MARInfo)))
+                throw new Exception("invalid root file (1)");
 
-                int MarInfoOffset = br.ReadInt32();                            // Offset of the first MAR entry info
-                int MarInfoCount = br.ReadInt32();                             // Number of the MAR info entries
-                int MarInfoSize = br.ReadInt32();                              // Size of the MAR info entry
-                int MndxEntriesOffset = br.ReadInt32();
-                int MndxEntriesTotal = br.ReadInt32();                         // Total number of MNDX root entries
-                int MndxEntriesValid = br.ReadInt32();                         // Number of valid MNDX root entries
-                int MndxEntrySize = br.ReadInt32();                            // Size of one MNDX root entry
+            for (int i = 0; i < MarInfoCount; i++)
+            {
+                stream.Position = MarInfoOffset + (MarInfoSize * i);
 
-                if (MarInfoCount > CASC_MAX_MAR_FILES || MarInfoSize != Marshal.SizeOf(typeof(MARInfo)))
-                    throw new Exception("invalid root file (1)");
+                MARInfo marInfo = stream.Read<MARInfo>();
 
-                for (int i = 0; i < MarInfoCount; i++)
-                {
-                    br.BaseStream.Position = MarInfoOffset + (MarInfoSize * i);
+                stream.Position = marInfo.MarDataOffset;
 
-                    MARInfo marInfo = br.Read<MARInfo>();
+                MarFiles[i] = new MARFileNameDB(stream);
 
-                    br.BaseStream.Position = marInfo.MarDataOffset;
+                if (stream.Position != marInfo.MarDataOffset + marInfo.MarDataSize)
+                    throw new Exception("MAR parsing error!");
+            }
 
-                    MarFiles[i] = new MARFileNameDB(br);
+            //if (MndxEntrySize != Marshal.SizeOf(typeof(CASC_ROOT_ENTRY_MNDX)))
+            //    throw new Exception("invalid root file (2)");
 
-                    if (br.BaseStream.Position != marInfo.MarDataOffset + marInfo.MarDataSize)
-                        throw new Exception("MAR parsing error!");
-                }
+            stream.Position = MndxEntriesOffset;
 
-                //if (MndxEntrySize != Marshal.SizeOf(typeof(CASC_ROOT_ENTRY_MNDX)))
-                //    throw new Exception("invalid root file (2)");
+            CASC_ROOT_ENTRY_MNDX prevEntry = null;
 
-                br.BaseStream.Position = MndxEntriesOffset;
+            //Dictionary<int, int> p = new Dictionary<int, int>();
 
-                CASC_ROOT_ENTRY_MNDX prevEntry = null;
+            for (int i = 0; i < MndxEntriesTotal; ++i)
+            {
+                CASC_ROOT_ENTRY_MNDX entry = new CASC_ROOT_ENTRY_MNDX();
+                if (prevEntry != null) prevEntry.Next = entry;
+                prevEntry = entry;
+                entry.Flags = stream.ReadInt32();
+                entry.MD5 = stream.ReadBytes(0x10);
+                entry.FileSize = stream.ReadInt32();
+                mndxRootEntries.Add(i, entry);
 
-                //Dictionary<int, int> p = new Dictionary<int, int>();
-
-                for (int i = 0; i < MndxEntriesTotal; ++i)
-                {
-                    CASC_ROOT_ENTRY_MNDX entry = new CASC_ROOT_ENTRY_MNDX();
-                    if (prevEntry != null) prevEntry.Next = entry;
-                    prevEntry = entry;
-                    entry.Flags = br.ReadInt32();
-                    entry.MD5 = br.ReadBytes(0x10);
-                    entry.FileSize = br.ReadInt32();
-                    mndxRootEntries.Add(i, entry);
-
-                    //if ((entry.Flags & 0x80000000) != 0)
-                    //{
-                    //    if (!p.ContainsKey(entry.Flags & 0x00FFFFFF))
-                    //        p[entry.Flags & 0x00FFFFFF] = 1;
-                    //    else
-                    //        p[entry.Flags & 0x00FFFFFF]++;
-                    //}
-                }
-
-                //for (int i = 0; i < MndxEntriesTotal; ++i)
-                //    Console.WriteLine("{0:X8} - {1:X8} - {2}", i, mndxRootEntries[i].Flags, mndxRootEntries[i].EncodingKey.ToHexString());
-
-                mndxRootEntriesValid = new Dictionary<int, CASC_ROOT_ENTRY_MNDX>();// mndxRootEntries.Where(e => (e.Flags & 0x80000000) != 0).ToList();
-
-                //var e1 = mndxRootEntries.Where(e => (e.Value.Flags & 0x80000000) != 0).ToDictionary(e => e.Key, e => e.Value);
-                //var e2 = mndxRootEntries.Where(e => (e.Value.Flags & 0x40000000) != 0).ToDictionary(e => e.Key, e => e.Value);
-                //var e3 = mndxRootEntries.Where(e => (e.Value.Flags & 0x20000000) != 0).ToDictionary(e => e.Key, e => e.Value);
-                //var e4 = mndxRootEntries.Where(e => (e.Value.Flags & 0x10000000) != 0).ToDictionary(e => e.Key, e => e.Value);
-
-                //var e5 = mndxRootEntries.Where(e => (e.Value.Flags & 0x8000000) != 0).ToDictionary(e => e.Key, e => e.Value);
-                //var e6 = mndxRootEntries.Where(e => (e.Value.Flags & 0x4000000) != 0).ToDictionary(e => e.Key, e => e.Value);
-                //var e7 = mndxRootEntries.Where(e => (e.Value.Flags & 0x2000000) != 0).ToDictionary(e => e.Key, e => e.Value);
-                //var e8 = mndxRootEntries.Where(e => (e.Value.Flags & 0x1000000) != 0).ToDictionary(e => e.Key, e => e.Value);
-
-                //var e9 = mndxRootEntries.Where(e => (e.Value.Flags & 0x4000000) == 0).ToDictionary(e => e.Key, e => e.Value);
-
-                //int c = 0;
-                //foreach(var e in e9)
-                //    Console.WriteLine("{0:X8} - {1:X8} - {2:X8} - {3}", c++,e.Key, e.Value.Flags, e.Value.EncodingKey.ToHexString());
-
-                int ValidEntryCount = 1; // edx
-                int index = 0;
-
-                mndxRootEntriesValid[index++] = mndxRootEntries[0];
-
-                for (int i = 0; i < MndxEntriesTotal; i++)
-                {
-                    if (ValidEntryCount >= MndxEntriesValid)
-                        break;
-
-                    if ((mndxRootEntries[i].Flags & 0x80000000) != 0)
-                    {
-                        mndxRootEntriesValid[index++] = mndxRootEntries[i + 1];
-
-                        ValidEntryCount++;
-                    }
-                }
-
-                //for (int i = 0, j = 0; i < MndxEntriesTotal; i++, j++)
+                //if ((entry.Flags & 0x80000000) != 0)
                 //{
-                //    if ((mndxRootEntries[i].Flags & 0x80000000) != 0)
-                //    {
-                //        mndxRootEntriesValid[j] = mndxRootEntries[i];
-                //    }
+                //    if (!p.ContainsKey(entry.Flags & 0x00FFFFFF))
+                //        p[entry.Flags & 0x00FFFFFF] = 1;
+                //    else
+                //        p[entry.Flags & 0x00FFFFFF]++;
                 //}
             }
+
+            //for (int i = 0; i < MndxEntriesTotal; ++i)
+            //    Console.WriteLine("{0:X8} - {1:X8} - {2}", i, mndxRootEntries[i].Flags, mndxRootEntries[i].EncodingKey.ToHexString());
+
+            mndxRootEntriesValid = new Dictionary<int, CASC_ROOT_ENTRY_MNDX>();// mndxRootEntries.Where(e => (e.Flags & 0x80000000) != 0).ToList();
+
+            //var e1 = mndxRootEntries.Where(e => (e.Value.Flags & 0x80000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+            //var e2 = mndxRootEntries.Where(e => (e.Value.Flags & 0x40000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+            //var e3 = mndxRootEntries.Where(e => (e.Value.Flags & 0x20000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+            //var e4 = mndxRootEntries.Where(e => (e.Value.Flags & 0x10000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+
+            //var e5 = mndxRootEntries.Where(e => (e.Value.Flags & 0x8000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+            //var e6 = mndxRootEntries.Where(e => (e.Value.Flags & 0x4000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+            //var e7 = mndxRootEntries.Where(e => (e.Value.Flags & 0x2000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+            //var e8 = mndxRootEntries.Where(e => (e.Value.Flags & 0x1000000) != 0).ToDictionary(e => e.Key, e => e.Value);
+
+            //var e9 = mndxRootEntries.Where(e => (e.Value.Flags & 0x4000000) == 0).ToDictionary(e => e.Key, e => e.Value);
+
+            //int c = 0;
+            //foreach(var e in e9)
+            //    Console.WriteLine("{0:X8} - {1:X8} - {2:X8} - {3}", c++,e.Key, e.Value.Flags, e.Value.EncodingKey.ToHexString());
+
+            int ValidEntryCount = 1; // edx
+            int index = 0;
+
+            mndxRootEntriesValid[index++] = mndxRootEntries[0];
+
+            for (int i = 0; i < MndxEntriesTotal; i++)
+            {
+                if (ValidEntryCount >= MndxEntriesValid)
+                    break;
+
+                if ((mndxRootEntries[i].Flags & 0x80000000) != 0)
+                {
+                    mndxRootEntriesValid[index++] = mndxRootEntries[i + 1];
+
+                    ValidEntryCount++;
+                }
+            }
+
+            //for (int i = 0, j = 0; i < MndxEntriesTotal; i++, j++)
+            //{
+            //    if ((mndxRootEntries[i].Flags & 0x80000000) != 0)
+            //    {
+            //        mndxRootEntriesValid[j] = mndxRootEntries[i];
+            //    }
+            //}
         }
 
         public ContentFlags Content
@@ -419,6 +416,7 @@ namespace CASCExplorer
                 //entry.Name = file;
                 CASCFile.FileNames[fileHash] = file;
                 RootEntry entry = new RootEntry();
+                entry.Block = RootBlock.Empty;
                 entry.MD5 = FindMNDXInfo(file, FindMNDXPackage(file)).MD5;
                 mndxData[fileHash] = entry;
 
@@ -454,6 +452,21 @@ namespace CASCExplorer
             return root;
         }
 
+        static Dictionary<string, ulong> dirHashes = new Dictionary<string, ulong>(StringComparer.InvariantCultureIgnoreCase);
+
+        private static ulong GetOrComputeDirHash(string dir)
+        {
+            ulong hash;
+
+            if (dirHashes.TryGetValue(dir, out hash))
+                return hash;
+
+            hash = Hasher.ComputeHash(dir);
+            dirHashes[dir] = hash;
+
+            return hash;
+        }
+
         private static void CreateSubTree(CASCFolder root, ulong filehash, string file)
         {
             string[] parts = file.Split('/');
@@ -464,7 +477,7 @@ namespace CASCExplorer
             {
                 bool isFile = (i == parts.Length - 1);
 
-                ulong hash = isFile ? filehash : Hasher.ComputeHash(parts[i]);
+                ulong hash = isFile ? filehash : GetOrComputeDirHash(parts[i]);
 
                 ICASCEntry entry = folder.GetEntry(hash);
 
@@ -658,7 +671,7 @@ namespace CASCExplorer
             0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07
         };
 
-        public MARFileNameDB(BinaryReader reader, bool next = false)
+        public MARFileNameDB(MMStream reader, bool next = false)
         {
             if (!next && reader.ReadInt32() != CASC_MAR_SIGNATURE)
                 throw new Exception("invalid MAR file");
@@ -1788,7 +1801,7 @@ namespace CASCExplorer
             }
         }
 
-        public TBitEntryArray(BinaryReader reader) : base(reader.Read<int>(false))
+        public TBitEntryArray(MMStream reader) : base(reader.Read<int>(false))
         {
             BitsPerEntry = reader.ReadInt32();
             EntryBitMask = reader.ReadInt32();
@@ -1806,7 +1819,7 @@ namespace CASCExplorer
         public int TotalItemCount { get; private set; } // Total number of items in the array
         public int ValidItemCount { get; private set; } // Number of present items in the array
 
-        public TSparseArray(BinaryReader reader)
+        public TSparseArray(MMStream reader)
         {
             ItemBits = reader.Read<int>(false);
             TotalItemCount = reader.ReadInt32();
@@ -1946,7 +1959,7 @@ namespace CASCExplorer
             get { return NameFragments.Count; }
         }
 
-        public TNameIndexStruct(BinaryReader reader)
+        public TNameIndexStruct(MMStream reader)
         {
             NameFragments = reader.Read<byte>(false);
             FragmentEnds = new TSparseArray(reader);

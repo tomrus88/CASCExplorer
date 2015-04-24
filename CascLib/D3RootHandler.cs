@@ -22,7 +22,7 @@ namespace CASCExplorer
         public LocaleFlags Locale { get { return locale; } }
         public ContentFlags Content { get { return ContentFlags.None; } }
 
-        public D3RootHandler(Stream stream, AsyncAction worker, CASCHandler casc)
+        public D3RootHandler(MMStream stream, AsyncAction worker, CASCHandler casc)
         {
             if (worker != null)
             {
@@ -30,92 +30,86 @@ namespace CASCExplorer
                 worker.ReportProgress(0, "Loading \"root\"...");
             }
 
-            using (var br = new BinaryReader(stream))
+            byte b1 = stream.ReadByte();
+            byte b2 = stream.ReadByte();
+            byte b3 = stream.ReadByte();
+            byte b4 = stream.ReadByte();
+
+            int count = stream.ReadInt32();
+
+            Dictionary<string, byte[]> data = new Dictionary<string, byte[]>();
+
+            for (int i = 0; i < count; ++i)
             {
-                byte b1 = br.ReadByte();
-                byte b2 = br.ReadByte();
-                byte b3 = br.ReadByte();
-                byte b4 = br.ReadByte();
+                byte[] hash = stream.ReadBytes(16);
+                string name = stream.ReadCString();
 
-                int count = br.ReadInt32();
+                data[name] = hash;
 
-                Dictionary<string, byte[]> data = new Dictionary<string, byte[]>();
+                Logger.WriteLine("{0}: {1} {2}", i, hash.ToHexString(), name);
+            }
 
-                for (int i = 0; i < count; ++i)
+            ParseCoreTOC(casc, data["Base"]);
+
+            ParsePackages(casc, data["Base"]);
+
+            foreach (var kv in data)
+            {
+                EncodingEntry enc = casc.Encoding.GetEntry(kv.Value);
+
+                using (MMStream s = OpenD3SubRootFile(casc, enc.Key, kv.Value, "data\\" + casc.Config.BuildName + "\\subroot\\" + kv.Key))
                 {
-                    byte[] hash = br.ReadBytes(16);
-                    string name = br.ReadCString();
-
-                    data[name] = hash;
-
-                    Logger.WriteLine("{0}: {1} {2}", i, hash.ToHexString(), name);
-                }
-
-                ParseCoreTOC(casc, data["Base"]);
-
-                ParsePackages(casc, data["Base"]);
-
-                foreach (var kv in data)
-                {
-                    EncodingEntry enc = casc.Encoding.GetEntry(kv.Value);
-
-                    using (Stream s = OpenD3SubRootFile(casc, enc.Key, kv.Value, "data\\" + casc.Config.BuildName + "\\subroot\\" + kv.Key))
+                    if (s != null)
                     {
-                        if (s != null)
+                        uint magic = s.ReadUInt32();
+
+                        int nEntries0 = s.ReadInt32();
+
+                        for (int i = 0; i < nEntries0; i++)
                         {
-                            using (var br2 = new BinaryReader(s))
+                            byte[] md5 = s.ReadBytes(16);
+                            int snoId = s.ReadInt32();
+                            var sno = tocParser.GetSNO(snoId);
+
+                            string name = String.Format("{0}\\{1}{2}", sno.GroupId, sno.Name, sno.Ext);
+
+                            AddFile(kv.Key, md5, name);
+                        }
+
+                        int nEntries1 = s.ReadInt32();
+
+                        for (int i = 0; i < nEntries1; i++)
+                        {
+                            byte[] md5 = s.ReadBytes(16);
+                            int snoId = s.ReadInt32();
+                            int fileNumber = s.ReadInt32();
+                            var sno = tocParser.GetSNO(snoId);
+
+                            //file extensions are wrong in this case
+                            //string name = String.Format("{0}\\{1}\\{2:D4}{3}", sno.GroupId, sno.Name, fileNumber, ".xxx");
+                            string name = String.Format("{0}\\{1}\\{2:D4}", sno.GroupId, sno.Name, fileNumber);
+
+                            string name2 = pkgParser.GetProperName(Hasher.ComputeHash(name));
+
+                            if (name2 != null)
+                                name = name2;
+                            else
                             {
-                                uint magic = br2.ReadUInt32();
-
-                                int nEntries0 = br2.ReadInt32();
-
-                                for (int i = 0; i < nEntries0; i++)
-                                {
-                                    byte[] md5 = br2.ReadBytes(16);
-                                    int snoId = br2.ReadInt32();
-                                    var sno = tocParser.GetSNO(snoId);
-
-                                    string name = String.Format("{0}\\{1}{2}", sno.GroupId, sno.Name, sno.Ext);
-
-                                    AddFile(kv.Key, md5, name);
-                                }
-
-                                int nEntries1 = br2.ReadInt32();
-
-                                for (int i = 0; i < nEntries1; i++)
-                                {
-                                    byte[] md5 = br2.ReadBytes(16);
-                                    int snoId = br2.ReadInt32();
-                                    int fileNumber = br2.ReadInt32();
-                                    var sno = tocParser.GetSNO(snoId);
-
-                                    //file extensions are wrong in this case
-                                    //string name = String.Format("{0}\\{1}\\{2:D4}{3}", sno.GroupId, sno.Name, fileNumber, ".xxx");
-                                    string name = String.Format("{0}\\{1}\\{2:D4}", sno.GroupId, sno.Name, fileNumber);
-
-                                    string name2 = pkgParser.GetProperName(Hasher.ComputeHash(name));
-
-                                    if (name2 != null)
-                                        name = name2;
-                                    else
-                                    {
-                                        CountUnknown++;
-                                        name += ".xxx";
-                                    }
-
-                                    AddFile(kv.Key, md5, name);
-                                }
-
-                                int nNamedEntries = br2.ReadInt32();
-
-                                for (int i = 0; i < nNamedEntries; i++)
-                                {
-                                    byte[] md5 = br2.ReadBytes(16);
-                                    string name = br2.ReadCString();
-
-                                    AddFile(kv.Key, md5, name);
-                                }
+                                CountUnknown++;
+                                name += ".xxx";
                             }
+
+                            AddFile(kv.Key, md5, name);
+                        }
+
+                        int nNamedEntries = s.ReadInt32();
+
+                        for (int i = 0; i < nNamedEntries; i++)
+                        {
+                            byte[] md5 = s.ReadBytes(16);
+                            string name = s.ReadCString();
+
+                            AddFile(kv.Key, md5, name);
                         }
                     }
                 }
@@ -142,9 +136,9 @@ namespace CASCExplorer
             RootData.Add(fileHash, entry);
         }
 
-        private Stream OpenD3SubRootFile(CASCHandler casc, byte[] key, byte[] md5, string name)
+        private MMStream OpenD3SubRootFile(CASCHandler casc, byte[] key, byte[] md5, string name)
         {
-            Stream s = casc.TryLocalCache(key, md5, name);
+            MMStream s = casc.TryLocalCache(key, md5, name);
 
             if (s != null)
                 return s;
@@ -154,41 +148,39 @@ namespace CASCExplorer
             if (s != null)
                 return s;
 
-            return casc.OpenFile(key);
+            throw new Exception("OpenD3SubRootFile");
+            //return casc.OpenFile(key);
         }
 
         private void ParseCoreTOC(CASCHandler casc, byte[] md5)
         {
             EncodingEntry enc = casc.Encoding.GetEntry(md5);
 
-            using (Stream s = OpenD3SubRootFile(casc, enc.Key, md5, "data\\" + casc.Config.BuildName + "\\subroot\\Base"))
+            using (MMStream s = OpenD3SubRootFile(casc, enc.Key, md5, "data\\" + casc.Config.BuildName + "\\subroot\\Base"))
             {
                 if (s != null)
                 {
-                    using (var br2 = new BinaryReader(s))
+                    uint magic = s.ReadUInt32();
+
+                    int nEntries0 = s.ReadInt32();
+
+                    s.Position += nEntries0 * (16 + 4);
+
+                    int nEntries1 = s.ReadInt32();
+
+                    s.Position += nEntries1 * (16 + 4 + 4);
+
+                    int nNamedEntries = s.ReadInt32();
+
+                    for (int i = 0; i < nNamedEntries; i++)
                     {
-                        uint magic = br2.ReadUInt32();
+                        byte[] md5_2 = s.ReadBytes(16);
+                        string name = s.ReadCString();
 
-                        int nEntries0 = br2.ReadInt32();
-
-                        br2.BaseStream.Position += nEntries0 * (16 + 4);
-
-                        int nEntries1 = br2.ReadInt32();
-
-                        br2.BaseStream.Position += nEntries1 * (16 + 4 + 4);
-
-                        int nNamedEntries = br2.ReadInt32();
-
-                        for (int i = 0; i < nNamedEntries; i++)
+                        if (name == "CoreTOC.dat")
                         {
-                            byte[] md5_2 = br2.ReadBytes(16);
-                            string name = br2.ReadCString();
-
-                            if (name == "CoreTOC.dat")
-                            {
-                                EncodingEntry enc2 = casc.Encoding.GetEntry(md5_2);
-                                tocParser = new CoreTOCParser(casc.OpenFile(enc2.Key));
-                            }
+                            EncodingEntry enc2 = casc.Encoding.GetEntry(md5_2);
+                            tocParser = new CoreTOCParser(casc.OpenFile(enc2.Key));
                         }
                     }
                 }
@@ -199,34 +191,31 @@ namespace CASCExplorer
         {
             EncodingEntry enc = casc.Encoding.GetEntry(md5);
 
-            using (Stream s = OpenD3SubRootFile(casc, enc.Key, md5, "data\\" + casc.Config.BuildName + "\\subroot\\Base"))
+            using (MMStream s = OpenD3SubRootFile(casc, enc.Key, md5, "data\\" + casc.Config.BuildName + "\\subroot\\Base"))
             {
                 if (s != null)
                 {
-                    using (var br2 = new BinaryReader(s))
+                    uint magic = s.ReadUInt32();
+
+                    int nEntries0 = s.ReadInt32();
+
+                    s.Position += nEntries0 * (16 + 4);
+
+                    int nEntries1 = s.ReadInt32();
+
+                    s.Position += nEntries1 * (16 + 4 + 4);
+
+                    int nNamedEntries = s.ReadInt32();
+
+                    for (int i = 0; i < nNamedEntries; i++)
                     {
-                        uint magic = br2.ReadUInt32();
+                        byte[] md5_2 = s.ReadBytes(16);
+                        string name = s.ReadCString();
 
-                        int nEntries0 = br2.ReadInt32();
-
-                        br2.BaseStream.Position += nEntries0 * (16 + 4);
-
-                        int nEntries1 = br2.ReadInt32();
-
-                        br2.BaseStream.Position += nEntries1 * (16 + 4 + 4);
-
-                        int nNamedEntries = br2.ReadInt32();
-
-                        for (int i = 0; i < nNamedEntries; i++)
+                        if (name == "Data_D3\\PC\\Misc\\Packages.dat")
                         {
-                            byte[] md5_2 = br2.ReadBytes(16);
-                            string name = br2.ReadCString();
-
-                            if (name == "Data_D3\\PC\\Misc\\Packages.dat")
-                            {
-                                EncodingEntry enc2 = casc.Encoding.GetEntry(md5_2);
-                                pkgParser = new PackagesParser(casc.OpenFile(enc2.Key));
-                            }
+                            EncodingEntry enc2 = casc.Encoding.GetEntry(md5_2);
+                            pkgParser = new PackagesParser(casc.OpenFile(enc2.Key));
                         }
                     }
                 }
@@ -311,6 +300,21 @@ namespace CASCExplorer
             return root;
         }
 
+        static Dictionary<string, ulong> dirHashes = new Dictionary<string, ulong>(StringComparer.InvariantCultureIgnoreCase);
+
+        private static ulong GetOrComputeDirHash(string dir)
+        {
+            ulong hash;
+
+            if (dirHashes.TryGetValue(dir, out hash))
+                return hash;
+
+            hash = Hasher.ComputeHash(dir);
+            dirHashes[dir] = hash;
+
+            return hash;
+        }
+
         private static void CreateSubTree(CASCFolder root, ulong filehash, string file)
         {
             string[] parts = file.Split('\\');
@@ -321,7 +325,7 @@ namespace CASCExplorer
             {
                 bool isFile = (i == parts.Length - 1);
 
-                ulong hash = isFile ? filehash : Hasher.ComputeHash(parts[i]);
+                ulong hash = isFile ? filehash : GetOrComputeDirHash(parts[i]);
 
                 ICASCEntry entry = folder.GetEntry(hash);
 

@@ -19,7 +19,7 @@ namespace CASCExplorer
             get { return EncodingData.Count; }
         }
 
-        public EncodingHandler(Stream stream, AsyncAction worker)
+        public EncodingHandler(MMStream stream, AsyncAction worker)
         {
             if (worker != null)
             {
@@ -27,73 +27,70 @@ namespace CASCExplorer
                 worker.ReportProgress(0, "Loading \"encoding\"...");
             }
 
-            using (var br = new BinaryReader(stream))
+            stream.Skip(2); // EN
+            byte b1 = stream.ReadByte();
+            byte b2 = stream.ReadByte();
+            byte b3 = stream.ReadByte();
+            ushort s1 = stream.ReadUInt16();
+            ushort s2 = stream.ReadUInt16();
+            int numEntries = stream.ReadInt32BE();
+            int i1 = stream.ReadInt32BE();
+            byte b4 = stream.ReadByte();
+            int entriesOfs = stream.ReadInt32BE();
+
+            stream.Position += entriesOfs; // skip strings
+
+            stream.Position += numEntries * 32;
+            //for (int i = 0; i < numEntries; ++i)
+            //{
+            //    br.ReadBytes(16);
+            //    br.ReadBytes(16);
+            //}
+
+            for (int i = 0; i < numEntries; ++i)
             {
-                br.ReadBytes(2); // EN
-                byte b1 = br.ReadByte();
-                byte b2 = br.ReadByte();
-                byte b3 = br.ReadByte();
-                ushort s1 = br.ReadUInt16();
-                ushort s2 = br.ReadUInt16();
-                int numEntries = br.ReadInt32BE();
-                int i1 = br.ReadInt32BE();
-                byte b4 = br.ReadByte();
-                int entriesOfs = br.ReadInt32BE();
+                ushort keysCount;
 
-                stream.Position += entriesOfs; // skip strings
-
-                stream.Position += numEntries * 32;
-                //for (int i = 0; i < numEntries; ++i)
-                //{
-                //    br.ReadBytes(16);
-                //    br.ReadBytes(16);
-                //}
-
-                for (int i = 0; i < numEntries; ++i)
+                while ((keysCount = stream.ReadUInt16()) != 0)
                 {
-                    ushort keysCount;
+                    int fileSize = stream.ReadInt32BE();
+                    byte[] md5 = stream.ReadBytes(16);
 
-                    while ((keysCount = br.ReadUInt16()) != 0)
+                    var entry = new EncodingEntry();
+                    entry.Size = fileSize;
+
+                    // how do we handle multiple keys?
+                    for (int ki = 0; ki < keysCount; ++ki)
                     {
-                        int fileSize = br.ReadInt32BE();
-                        byte[] md5 = br.ReadBytes(16);
+                        byte[] key = stream.ReadBytes(16);
 
-                        var entry = new EncodingEntry();
-                        entry.Size = fileSize;
-
-                        // how do we handle multiple keys?
-                        for (int ki = 0; ki < keysCount; ++ki)
-                        {
-                            byte[] key = br.ReadBytes(16);
-
-                            // use first key for now
-                            if (ki == 0)
-                                entry.Key = key;
-                            //else
-                            //    Logger.WriteLine("Multiple encoding keys for MD5 {0}: {1}", md5.ToHexString(), key.ToHexString());
-                        }
-
-                        //Encodings[md5] = entry;
-                        EncodingData.Add(md5, entry);
+                        // use first key for now
+                        if (ki == 0)
+                            entry.Key = key;
+                        //else
+                        //    Logger.WriteLine("Multiple encoding keys for MD5 {0}: {1}", md5.ToHexString(), key.ToHexString());
                     }
 
-                    //br.ReadBytes(28);
-                    while (br.PeekChar() == 0)
-                        stream.Position++;
-
-                    if (worker != null)
-                    {
-                        worker.ThrowOnCancel();
-                        worker.ReportProgress((int)((float)i / (float)(numEntries - 1) * 100));
-                    }
+                    //Encodings[md5] = entry;
+                    EncodingData.Add(md5, entry);
                 }
-                //var pos = br.BaseStream.Position;
-                //for (int i = 0; i < i1; ++i)
-                //{
-                //    br.ReadBytes(16);
-                //    br.ReadBytes(16);
-                //}
+
+                //br.ReadBytes(28);
+                while (stream.PeekByte() == 0)
+                    stream.Skip(1);
+
+                if (worker != null)
+                {
+                    worker.ThrowOnCancel();
+                    worker.ReportProgress((int)((float)i / (float)(numEntries - 1) * 100));
+                }
             }
+            //var pos = br.BaseStream.Position;
+            //for (int i = 0; i < i1; ++i)
+            //{
+            //    br.ReadBytes(16);
+            //    br.ReadBytes(16);
+            //}
         }
 
         public EncodingEntry GetEntry(byte[] md5)

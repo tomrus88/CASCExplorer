@@ -37,19 +37,19 @@ namespace CASCExplorer
 
             using (var fileStream = File.Open(fullPath, FileMode.Create))
             {
-                ExtractData(fileStream);
+                CopyTo(fileStream);
             }
         }
 
         public MemoryStream OpenFile()
         {
             MemoryStream memStream = new MemoryStream();
-            ExtractData(memStream);
+            CopyTo(memStream);
             memStream.Position = 0;
             return memStream;
         }
 
-        public void ExtractData(Stream stream)
+        public void CopyTo(Stream stream)
         {
             int magic = reader.ReadInt32(); // BLTE (raw)
 
@@ -58,11 +58,11 @@ namespace CASCExplorer
 
             int frameHeaderSize = reader.ReadInt32BE();
             int chunkCount = 0;
-            int totalSize = 0;
+            //int totalSize = 0;
 
             if (frameHeaderSize == 0)
             {
-                totalSize = size - 8;// - 38;
+                //totalSize = size - 8;// - 38;
 
                 chunkCount = 1;
             }
@@ -95,8 +95,8 @@ namespace CASCExplorer
                 }
                 else
                 {
-                    chunk.CompSize = totalSize;
-                    chunk.DecompSize = totalSize - 1;
+                    chunk.CompSize = size - 8;
+                    chunk.DecompSize = size - 8 - 1;
                     chunk.Hash = null;
                 }
                 chunks.Add(chunk);
@@ -132,7 +132,7 @@ namespace CASCExplorer
                         Decompress(stream, chunk.Data);
                         break;
                     default:
-                        throw new InvalidDataException("Unknown byte at switch case!");
+                        throw new InvalidDataException("Unknown BLTE chunk type!");
                 }
             }
         }
@@ -142,9 +142,19 @@ namespace CASCExplorer
             using (var ms = new MemoryStream(data, 3, data.Length - 3))
             using (var dStream = new DeflateStream(ms, CompressionMode.Decompress))
             {
-                dStream.CopyTo(outS, 0x80000);
+                dStream.CopyTo(outS);
             }
         }
+
+        //private static void Copy(Stream input, Stream output, int count)
+        //{
+        //    byte[] buffer = new byte[32768];
+        //    int read;
+        //    while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
+        //    {
+        //        output.Write(buffer, 0, read);
+        //    }
+        //}
 
         public void Dispose()
         {

@@ -39,6 +39,7 @@ namespace CASCExplorer
         private CancellationTokenSource cts;
         private Task task;
         private Action action;
+        private int lastPercent;
 
         public event EventHandler<AsyncActionProgressChangedEventArgs> ProgressChanged
         {
@@ -73,7 +74,12 @@ namespace CASCExplorer
         {
             if (cts.IsCancellationRequested)
                 return;
-            progress.Report(new AsyncActionProgressChangedEventArgs(percent, userData));
+
+            if (lastPercent != percent)
+            {
+                lastPercent = percent;
+                progress.Report(new AsyncActionProgressChangedEventArgs(percent, userData));
+            }
         }
 
         public void ThrowOnCancel()

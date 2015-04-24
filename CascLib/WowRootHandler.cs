@@ -6,9 +6,9 @@ using System.Linq;
 namespace CASCExplorer
 {
     [Flags]
-    public enum LocaleFlags
+    public enum LocaleFlags : uint
     {
-        All = -1,
+        All = 0xFFFFFFFF,
         None = 0,
         //Unk_1 = 0x1,
         enUS = 0x2,
@@ -76,7 +76,7 @@ namespace CASCExplorer
         public LocaleFlags Locale { get { return locale; } }
         public ContentFlags Content { get { return content; } }
 
-        public WowRootHandler(Stream stream, AsyncAction worker)
+        public unsafe WowRootHandler(MMStream stream, AsyncAction worker)
         {
             if (worker != null)
             {
@@ -84,61 +84,58 @@ namespace CASCExplorer
                 worker.ReportProgress(0, "Loading \"root\"...");
             }
 
-            using (var br = new BinaryReader(stream))
+            while (stream.Position < stream.Length)
             {
-                while (stream.Position < stream.Length)
+                int count = stream.ReadInt32();
+
+                RootBlock block = new RootBlock();
+                block.ContentFlags = (ContentFlags)stream.ReadUInt32();
+                block.LocaleFlags = (LocaleFlags)stream.ReadUInt32();
+
+                if (block.LocaleFlags == LocaleFlags.None)
+                    throw new Exception("block.LocaleFlags == LocaleFlags.None");
+
+                if (block.ContentFlags != ContentFlags.None && (block.ContentFlags & (ContentFlags.LowViolence | ContentFlags.NoCompression)) == 0)
+                    throw new Exception("block.ContentFlags != ContentFlags.None");
+
+                RootEntry[] entries = new RootEntry[count];
+
+                int fileDataIndex = 0;
+
+                for (var i = 0; i < count; ++i)
                 {
-                    int count = br.ReadInt32();
+                    entries[i] = new RootEntry();
+                    entries[i].Block = block;
+                    entries[i].FileDataId = fileDataIndex + stream.ReadInt32();
 
-                    RootBlock block = new RootBlock();
-                    block.ContentFlags = (ContentFlags)br.ReadUInt32();
-                    block.LocaleFlags = (LocaleFlags)br.ReadUInt32();
+                    fileDataIndex = entries[i].FileDataId + 1;
+                }
 
-                    if (block.LocaleFlags == LocaleFlags.None)
-                        throw new Exception("block.LocaleFlags == LocaleFlags.None");
+                //Console.WriteLine("Block: {0} {1} (size {2})", block.ContentFlags, block.LocaleFlags, count);
 
-                    if (block.ContentFlags != ContentFlags.None && (block.ContentFlags & (ContentFlags.LowViolence | ContentFlags.NoCompression)) == 0)
-                        throw new Exception("block.ContentFlags != ContentFlags.None");
+                for (var i = 0; i < count; ++i)
+                {
+                    entries[i].MD5 = stream.ReadBytes(16);
 
-                    RootEntry[] entries = new RootEntry[count];
+                    ulong hash = stream.ReadUInt64();
 
-                    int fileDataIndex = 0;
+                    RootData.Add(hash, entries[i]);
 
-                    for (var i = 0; i < count; ++i)
+                    //Console.WriteLine("File: {0:X8} {1:X16} {2}", entries[i].FileDataId, hash, entries[i].MD5.ToHexString());
+
+                    if (FileDataStore.ContainsKey(entries[i].FileDataId) && FileDataStore[entries[i].FileDataId] == hash)
                     {
-                        entries[i] = new RootEntry();
-                        entries[i].Block = block;
-                        entries[i].FileDataId = fileDataIndex + br.ReadInt32();
-
-                        fileDataIndex = entries[i].FileDataId + 1;
+                        //Console.WriteLine("2 {0:X8} {1:X16}", entries[i].FileDataId, hash);
+                        continue;
                     }
 
-                    //Console.WriteLine("Block: {0} {1} (size {2})", block.ContentFlags, block.LocaleFlags, count);
+                    FileDataStore.Add(entries[i].FileDataId, hash);
+                }
 
-                    for (var i = 0; i < count; ++i)
-                    {
-                        entries[i].MD5 = br.ReadBytes(16);
-
-                        ulong hash = br.ReadUInt64();
-
-                        RootData.Add(hash, entries[i]);
-
-                        //Console.WriteLine("File: {0:X8} {1:X16} {2}", entries[i].FileDataId, hash, entries[i].MD5.ToHexString());
-
-                        if (FileDataStore.ContainsKey(entries[i].FileDataId) && FileDataStore[entries[i].FileDataId] == hash)
-                        {
-                            //Console.WriteLine("2 {0:X8} {1:X16}", entries[i].FileDataId, hash);
-                            continue;
-                        }
-
-                        FileDataStore.Add(entries[i].FileDataId, hash);
-                    }
-
-                    if (worker != null)
-                    {
-                        worker.ThrowOnCancel();
-                        worker.ReportProgress((int)((float)stream.Position / (float)stream.Length * 100));
-                    }
+                if (worker != null)
+                {
+                    worker.ThrowOnCancel();
+                    worker.ReportProgress((int)((float)stream.Position / (float)stream.Length * 100));
                 }
             }
         }
@@ -186,54 +183,159 @@ namespace CASCExplorer
                 yield return entry;
         }
 
-        public void LoadListFile(string path, AsyncAction worker = null)
+        private bool LoadPreHashedListFile(string pathbin, string pathtext, AsyncAction worker = null)
         {
-            if (worker != null)
+            using (var _ = new PerfCounter("WowRootHandler::LoadPreHashedListFile()"))
             {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(0, "Loading \"listfile\"...");
-            }
-
-            if (!File.Exists(path))
-                throw new FileNotFoundException("list file missing!");
-
-            Logger.WriteLine("WowRootHandler: loading file names...");
-
-            //Dictionary<string, bool> dirs = new Dictionary<string, bool>();
-
-            using (var sr = new StreamReader(path))
-            {
-                string file;
-
-                while ((file = sr.ReadLine()) != null)
+                if (worker != null)
                 {
-                    ulong fileHash = Hasher.ComputeHash(file);
-
-                    // skip invalid names
-                    if (!RootData.ContainsKey(fileHash))
-                    {
-                        Logger.WriteLine("Invalid file name: {0}", file);
-                        continue;
-                    }
-
-                    CASCFile.FileNames[fileHash] = file;
-
-                    //int dirIndex = file.LastIndexOf('\\');
-
-                    //if (dirIndex >= 0)
-                    //    dirs[file.ToLower().Substring(0, dirIndex)] = true;
-
-                    if (worker != null)
-                    {
-                        worker.ThrowOnCancel();
-                        worker.ReportProgress((int)((float)sr.BaseStream.Position / (float)sr.BaseStream.Length * 100));
-                    }
+                    worker.ThrowOnCancel();
+                    worker.ReportProgress(0, "Loading \"listfile\"...");
                 }
 
-                //foreach (var dir in dirs)
-                //    Console.WriteLine(dir.Key);
+                if (!File.Exists(pathbin))
+                    return false;
 
-                Logger.WriteLine("WowRootHandler: loaded {0} valid file names", CASCFile.FileNames.Count);
+                var timebin = File.GetLastWriteTime(pathbin);
+                var timetext = File.GetLastWriteTime(pathtext);
+
+                if (timebin != timetext) // text has been modified, recreate crehashed file
+                    return false;
+
+                Logger.WriteLine("WowRootHandler: loading file names...");
+
+                using (var fs = new FileStream(pathbin, FileMode.Open))
+                using (var br = new BinaryReader(fs))
+                {
+                    int numFolders = br.ReadInt32();
+
+                    for (int i = 0; i < numFolders; i++)
+                    {
+                        string dirName = br.ReadString();
+
+                        int numFiles = br.ReadInt32();
+
+                        for (int j = 0; j < numFiles; j++)
+                        {
+                            ulong fileHash = br.ReadUInt64();
+                            string fileName = br.ReadString();
+
+                            string fileNameFull = dirName != String.Empty ? dirName + "\\" + fileName : fileName;
+
+                            // skip invalid names
+                            if (!RootData.ContainsKey(fileHash))
+                            {
+                                Logger.WriteLine("Invalid file name: {0}", fileNameFull);
+                                continue;
+                            }
+
+                            CASCFile.FileNames[fileHash] = fileNameFull;
+                        }
+
+                        if (worker != null)
+                        {
+                            worker.ThrowOnCancel();
+                            worker.ReportProgress((int)((float)br.BaseStream.Position / (float)br.BaseStream.Length * 100));
+                        }
+                    }
+
+                    Logger.WriteLine("WowRootHandler: loaded {0} valid file names", CASCFile.FileNames.Count);
+                }
+            }
+
+            return true;
+        }
+
+        public void LoadListFile(string path, AsyncAction worker = null)
+        {
+            if (LoadPreHashedListFile("listfile.bin", path, worker))
+                return;
+
+            using (var _ = new PerfCounter("WowRootHandler::LoadListFile()"))
+            {
+                if (worker != null)
+                {
+                    worker.ThrowOnCancel();
+                    worker.ReportProgress(0, "Loading \"listfile\"...");
+                }
+
+                if (!File.Exists(path))
+                    throw new FileNotFoundException("list file missing!");
+
+                Logger.WriteLine("WowRootHandler: loading file names...");
+
+                Dictionary<string, List<ulong>> dirData = new Dictionary<string, List<ulong>>(StringComparer.InvariantCultureIgnoreCase);
+                dirData[""] = new List<ulong>();
+
+                using (var fs = new FileStream("listfile.bin", FileMode.Create))
+                using (var bw = new BinaryWriter(fs))
+                using (var sr = new StreamReader(path))
+                {
+                    string file;
+
+                    while ((file = sr.ReadLine()) != null)
+                    {
+                        ulong fileHash = Hasher.ComputeHash(file);
+
+                        // skip invalid names
+                        if (!RootData.ContainsKey(fileHash))
+                        {
+                            Logger.WriteLine("Invalid file name: {0}", file);
+                            continue;
+                        }
+
+                        CASCFile.FileNames[fileHash] = file;
+
+                        int dirSepIndex = file.LastIndexOf('\\');
+
+                        if (dirSepIndex >= 0)
+                        {
+                            string key = file.Substring(0, dirSepIndex);
+
+                            if (!dirData.ContainsKey(key))
+                            {
+                                dirData[key] = new List<ulong>();
+                            }
+
+                            dirData[key].Add(fileHash);
+                        }
+                        else
+                            dirData[""].Add(fileHash);
+
+                        if (worker != null)
+                        {
+                            worker.ThrowOnCancel();
+                            worker.ReportProgress((int)((float)sr.BaseStream.Position / (float)sr.BaseStream.Length * 100));
+                        }
+                    }
+
+                    bw.Write(dirData.Count); // count of dirs
+
+                    foreach (var dir in dirData)
+                    {
+                        bw.Write(dir.Key); // dir name
+
+                        bw.Write(dirData[dir.Key].Count); // count of files in dir
+
+                        foreach (var fh in dirData[dir.Key])
+                        {
+                            bw.Write(fh); // file name hash
+
+                            file = CASCFile.FileNames[fh];
+
+                            int dirSepIndex = file.LastIndexOf('\\');
+
+                            if (dirSepIndex >= 0)
+                                bw.Write(file.Substring(dirSepIndex + 1)); // file name (without dir name)
+                            else
+                                bw.Write(file); // file name (without dir name)
+                        }
+                    }
+
+                    Logger.WriteLine("WowRootHandler: loaded {0} valid file names", CASCFile.FileNames.Count);
+                }
+
+                File.SetLastWriteTime("listfile.bin", File.GetLastWriteTime(path));
             }
         }
 
@@ -288,6 +390,21 @@ namespace CASCExplorer
             return root;
         }
 
+        static Dictionary<string, ulong> dirHashes = new Dictionary<string, ulong>(StringComparer.InvariantCultureIgnoreCase);
+
+        private static ulong GetOrComputeDirHash(string dir)
+        {
+            ulong hash;
+
+            if (dirHashes.TryGetValue(dir, out hash))
+                return hash;
+
+            hash = Hasher.ComputeHash(dir);
+            dirHashes[dir] = hash;
+
+            return hash;
+        }
+
         private static void CreateSubTree(CASCFolder root, ulong filehash, string file)
         {
             string[] parts = file.Split('\\');
@@ -298,7 +415,7 @@ namespace CASCExplorer
             {
                 bool isFile = (i == parts.Length - 1);
 
-                ulong hash = isFile ? filehash : Hasher.ComputeHash(parts[i]);
+                ulong hash = isFile ? filehash : GetOrComputeDirHash(parts[i]);
 
                 ICASCEntry entry = folder.GetEntry(hash);
 
@@ -324,16 +441,19 @@ namespace CASCExplorer
 
         public CASCFolder SetFlags(LocaleFlags locale, ContentFlags content, bool createTree = true)
         {
-            if (this.locale != locale || this.content != content)
+            using(var _ = new PerfCounter("WowRootHandler::SetFlags()"))
             {
-                this.locale = locale;
-                this.content = content;
+                if (this.locale != locale || this.content != content)
+                {
+                    this.locale = locale;
+                    this.content = content;
 
-                if (createTree)
-                    Root = CreateStorageTree();
+                    if (createTree)
+                        Root = CreateStorageTree();
+                }
+
+                return Root;
             }
-
-            return Root;
         }
 
         public bool IsUnknownFile(ulong hash)

@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.Diagnostics;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -38,78 +37,80 @@ namespace CASCExplorer
 
             Logger.WriteLine("CASCHandler: loading CDN indices...");
 
-            Stopwatch sw = new Stopwatch();
+            using (var _ = new PerfCounter("CDNIndexHandler.Initialize()"))
+            {
+                CDNIndex = CDNIndexHandler.Initialize(config, worker);
+            }
 
-            sw.Restart();
-            CDNIndex = CDNIndexHandler.Initialize(config, worker);
-            sw.Stop();
-
-            Logger.WriteLine("CASCHandler: loaded {0} CDN indexes in {1}", CDNIndex.Count, sw.Elapsed);
+            Logger.WriteLine("CASCHandler: loaded {0} CDN indexes", CDNIndex.Count);
 
             if (!config.OnlineMode)
             {
                 Logger.WriteLine("CASCHandler: loading local indices...");
 
-                sw.Restart();
-                LocalIndex = LocalIndexHandler.Initialize(config, worker);
-                sw.Stop();
+                using (var _ = new PerfCounter("LocalIndexHandler.Initialize()"))
+                {
+                    LocalIndex = LocalIndexHandler.Initialize(config, worker);
+                }
 
-                Logger.WriteLine("CASCHandler: loaded {0} local indexes in {1}", LocalIndex.Count, sw.Elapsed);
+                Logger.WriteLine("CASCHandler: loaded {0} local indexes", LocalIndex.Count);
             }
 
             Logger.WriteLine("CASCHandler: loading encoding data...");
 
-            sw.Restart();
-            using (var fs = OpenEncodingFile())
-                EncodingHandler = new EncodingHandler(fs, worker);
-            sw.Stop();
+            using (var _ = new PerfCounter("new EncodingHandler()"))
+            {
+                using (var fs = OpenEncodingFile())
+                    EncodingHandler = new EncodingHandler(fs, worker);
+            }
 
-            Logger.WriteLine("CASCHandler: loaded {0} encoding data in {1}", EncodingHandler.Count, sw.Elapsed);
+            Logger.WriteLine("CASCHandler: loaded {0} encoding data", EncodingHandler.Count);
 
             Logger.WriteLine("CASCHandler: loading install data...");
 
-            sw.Restart();
-            using (var fs = OpenInstallFile())
-                InstallHandler = new InstallHandler(fs, worker);
-            sw.Stop();
+            using (var _ = new PerfCounter("new InstallHandler()"))
+            {
+                using (var fs = OpenInstallFile())
+                    InstallHandler = new InstallHandler(fs, worker);
+            }
 
-            Logger.WriteLine("CASCHandler: loaded {0} install data in {1}", InstallHandler.Count, sw.Elapsed);
+            Logger.WriteLine("CASCHandler: loaded {0} install data", InstallHandler.Count);
 
             Logger.WriteLine("CASCHandler: loading root data...");
 
-            sw.Restart();
-            using (var fs = OpenRootFile())
+            using (var _ = new PerfCounter("new RootHandler()"))
             {
-                byte[] magic = new byte[4];
-                fs.Read(magic, 0, magic.Length);
-                fs.Position = 0;
+                using (var fs = OpenRootFile())
+                {
+                    byte[] magic = fs.ReadBytes(4);
+                    fs.Position = 0;
 
-                if (magic[0] == 0x4D && magic[1] == 0x4E && magic[2] == 0x44 && magic[3] == 0x58) // MNDX
-                {
-                    RootHandler = new MNDXRootHandler(fs, worker);
-                }
-                else if (config.BuildUID.StartsWith("d3"))
-                {
-                    RootHandler = new D3RootHandler(fs, worker, this);
-                }
-                else
-                {
-                    RootHandler = new WowRootHandler(fs, worker);
+                    if (magic[0] == 0x4D && magic[1] == 0x4E && magic[2] == 0x44 && magic[3] == 0x58) // MNDX
+                    {
+                        RootHandler = new MNDXRootHandler(fs, worker);
+                    }
+                    else if (config.BuildUID.StartsWith("d3"))
+                    {
+                        RootHandler = new D3RootHandler(fs, worker, this);
+                    }
+                    else
+                    {
+                        RootHandler = new WowRootHandler(fs, worker);
+                    }
                 }
             }
-            sw.Stop();
 
-            Logger.WriteLine("CASCHandler: loaded {0} root data in {1}", RootHandler.Count, sw.Elapsed);
+            Logger.WriteLine("CASCHandler: loaded {0} root data", RootHandler.Count);
         }
 
-        private Stream OpenInstallFile()
+        private MMStream OpenInstallFile()
         {
             var encInfo = EncodingHandler.GetEntry(Config.InstallMD5);
 
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for install file missing!");
 
-            Stream s = TryLocalCache(encInfo.Key, Config.InstallMD5, Path.Combine("data", Config.BuildName, "install"));
+            MMStream s = TryLocalCache(encInfo.Key, Config.InstallMD5, Path.Combine("data", Config.BuildName, "install"));
 
             if (s != null)
                 return s;
@@ -119,17 +120,18 @@ namespace CASCExplorer
             if (s != null)
                 return s;
 
-            return OpenFile(encInfo.Key);
+            throw new Exception("OpenInstallFile");
+            //return OpenFile(encInfo.Key); // this line should not be reached
         }
 
-        private Stream OpenRootFile()
+        private MMStream OpenRootFile()
         {
             var encInfo = EncodingHandler.GetEntry(Config.RootMD5);
 
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for root file missing!");
 
-            Stream s = TryLocalCache(encInfo.Key, Config.RootMD5, Path.Combine("data", Config.BuildName, "root"));
+            MMStream s = TryLocalCache(encInfo.Key, Config.RootMD5, Path.Combine("data", Config.BuildName, "root"));
 
             if (s != null)
                 return s;
@@ -139,12 +141,13 @@ namespace CASCExplorer
             if (s != null)
                 return s;
 
-            return OpenFile(encInfo.Key);
+            throw new Exception("OpenRootFile");
+            //return OpenFile(encInfo.Key); // this line should not be reached
         }
 
-        private Stream OpenEncodingFile()
+        private MMStream OpenEncodingFile()
         {
-            Stream s = TryLocalCache(Config.EncodingKey, Config.EncodingMD5, Path.Combine("data", Config.BuildName, "encoding"));
+            MMStream s = TryLocalCache(Config.EncodingKey, Config.EncodingMD5, Path.Combine("data", Config.BuildName, "encoding"));
 
             if (s != null)
                 return s;
@@ -154,16 +157,19 @@ namespace CASCExplorer
             if (s != null)
                 return s;
 
-            return OpenFile(Config.EncodingKey);
+            throw new Exception("OpenEncodingFile");
+            //return OpenFile(Config.EncodingKey); // this line should not be reached
         }
 
-        public Stream TryLocalCache(byte[] key, byte[] md5, string name)
+        public MMStream TryLocalCache(byte[] key, byte[] md5, string name)
         {
             if (File.Exists(name))
             {
-                var fs = File.OpenRead(name);
+                var fs = new MMStream(name);
 
-                if (MD5.Create().ComputeHash(fs).EqualsTo(md5))
+                int len = (int)fs.Length;
+                byte[] data = fs.ReadBytes(len);
+                if (MD5.Create().ComputeHash(data).EqualsTo(md5))
                 {
                     fs.Position = 0;
                     return fs;
@@ -336,7 +342,10 @@ namespace CASCExplorer
 
         private static CASCHandler Open(AsyncAction worker, CASCConfig config)
         {
-            return new CASCHandler(config, worker);
+            using (var _ = new PerfCounter("new CASCHandler()"))
+            {
+                return new CASCHandler(config, worker);
+            }
         }
 
         public bool FileExists(string file)
