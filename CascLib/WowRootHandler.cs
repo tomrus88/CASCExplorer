@@ -264,8 +264,8 @@ namespace CASCExplorer
 
                 Logger.WriteLine("WowRootHandler: loading file names...");
 
-                Dictionary<string, List<ulong>> dirData = new Dictionary<string, List<ulong>>(StringComparer.InvariantCultureIgnoreCase);
-                dirData[""] = new List<ulong>();
+                Dictionary<string, Dictionary<ulong, string>> dirData = new Dictionary<string, Dictionary<ulong, string>>(StringComparer.InvariantCultureIgnoreCase);
+                dirData[""] = new Dictionary<ulong, string>();
 
                 using (var fs = new FileStream("listfile.bin", FileMode.Create))
                 using (var bw = new BinaryWriter(fs))
@@ -294,13 +294,13 @@ namespace CASCExplorer
 
                             if (!dirData.ContainsKey(key))
                             {
-                                dirData[key] = new List<ulong>();
+                                dirData[key] = new Dictionary<ulong, string>();
                             }
 
-                            dirData[key].Add(fileHash);
+                            dirData[key][fileHash] = file.Substring(dirSepIndex + 1);
                         }
                         else
-                            dirData[""].Add(fileHash);
+                            dirData[""][fileHash] = file;
 
                         if (worker != null)
                         {
@@ -319,16 +319,8 @@ namespace CASCExplorer
 
                         foreach (var fh in dirData[dir.Key])
                         {
-                            bw.Write(fh); // file name hash
-
-                            file = CASCFile.FileNames[fh];
-
-                            int dirSepIndex = file.LastIndexOf('\\');
-
-                            if (dirSepIndex >= 0)
-                                bw.Write(file.Substring(dirSepIndex + 1)); // file name (without dir name)
-                            else
-                                bw.Write(file); // file name (without dir name)
+                            bw.Write(fh.Key); // file name hash
+                            bw.Write(fh.Value); // file name (without dir name)
                         }
                     }
 
