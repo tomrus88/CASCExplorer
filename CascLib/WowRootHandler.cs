@@ -76,7 +76,7 @@ namespace CASCExplorer
         public LocaleFlags Locale { get { return locale; } }
         public ContentFlags Content { get { return content; } }
 
-        public unsafe WowRootHandler(MMStream stream, AsyncAction worker)
+        public WowRootHandler(MMStream stream, AsyncAction worker)
         {
             if (worker != null)
             {

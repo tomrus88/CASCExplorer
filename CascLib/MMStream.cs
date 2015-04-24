@@ -45,7 +45,7 @@ namespace CASCExplorer
                 file.Dispose();
         }
 
-        public unsafe T Read<T>() where T : struct
+        public T Read<T>() where T : struct
         {
             T val = (T)Marshal.PtrToStructure((IntPtr)(UnsafePointer + Position), typeof(T));
             Position += Marshal.SizeOf(val);

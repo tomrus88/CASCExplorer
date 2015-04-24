@@ -15,7 +15,7 @@ namespace CASCExplorer
             return (x << k) | (x >> (32 - k));
         }
 
-        public unsafe ulong ComputeHash(string str, bool fix = true)
+        public ulong ComputeHash(string str, bool fix = true)
         {
             if (fix)
             {
