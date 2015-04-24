@@ -6,21 +6,15 @@ using System.Runtime.InteropServices;
 
 namespace CASCExplorer
 {
-    public class D3RootHandler : IRootHandler
+    public class D3RootHandler : RootHandlerBase
     {
         private readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
-        private static readonly Jenkins96 Hasher = new Jenkins96();
-        private LocaleFlags locale;
-        private CASCFolder Root;
         private CoreTOCParser tocParser;
         private PackagesParser pkgParser;
 
-        public int Count { get { return RootData.Count; } }
-        public int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
-        public int CountSelect { get; private set; }
-        public int CountUnknown { get; private set; }
-        public LocaleFlags Locale { get { return locale; } }
-        public ContentFlags Content { get { return ContentFlags.None; } }
+        public override int Count { get { return RootData.Count; } }
+        public override int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
+        public override ContentFlags Content { get { return ContentFlags.None; } }
 
         public D3RootHandler(MMStream stream, AsyncAction worker, CASCHandler casc)
         {
@@ -222,12 +216,12 @@ namespace CASCExplorer
             }
         }
 
-        public void Clear()
+        public override void Clear()
         {
             RootData.Clear();
         }
 
-        public IEnumerable<RootEntry> GetAllEntries(ulong hash)
+        public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
             HashSet<RootEntry> result;
             RootData.TryGetValue(hash, out result);
@@ -239,7 +233,7 @@ namespace CASCExplorer
                 yield return entry;
         }
 
-        public IEnumerable<RootEntry> GetEntries(ulong hash)
+        public override IEnumerable<RootEntry> GetEntries(ulong hash)
         {
             HashSet<RootEntry> result;
             RootData.TryGetValue(hash, out result);
@@ -251,12 +245,7 @@ namespace CASCExplorer
                 yield return entry;
         }
 
-        public void LoadListFile(string path, AsyncAction worker = null)
-        {
-
-        }
-
-        private CASCFolder CreateStorageTree()
+        protected override CASCFolder CreateStorageTree()
         {
             var rootHash = Hasher.ComputeHash("root");
 
@@ -269,29 +258,12 @@ namespace CASCExplorer
             // Create new tree based on specified locale
             foreach (var rootEntry in RootData)
             {
-                var rootInfosLocale = rootEntry.Value.Where(re => (re.Block.LocaleFlags & locale) != 0);
-
-                //if (rootInfosLocale.Count() > 1)
-                //{
-                //    var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.Block.ContentFlags == content));
-
-                //    if (rootInfosLocaleAndContent.Any())
-                //        rootInfosLocale = rootInfosLocaleAndContent;
-                //}
+                var rootInfosLocale = rootEntry.Value.Where(re => (re.Block.LocaleFlags & Locale) != 0);
 
                 if (!rootInfosLocale.Any())
                     continue;
 
-                string file;
-
-                if (!CASCFile.FileNames.TryGetValue(rootEntry.Key, out file))
-                {
-                    file = "unknown\\" + rootEntry.Key.ToString("X16");
-                //    CountUnknown++;
-                //    UnknownFiles.Add(rootEntry.Key);
-                }
-
-                CreateSubTree(root, rootEntry.Key, file);
+                CreateSubTree(root, rootEntry.Key, CASCFile.FileNames[rootEntry.Key], '\\');
                 CountSelect++;
             }
 
@@ -299,71 +271,9 @@ namespace CASCExplorer
 
             return root;
         }
-
-        static Dictionary<string, ulong> dirHashes = new Dictionary<string, ulong>(StringComparer.InvariantCultureIgnoreCase);
-
-        private static ulong GetOrComputeDirHash(string dir)
-        {
-            ulong hash;
-
-            if (dirHashes.TryGetValue(dir, out hash))
-                return hash;
-
-            hash = Hasher.ComputeHash(dir);
-            dirHashes[dir] = hash;
-
-            return hash;
-        }
-
-        private static void CreateSubTree(CASCFolder root, ulong filehash, string file)
-        {
-            string[] parts = file.Split('\\');
-
-            CASCFolder folder = root;
-
-            for (int i = 0; i < parts.Length; ++i)
-            {
-                bool isFile = (i == parts.Length - 1);
-
-                ulong hash = isFile ? filehash : GetOrComputeDirHash(parts[i]);
-
-                ICASCEntry entry = folder.GetEntry(hash);
-
-                if (entry == null)
-                {
-                    if (isFile)
-                    {
-                        entry = new CASCFile(hash);
-                        CASCFile.FileNames[hash] = file;
-                    }
-                    else
-                    {
-                        entry = new CASCFolder(hash);
-                        CASCFolder.FolderNames[hash] = parts[i];
-                    }
-
-                    folder.SubEntries[hash] = entry;
-                }
-
-                folder = entry as CASCFolder;
-            }
-        }
-
-        public CASCFolder SetFlags(LocaleFlags locale, ContentFlags content, bool createTree = true)
-        {
-            if (this.locale != locale)
-            {
-                this.locale = locale;
-
-                if (createTree)
-                    Root = CreateStorageTree();
-            }
-
-            return Root;
-        }
     }
 
-    public struct SNOInfo
+    public class SNOInfo
     {
         public SNOGroup GroupId;
         public string Name;

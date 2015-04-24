@@ -20,7 +20,7 @@ namespace CASCExplorer
 
         private InstallHandler InstallHandler;
         private EncodingHandler EncodingHandler;
-        private IRootHandler RootHandler;
+        private RootHandlerBase RootHandler;
 
         private static readonly Jenkins96 Hasher = new Jenkins96();
 
@@ -28,7 +28,7 @@ namespace CASCExplorer
 
         public InstallHandler Install { get { return InstallHandler; } }
         public EncodingHandler Encoding { get { return EncodingHandler; } }
-        public IRootHandler Root { get { return RootHandler; } }
+        public RootHandlerBase Root { get { return RootHandler; } }
         public CASCConfig Config { get; private set; }
 
         private CASCHandler(CASCConfig config, AsyncAction worker)

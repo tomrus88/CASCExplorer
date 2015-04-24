@@ -59,22 +59,14 @@ namespace CASCExplorer
         }
     }
 
-    public class WowRootHandler : IRootHandler
+    public class WowRootHandler : RootHandlerBase
     {
         private readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
         private readonly Dictionary<int, ulong> FileDataStore = new Dictionary<int, ulong>();
         private readonly HashSet<ulong> UnknownFiles = new HashSet<ulong>();
-        private static readonly Jenkins96 Hasher = new Jenkins96();
-        private LocaleFlags locale;
-        private ContentFlags content;
-        private CASCFolder Root;
 
-        public int Count { get { return RootData.Count; } }
-        public int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
-        public int CountSelect { get; private set; }
-        public int CountUnknown { get; private set; }
-        public LocaleFlags Locale { get { return locale; } }
-        public ContentFlags Content { get { return content; } }
+        public override int Count { get { return RootData.Count; } }
+        public override int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
 
         public WowRootHandler(MMStream stream, AsyncAction worker)
         {
@@ -147,11 +139,16 @@ namespace CASCExplorer
             return GetAllEntries(hash);
         }
 
-        public IEnumerable<RootEntry> GetAllEntries(ulong hash)
+        public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
             HashSet<RootEntry> result;
             RootData.TryGetValue(hash, out result);
-            return result;
+
+            if (result == null)
+                yield break;
+
+            foreach (var entry in result)
+                yield return entry;
         }
 
         public IEnumerable<RootEntry> GetEntriesByFileDataId(int fileDataId)
@@ -162,18 +159,18 @@ namespace CASCExplorer
         }
 
         // Returns only entries that match current locale and content flags
-        public IEnumerable<RootEntry> GetEntries(ulong hash)
+        public override IEnumerable<RootEntry> GetEntries(ulong hash)
         {
             var rootInfos = GetAllEntries(hash);
 
             if (rootInfos == null)
                 yield break;
 
-            var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & locale) != 0);
+            var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & Locale) != 0);
 
             if (rootInfosLocale.Count() > 1)
             {
-                var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.Block.ContentFlags == content));
+                var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.Block.ContentFlags == Content));
 
                 if (rootInfosLocaleAndContent.Any())
                     rootInfosLocale = rootInfosLocaleAndContent;
@@ -246,7 +243,7 @@ namespace CASCExplorer
             return true;
         }
 
-        public void LoadListFile(string path, AsyncAction worker = null)
+        public override void LoadListFile(string path, AsyncAction worker = null)
         {
             if (LoadPreHashedListFile("listfile.bin", path, worker))
                 return;
@@ -331,7 +328,7 @@ namespace CASCExplorer
             }
         }
 
-        private CASCFolder CreateStorageTree()
+        protected override CASCFolder CreateStorageTree()
         {
             var rootHash = Hasher.ComputeHash("root");
 
@@ -350,11 +347,11 @@ namespace CASCExplorer
             // Create new tree based on specified locale
             foreach (var rootEntry in RootData)
             {
-                var rootInfosLocale = rootEntry.Value.Where(re => (re.Block.LocaleFlags & locale) != 0);
+                var rootInfosLocale = rootEntry.Value.Where(re => (re.Block.LocaleFlags & Locale) != 0);
 
                 if (rootInfosLocale.Count() > 1)
                 {
-                    var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.Block.ContentFlags == content));
+                    var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.Block.ContentFlags == Content));
 
                     if (rootInfosLocaleAndContent.Any())
                         rootInfosLocale = rootInfosLocaleAndContent;
@@ -373,79 +370,13 @@ namespace CASCExplorer
                     UnknownFiles.Add(rootEntry.Key);
                 }
 
-                CreateSubTree(root, rootEntry.Key, file);
+                CreateSubTree(root, rootEntry.Key, file, '\\');
                 CountSelect++;
             }
 
-            Logger.WriteLine("WowRootHandler: {0} file names missing for locale {1}", CountUnknown, locale);
+            Logger.WriteLine("WowRootHandler: {0} file names missing for locale {1}", CountUnknown, Locale);
 
             return root;
-        }
-
-        static Dictionary<string, ulong> dirHashes = new Dictionary<string, ulong>(StringComparer.InvariantCultureIgnoreCase);
-
-        private static ulong GetOrComputeDirHash(string dir)
-        {
-            ulong hash;
-
-            if (dirHashes.TryGetValue(dir, out hash))
-                return hash;
-
-            hash = Hasher.ComputeHash(dir);
-            dirHashes[dir] = hash;
-
-            return hash;
-        }
-
-        private static void CreateSubTree(CASCFolder root, ulong filehash, string file)
-        {
-            string[] parts = file.Split('\\');
-
-            CASCFolder folder = root;
-
-            for (int i = 0; i < parts.Length; ++i)
-            {
-                bool isFile = (i == parts.Length - 1);
-
-                ulong hash = isFile ? filehash : GetOrComputeDirHash(parts[i]);
-
-                ICASCEntry entry = folder.GetEntry(hash);
-
-                if (entry == null)
-                {
-                    if (isFile)
-                    {
-                        entry = new CASCFile(hash);
-                        CASCFile.FileNames[hash] = file;
-                    }
-                    else
-                    {
-                        entry = new CASCFolder(hash);
-                        CASCFolder.FolderNames[hash] = parts[i];
-                    }
-
-                    folder.SubEntries[hash] = entry;
-                }
-
-                folder = entry as CASCFolder;
-            }
-        }
-
-        public CASCFolder SetFlags(LocaleFlags locale, ContentFlags content, bool createTree = true)
-        {
-            using(var _ = new PerfCounter("WowRootHandler::SetFlags()"))
-            {
-                if (this.locale != locale || this.content != content)
-                {
-                    this.locale = locale;
-                    this.content = content;
-
-                    if (createTree)
-                        Root = CreateStorageTree();
-                }
-
-                return Root;
-            }
         }
 
         public bool IsUnknownFile(ulong hash)
@@ -453,7 +384,7 @@ namespace CASCExplorer
             return UnknownFiles.Contains(hash);
         }
 
-        public void Clear()
+        public override void Clear()
         {
             RootData.Clear();
             UnknownFiles.Clear();

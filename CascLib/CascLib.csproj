@@ -54,7 +54,7 @@
     <Compile Include="EncodingHandler.cs" />
     <Compile Include="Extensions.cs" />
     <Compile Include="InstallHandler.cs" />
-    <Compile Include="IRootHandler.cs" />
+    <Compile Include="RootHandlerBase.cs" />
     <Compile Include="Jenkins96.cs" />
     <Compile Include="Jenkins96Old.cs" />
     <Compile Include="LocalIndexHandler.cs" />

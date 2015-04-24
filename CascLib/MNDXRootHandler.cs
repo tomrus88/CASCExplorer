@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
-using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -73,7 +72,7 @@ namespace CASCExplorer
         public string Name;
     }
 
-    class MNDXRootHandler : IRootHandler
+    class MNDXRootHandler : RootHandlerBase
     {
         private const int CASC_MNDX_SIGNATURE = 0x58444E4D;          // 'MNDX'
         private const int CASC_MAX_MAR_FILES = 3;
@@ -83,15 +82,18 @@ namespace CASCExplorer
         //[2] - complete file names
         private MARFileNameDB[] MarFiles = new MARFileNameDB[CASC_MAX_MAR_FILES];
 
-        private static readonly Jenkins96 Hasher = new Jenkins96();
-        private CASCFolder Root;
-
         private Dictionary<int, CASC_ROOT_ENTRY_MNDX> mndxRootEntries = new Dictionary<int, CASC_ROOT_ENTRY_MNDX>();
         private Dictionary<int, CASC_ROOT_ENTRY_MNDX> mndxRootEntriesValid;
 
         private Dictionary<int, string> Packages = new Dictionary<int, string>();
 
         private Dictionary<ulong, RootEntry> mndxData = new Dictionary<ulong, RootEntry>();
+
+        public override int Count { get { return MarFiles[2].NumFiles; } }
+        public override int CountTotal { get { return MarFiles[2].NumFiles; } }
+        public override LocaleFlags Locale { get { return LocaleFlags.None; } }
+        public override ContentFlags Content { get { return ContentFlags.None; } }
+        public int PackagesCount { get { return MarFiles[0].NumFiles; } }
 
         public MNDXRootHandler(MMStream stream, AsyncAction worker)
         {
@@ -152,7 +154,7 @@ namespace CASCExplorer
                 if (prevEntry != null) prevEntry.Next = entry;
                 prevEntry = entry;
                 entry.Flags = stream.ReadInt32();
-                entry.MD5 = stream.ReadBytes(0x10);
+                entry.MD5 = stream.ReadBytes(16);
                 entry.FileSize = stream.ReadInt32();
                 mndxRootEntries.Add(i, entry);
 
@@ -213,63 +215,7 @@ namespace CASCExplorer
             //}
         }
 
-        public ContentFlags Content
-        {
-            get
-            {
-                return ContentFlags.None;
-            }
-        }
-
-        public int Count
-        {
-            get
-            {
-                return MarFiles[2].NumFiles;
-            }
-        }
-
-        public int PackagesCount
-        {
-            get
-            {
-                return MarFiles[0].NumFiles;
-            }
-        }
-
-        public int CountSelect
-        {
-            get
-            {
-                return MarFiles[2].NumFiles;
-            }
-        }
-
-        public int CountTotal
-        {
-            get
-            {
-                return MarFiles[2].NumFiles;
-            }
-        }
-
-        public int CountUnknown
-        {
-            get
-            {
-                return 0;
-            }
-        }
-
-        public LocaleFlags Locale
-        {
-            get
-            {
-                return LocaleFlags.None;
-            }
-        }
-
-        public IEnumerable<RootEntry> GetAllEntries(ulong hash)
+        public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
             RootEntry rootEntry;
             mndxData.TryGetValue(hash, out rootEntry);
@@ -280,7 +226,7 @@ namespace CASCExplorer
                 yield break;
         }
 
-        public IEnumerable<RootEntry> GetEntries(ulong hash)
+        public override IEnumerable<RootEntry> GetEntries(ulong hash)
         {
             RootEntry rootEntry;
             mndxData.TryGetValue(hash, out rootEntry);
@@ -368,7 +314,7 @@ namespace CASCExplorer
             throw new Exception("File not found!");
         }
 
-        public void LoadListFile(string path, AsyncAction worker = null)
+        public override void LoadListFile(string path, AsyncAction worker = null)
         {
             if (worker != null)
             {
@@ -436,7 +382,7 @@ namespace CASCExplorer
             Logger.WriteLine("MNDXRootHandler: loaded {0} file names", i);
         }
 
-        private CASCFolder CreateStorageTree()
+        protected override CASCFolder CreateStorageTree()
         {
             var rootHash = Hasher.ComputeHash("root");
 
@@ -444,72 +390,18 @@ namespace CASCExplorer
 
             CASCFolder.FolderNames[rootHash] = "root";
 
+            CountSelect = 0;
+
             foreach (var entry in mndxData)
             {
-                CreateSubTree(root, entry.Key, CASCFile.FileNames[entry.Key]);
+                CreateSubTree(root, entry.Key, CASCFile.FileNames[entry.Key], '/');
+                CountSelect++;
             }
 
             return root;
         }
 
-        static Dictionary<string, ulong> dirHashes = new Dictionary<string, ulong>(StringComparer.InvariantCultureIgnoreCase);
-
-        private static ulong GetOrComputeDirHash(string dir)
-        {
-            ulong hash;
-
-            if (dirHashes.TryGetValue(dir, out hash))
-                return hash;
-
-            hash = Hasher.ComputeHash(dir);
-            dirHashes[dir] = hash;
-
-            return hash;
-        }
-
-        private static void CreateSubTree(CASCFolder root, ulong filehash, string file)
-        {
-            string[] parts = file.Split('/');
-
-            CASCFolder folder = root;
-
-            for (int i = 0; i < parts.Length; ++i)
-            {
-                bool isFile = (i == parts.Length - 1);
-
-                ulong hash = isFile ? filehash : GetOrComputeDirHash(parts[i]);
-
-                ICASCEntry entry = folder.GetEntry(hash);
-
-                if (entry == null)
-                {
-                    if (isFile)
-                    {
-                        entry = new CASCFile(hash);
-                        CASCFile.FileNames[hash] = file;
-                    }
-                    else
-                    {
-                        entry = new CASCFolder(hash);
-                        CASCFolder.FolderNames[hash] = parts[i];
-                    }
-
-                    folder.SubEntries[hash] = entry;
-                }
-
-                folder = entry as CASCFolder;
-            }
-        }
-
-        public CASCFolder SetFlags(LocaleFlags locale, ContentFlags content, bool createTree = true)
-        {
-            if (createTree)
-                Root = CreateStorageTree();
-
-            return Root;
-        }
-
-        public void Clear()
+        public override void Clear()
         {
             mndxData.Clear();
             mndxRootEntries.Clear();
