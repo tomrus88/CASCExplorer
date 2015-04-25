@@ -75,8 +75,6 @@ namespace CASCExplorer
                 string name = stream.ReadCString();
 
                 data[name] = hash;
-
-                Logger.WriteLine("{0}: {1} {2}", i, hash.ToHexString(), name);
             }
 
             int di = 0;
@@ -215,7 +213,7 @@ namespace CASCExplorer
                     SNOInfo sno2 = tocParser.GetSNO(e.SNO);
                     name = String.Format("{0}\\{1}\\{2:D4}", sno2.GroupId, sno2.Name, e.FileIndex);
 
-                    string name2 = pkgParser.GetProperName(Hasher.ComputeHash(name));
+                    string name2 = pkgParser.GetProperName(name);
 
                     if (name2 != null)
                         name = name2;
@@ -518,8 +516,7 @@ namespace CASCExplorer
 
     public class PackagesParser
     {
-        Dictionary<ulong, string> namesDic = new Dictionary<ulong, string>();
-        private static readonly Jenkins96 Hasher = new Jenkins96();
+        Dictionary<string, string> namesDic = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
 
         public PackagesParser(Stream stream)
         {
@@ -531,16 +528,15 @@ namespace CASCExplorer
                 for (int i = 0; i < namesCount; i++)
                 {
                     string name = br.ReadCString();
-                    ulong hash = Hasher.ComputeHash(name.Remove(name.Length - 4, 4));
-                    namesDic[hash] = name;
+                    namesDic[name.Remove(name.Length - 4, 4)] = name;
                 }
             }
         }
 
-        public string GetProperName(ulong hash)
+        public string GetProperName(string partialName)
         {
             string name;
-            namesDic.TryGetValue(hash, out name);
+            namesDic.TryGetValue(partialName, out name);
             return name;
         }
     }
