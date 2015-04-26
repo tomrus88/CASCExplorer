@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 
 namespace CASCExplorer
 {
@@ -19,29 +18,11 @@ namespace CASCExplorer
 
         public abstract IEnumerable<RootEntry> GetEntries(ulong hash);
 
-        public virtual void LoadListFile(string path, AsyncAction worker = null)
-        {
-
-        }
+        public abstract void LoadListFile(string path, AsyncAction worker = null);
 
         public abstract void Clear();
 
         protected abstract CASCFolder CreateStorageTree();
-
-        Dictionary<string, ulong> dirHashes = new Dictionary<string, ulong>(StringComparer.InvariantCultureIgnoreCase);
-
-        private ulong GetOrComputeDirHash(string dir)
-        {
-            ulong hash;
-
-            if (dirHashes.TryGetValue(dir, out hash))
-                return hash;
-
-            hash = Hasher.ComputeHash(dir);
-            dirHashes[dir] = hash;
-
-            return hash;
-        }
 
         protected void CreateSubTree(CASCFolder root, ulong filehash, string file, char separator)
         {
@@ -53,24 +34,23 @@ namespace CASCExplorer
             {
                 bool isFile = (i == parts.Length - 1);
 
-                ulong hash = isFile ? filehash : GetOrComputeDirHash(parts[i]);
+                string entryName = parts[i];
 
-                ICASCEntry entry = folder.GetEntry(hash);
+                ICASCEntry entry = folder.GetEntry(entryName);
 
                 if (entry == null)
                 {
                     if (isFile)
                     {
-                        entry = new CASCFile(hash);
-                        CASCFile.FileNames[hash] = file;
+                        entry = new CASCFile(filehash);
+                        CASCFile.FileNames[filehash] = file;
                     }
                     else
                     {
-                        entry = new CASCFolder(hash);
-                        CASCFolder.FolderNames[hash] = parts[i];
+                        entry = new CASCFolder(entryName);
                     }
 
-                    folder.SubEntries[hash] = entry;
+                    folder.Entries[entryName] = entry;
                 }
 
                 folder = entry as CASCFolder;

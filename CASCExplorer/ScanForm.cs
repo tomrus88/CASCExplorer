@@ -12,7 +12,6 @@ namespace CASCExplorer
 
         private FileScanner scanner;
         private HashSet<ScanResult> uniqueFileNames = new HashSet<ScanResult>();
-        private Dictionary<string, int> extCounter = new Dictionary<string, int>();
 
         private CASCHandler CASC;
         private CASCFolder Root;
@@ -79,38 +78,13 @@ namespace CASCExplorer
             progressLabel.Text = "";
             filenameTextBox.Text = "";
             uniqueFileNames.Clear();
-            extCounter.Clear();
-        }
-
-        private void updateExtCounter(string ext, int count)
-        {
-            if (extCounter.ContainsKey(ext))
-                extCounter[ext] += count;
-            else
-                extCounter.Add(ext, count);
         }
 
         private void UpdateFileNames(string newFileName, string foundInFileName)
         {
-            updateExtCounter(Path.GetExtension(foundInFileName).ToLower(), 1);
             ScanResult res = new ScanResult(newFileName.Replace("/", "\\"), foundInFileName);
             uniqueFileNames.Add(res);
             filenameTextBox.AppendText(res.ToString() + Environment.NewLine);
-        }
-
-        // public delegate void UpdateFileNameBoxCallback(string newFileName, string foundInFileName);
-
-        private void RefineFileNames()
-        {
-            // display unique file names without finding place
-            filenameTextBox.Clear();
-            foreach (var uniqueFileName in uniqueFileNames)
-                filenameTextBox.AppendText(uniqueFileName.NewFile + Environment.NewLine);
-
-            // display stats
-            filenameTextBox.AppendText(Environment.NewLine + Environment.NewLine + "Found file names in the following file types (some types were skipped):" + Environment.NewLine);
-            foreach (var ext in extCounter)
-                filenameTextBox.AppendText(ext.Value + "x in \"" + ext.Key + "\"" + Environment.NewLine);
         }
 
         private void scanButton_Click(object sender, EventArgs e)
@@ -148,25 +122,23 @@ namespace CASCExplorer
                 ScanProgressState state = (ScanProgressState)e.UserState;
                 scanLabel.Text = "Scanning '" + state.CurrentFileName + "' ...";
                 progressLabel.Text = state.NumFilesScanned + "/" + state.NumFilesTotal;
-                //if (state.MissingFileName != null)
-                //{
-                //    ScanResult res = new ScanResult(state.MissingFileName.Replace("/", "\\"), state.CurrentFileName);
-                //    uniqueFileNames.Add(res);
-                //    UpdateFileNameBox();
-                //    Console.WriteLine(res.ToString());
-                //}
             }
         }
 
         private void scanBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             running = false;
-            scanButton.Enabled = false;
+            scanButton.Enabled = true;
             scanLabel.Text = "Scan completed.";
             scanProgressBar.Value = 100;
-            RefineFileNames();
-            //if (e.Cancelled)
-            //    Reset();
+
+            // display unique file names without finding place
+            filenameTextBox.Clear();
+            foreach (var uniqueFileName in uniqueFileNames)
+                filenameTextBox.AppendText(uniqueFileName.NewFile + Environment.NewLine);
+
+            if (e.Cancelled)
+                scanLabel.Text = "Scan cancelled.";
         }
 
         private void Scan()
@@ -176,7 +148,7 @@ namespace CASCExplorer
 
         private void ScanFolder(CASCFolder folder)
         {
-            foreach (var entry in folder.SubEntries)
+            foreach (var entry in folder.Entries)
             {
                 if (entry.Value is CASCFile)
                 {
@@ -201,10 +173,8 @@ namespace CASCExplorer
         {
             if (scanBackgroundWorker.CancellationPending)
                 throw new OperationCanceledException();
-            NumScanned++;
 
-            var ext = Path.GetExtension(file.FullName).ToLower();
-            this.BeginInvoke((MethodInvoker)(() => updateExtCounter(ext, 0)));
+            NumScanned++;
 
             HashSet<string> fileNames = scanner.ScanFile(file);
 
@@ -225,10 +195,6 @@ namespace CASCExplorer
                     if ((CASC.Root as WowRootHandler).IsUnknownFile(hash))
                     {
                         this.BeginInvoke((MethodInvoker)(() => UpdateFileNames(fileName, file.FullName)));
-                    }
-                    else if (CASC.FileExists(hash))
-                    {
-                        this.BeginInvoke((MethodInvoker)(() => updateExtCounter(ext, 1)));
                     }
                 }
             }

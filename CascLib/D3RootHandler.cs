@@ -282,11 +282,7 @@ namespace CASCExplorer
 
         protected override CASCFolder CreateStorageTree()
         {
-            var rootHash = Hasher.ComputeHash("root");
-
-            var root = new CASCFolder(rootHash);
-
-            CASCFolder.FolderNames[rootHash] = "root";
+            var root = new CASCFolder("root");
 
             CountSelect = 0;
 

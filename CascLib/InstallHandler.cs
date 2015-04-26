@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.IO;
 using System.Linq;
 
 namespace CASCExplorer
@@ -145,24 +144,23 @@ namespace CASCExplorer
             {
                 bool isFile = (i == parts.Length - 1);
 
-                ulong hash = isFile ? filehash : Hasher.ComputeHash(parts[i]);
+                string entryName = parts[i];
 
-                ICASCEntry entry = folder.GetEntry(hash);
+                ICASCEntry entry = folder.GetEntry(entryName);
 
                 if (entry == null)
                 {
                     if (isFile)
                     {
-                        entry = new CASCFile(hash);
-                        CASCFile.FileNames[hash] = file;
+                        entry = new CASCFile(filehash);
+                        CASCFile.FileNames[filehash] = file;
                     }
                     else
                     {
-                        entry = new CASCFolder(hash);
-                        CASCFolder.FolderNames[hash] = parts[i];
+                        entry = new CASCFolder(entryName);
                     }
 
-                    folder.SubEntries[hash] = entry;
+                    folder.Entries[entryName] = entry;
                 }
 
                 folder = entry as CASCFolder;

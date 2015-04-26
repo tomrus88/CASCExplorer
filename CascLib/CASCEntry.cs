@@ -1,4 +1,5 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.Linq;
 
@@ -12,29 +13,30 @@ namespace CASCExplorer
 
     public class CASCFolder : ICASCEntry
     {
-        public Dictionary<ulong, ICASCEntry> SubEntries;
-        ulong hash;
+        public Dictionary<string, ICASCEntry> Entries;
 
-        public CASCFolder(ulong hash)
+        private string name;
+
+        public CASCFolder(string name)
         {
-            SubEntries = new Dictionary<ulong, ICASCEntry>();
-            this.hash = hash;
+            Entries = new Dictionary<string, ICASCEntry>(StringComparer.InvariantCultureIgnoreCase);
+            this.name = name;
         }
 
         public string Name
         {
-            get { return FolderNames[hash]; }
+            get { return name; }
         }
 
         public ulong Hash
         {
-            get { return hash; }
+            get { return 0; }
         }
 
-        public ICASCEntry GetEntry(ulong hash)
+        public ICASCEntry GetEntry(string name)
         {
             ICASCEntry entry;
-            SubEntries.TryGetValue(hash, out entry);
+            Entries.TryGetValue(name, out entry);
             return entry;
         }
 
@@ -44,7 +46,7 @@ namespace CASCExplorer
             {
                 foreach (int index in selection)
                 {
-                    var entry = SubEntries.ElementAt(index);
+                    var entry = Entries.ElementAt(index);
 
                     if (entry.Value is CASCFile)
                     {
@@ -64,7 +66,7 @@ namespace CASCExplorer
             }
             else
             {
-                foreach (var entry in SubEntries)
+                foreach (var entry in Entries)
                 {
                     if (entry.Value is CASCFile)
                     {
@@ -83,8 +85,6 @@ namespace CASCExplorer
                 }
             }
         }
-
-        public static readonly Dictionary<ulong, string> FolderNames = new Dictionary<ulong, string>();
     }
 
     public class CASCFile : ICASCEntry

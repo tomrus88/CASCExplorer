@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
 using System.Drawing;
@@ -207,12 +208,12 @@ namespace CASCExplorer
         private void UpdateListView(CASCFolder baseEntry)
         {
             // Sort
-            baseEntry.SubEntries = baseEntry.SubEntries.OrderBy(v => v.Value, Sorter).ToDictionary(pair => pair.Key, pair => pair.Value);
+            baseEntry.Entries = baseEntry.Entries.OrderBy(v => v.Value, Sorter).ToDictionary(pair => pair.Key, pair => pair.Value);
 
             // Update
             fileList.Tag = baseEntry;
             fileList.VirtualListSize = 0;
-            fileList.VirtualListSize = baseEntry.SubEntries.Count;
+            fileList.VirtualListSize = baseEntry.Entries.Count;
 
             if (fileList.VirtualListSize > 0)
             {
@@ -234,7 +235,7 @@ namespace CASCExplorer
                 // remove dummy node
                 node.Nodes.Clear();
 
-                var orderedEntries = baseEntry.SubEntries.OrderBy(v => v.Value.Name);
+                var orderedEntries = baseEntry.Entries.OrderBy(v => v.Value.Name);
 
                 // Create nodes dynamically
                 foreach (var it in orderedEntries)
@@ -247,7 +248,7 @@ namespace CASCExplorer
                         newNode.Tag = entry;
                         newNode.Name = entry.Name;
 
-                        if (entry.SubEntries.Count(v => v.Value is CASCFolder) > 0)
+                        if (entry.Entries.Count(v => v.Value is CASCFolder) > 0)
                             newNode.Nodes.Add(new TreeNode() { Name = "tempnode" }); // add dummy node
                     }
                 }
@@ -268,10 +269,10 @@ namespace CASCExplorer
             if (folder == null)
                 return;
 
-            if (e.ItemIndex < 0 || e.ItemIndex >= folder.SubEntries.Count)
+            if (e.ItemIndex < 0 || e.ItemIndex >= folder.Entries.Count)
                 return;
 
-            ICASCEntry entry = folder.SubEntries.ElementAt(e.ItemIndex).Value;
+            ICASCEntry entry = folder.Entries.ElementAt(e.ItemIndex).Value;
 
             var localeFlags = LocaleFlags.None;
             var contentFlags = ContentFlags.None;
@@ -353,7 +354,7 @@ namespace CASCExplorer
             if (!fileList.HasSingleSelection)
                 return;
 
-            var file = folder.SubEntries.ElementAt(fileList.SelectedIndex).Value as CASCFile;
+            var file = folder.Entries.ElementAt(fileList.SelectedIndex).Value as CASCFile;
 
             var extension = Path.GetExtension(file.Name);
 
@@ -447,7 +448,7 @@ namespace CASCExplorer
                 return false;
 
             // Selected folder
-            CASCFolder baseEntry = folder.SubEntries.ElementAt(fileList.SelectedIndex).Value as CASCFolder;
+            CASCFolder baseEntry = folder.Entries.ElementAt(fileList.SelectedIndex).Value as CASCFolder;
 
             if (baseEntry == null)
                 return false;
@@ -564,17 +565,44 @@ namespace CASCExplorer
         private void GetUnknownFileExtensions()
         {
             FileScanner scanner = new FileScanner(CASC, Root);
-            ulong unknownHash = 14541926008585051990;
-            CASCFolder unknownFolder = Root.GetEntry(unknownHash) as CASCFolder;
-            int numTotal = unknownFolder.SubEntries.Count;
+
+            Dictionary<int, string> idToName = new Dictionary<int, string>();
+
+            using (Stream stream = CASC.OpenFile("DBFilesClient\\SoundEntries.db2"))
+            {
+                DB2Reader se = new DB2Reader(stream);
+
+                foreach(var row in se)
+                {
+                    string name = row.Value.GetField<string>(2);
+
+                    int type = row.Value.GetField<int>(1);
+
+                    bool many = row.Value.GetField<int>(4) > 0;
+
+                    for (int i = 3; i < 23; i++)
+                        idToName[row.Value.GetField<int>(i)] = "unknown\\sound\\" + name + (many ? "_" + (i - 2).ToString("D2") : "") + (type == 28 ? ".mp3" : ".ogg");
+                }
+            }
+
+            CASCFolder unknownFolder = Root.GetEntry("unknown") as CASCFolder;
+            int numTotal = unknownFolder.Entries.Count;
             int numDone = 0;
-            foreach (var unknownEntry in unknownFolder.SubEntries)
+
+            foreach (var unknownEntry in unknownFolder.Entries)
             {
                 getFileExtensionAction.ThrowOnCancel();
                 getFileExtensionAction.ReportProgress((int)((float)(++numDone) / (float)numTotal * 100));
                 CASCFile unknownFile = unknownEntry.Value as CASCFile;
-                string ext = scanner.GetFileExtension(unknownFile);
-                unknownFile.FullName += ext;
+
+                string name;
+                if (idToName.TryGetValue(CASC.Root.GetEntries(unknownFile.Hash).First().FileDataId, out name))
+                    unknownFile.FullName = name;
+                else
+                {
+                    string ext = scanner.GetFileExtension(unknownFile);
+                    unknownFile.FullName += ext;
+                }
             }
         }
 
@@ -682,7 +710,7 @@ namespace CASCExplorer
             {
                 for (var i = SelectedIndex - 1; i >= 0; --i)
                 {
-                    var op = folder.SubEntries.ElementAt(i).Value.Name;
+                    var op = folder.Entries.ElementAt(i).Value.Name;
                     if (op.IndexOf(e.Text, comparisonType) != -1)
                     {
                         e.Index = i;
@@ -694,7 +722,7 @@ namespace CASCExplorer
             {
                 for (int i = SelectedIndex + 1; i < fileList.Items.Count; ++i)
                 {
-                    var op = folder.SubEntries.ElementAt(i).Value.Name;
+                    var op = folder.Entries.ElementAt(i).Value.Name;
                     if (op.IndexOf(e.Text, comparisonType) != -1)
                     {
                         e.Index = i;

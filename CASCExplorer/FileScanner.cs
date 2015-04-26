@@ -43,8 +43,6 @@ namespace CASCExplorer
                 {
                     using (Stream fileStream = CASC.OpenFile(file.Hash, file.FullName))
                     {
-                        //if (fileStream == null)
-                        //    return null;
                         int b;
                         int state = 1;
                         StringBuilder sb = new StringBuilder();

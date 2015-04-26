@@ -384,11 +384,7 @@ namespace CASCExplorer
 
         protected override CASCFolder CreateStorageTree()
         {
-            var rootHash = Hasher.ComputeHash("root");
-
-            var root = new CASCFolder(rootHash);
-
-            CASCFolder.FolderNames[rootHash] = "root";
+            var root = new CASCFolder("root");
 
             CountSelect = 0;
 
@@ -407,8 +403,7 @@ namespace CASCExplorer
             mndxRootEntries.Clear();
             mndxRootEntriesValid.Clear();
             Packages.Clear();
-            Root.SubEntries.Clear();
-            CASCFolder.FolderNames.Clear();
+            Root.Entries.Clear();
             CASCFile.FileNames.Clear();
         }
     }
