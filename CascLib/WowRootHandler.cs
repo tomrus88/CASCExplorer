@@ -383,6 +383,7 @@ namespace CASCExplorer
         public override void Clear()
         {
             RootData.Clear();
+            FileDataStore.Clear();
             UnknownFiles.Clear();
             Root.Entries.Clear();
             CASCFile.FileNames.Clear();

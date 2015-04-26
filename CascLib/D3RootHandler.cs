@@ -200,10 +200,10 @@ namespace CASCExplorer
                     SNOInfo sno2 = tocParser.GetSNO(e.SNO);
                     name = String.Format("{0}\\{1}\\{2:D4}", sno2.GroupId, sno2.Name, e.FileIndex);
 
-                    string name2 = pkgParser.GetProperName(name);
+                    string ext = pkgParser.GetExtension(name);
 
-                    if (name2 != null)
-                        name = name2;
+                    if (ext != null)
+                        name += ext;
                     else
                     {
                         CountUnknown++;
@@ -285,7 +285,7 @@ namespace CASCExplorer
                 CountSelect++;
             }
 
-            //Logger.WriteLine("D3RootHandler: {0} file names missing for locale {1}", CountUnknown, locale);
+            Logger.WriteLine("D3RootHandler: {0} file names missing extensions for locale {1}", CountUnknown, Locale);
 
             return root;
         }
@@ -499,7 +499,7 @@ namespace CASCExplorer
 
     public class PackagesParser
     {
-        Dictionary<string, string> namesDic = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        Dictionary<string, string> nameToExtDic = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         public PackagesParser(Stream stream)
         {
@@ -511,16 +511,16 @@ namespace CASCExplorer
                 for (int i = 0; i < namesCount; i++)
                 {
                     string name = br.ReadCString();
-                    namesDic[name.Remove(name.Length - 4, 4)] = name;
+                    nameToExtDic[name.Substring(0, name.Length - 4)] = Path.GetExtension(name);
                 }
             }
         }
 
-        public string GetProperName(string partialName)
+        public string GetExtension(string partialName)
         {
-            string name;
-            namesDic.TryGetValue(partialName, out name);
-            return name;
+            string ext;
+            nameToExtDic.TryGetValue(partialName, out ext);
+            return ext;
         }
     }
 }
