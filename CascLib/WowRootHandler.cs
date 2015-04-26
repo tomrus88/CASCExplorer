@@ -261,7 +261,7 @@ namespace CASCExplorer
 
                 Logger.WriteLine("WowRootHandler: loading file names...");
 
-                Dictionary<string, Dictionary<ulong, string>> dirData = new Dictionary<string, Dictionary<ulong, string>>(StringComparer.InvariantCultureIgnoreCase);
+                Dictionary<string, Dictionary<ulong, string>> dirData = new Dictionary<string, Dictionary<ulong, string>>(StringComparer.OrdinalIgnoreCase);
                 dirData[""] = new Dictionary<ulong, string>();
 
                 using (var fs = new FileStream("listfile.bin", FileMode.Create))

@@ -19,7 +19,7 @@ namespace CASCExplorer
 
         public CASCFolder(string name)
         {
-            Entries = new Dictionary<string, ICASCEntry>(StringComparer.InvariantCultureIgnoreCase);
+            Entries = new Dictionary<string, ICASCEntry>(StringComparer.OrdinalIgnoreCase);
             this.name = name;
         }
 
@@ -89,7 +89,7 @@ namespace CASCExplorer
 
     public class CASCFile : ICASCEntry
     {
-        ulong hash;
+        private ulong hash;
 
         public CASCFile(ulong hash)
         {

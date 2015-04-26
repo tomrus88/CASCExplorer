@@ -19,21 +19,17 @@ namespace CASCExplorer
             D3RootEntry e = new D3RootEntry();
 
             e.Type = type;
+            e.MD5 = s.ReadBytes(16);
 
-            if (type == 0) // SNO without index
+            if (type == 0 || type == 1) // has SNO id
             {
-                e.MD5 = s.ReadBytes(16);
                 e.SNO = s.ReadInt32();
-            }
-            else if (type == 1) // SNO with index
-            {
-                e.MD5 = s.ReadBytes(16);
-                e.SNO = s.ReadInt32();
-                e.FileIndex = s.ReadInt32();
+
+                if (type == 1) // has file index
+                    e.FileIndex = s.ReadInt32();
             }
             else // Named file
             {
-                e.MD5 = s.ReadBytes(16);
                 e.Name = s.ReadCString();
             }
 
@@ -67,26 +63,17 @@ namespace CASCExplorer
 
             int count = stream.ReadInt32();
 
-            Dictionary<string, byte[]> data = new Dictionary<string, byte[]>();
-
-            for (int i = 0; i < count; ++i)
+            for (int j = 0; j < count; j++)
             {
-                byte[] hash = stream.ReadBytes(16);
+                byte[] md5 = stream.ReadBytes(16);
                 string name = stream.ReadCString();
 
-                data[name] = hash;
-            }
-
-            int di = 0;
-
-            foreach (var kv in data)
-            {
                 var entries = new List<D3RootEntry>();
-                D3RootData[kv.Key] = entries;
+                D3RootData[name] = entries;
 
-                EncodingEntry enc = casc.Encoding.GetEntry(kv.Value);
+                EncodingEntry enc = casc.Encoding.GetEntry(md5);
 
-                using (MMStream s = OpenD3SubRootFile(casc, enc.Key, kv.Value, "data\\" + casc.Config.BuildName + "\\subroot\\" + kv.Key))
+                using (MMStream s = OpenD3SubRootFile(casc, enc.Key, md5, "data\\" + casc.Config.BuildName + "\\subroot\\" + name))
                 {
                     if (s != null)
                     {
@@ -118,7 +105,7 @@ namespace CASCExplorer
                 if (worker != null)
                 {
                     worker.ThrowOnCancel();
-                    worker.ReportProgress((int)((float)di++ / (float)(data.Count + 2) * 100));
+                    worker.ReportProgress((int)((float)++j / (float)(count + 2) * 100));
                 }
             }
 
@@ -133,7 +120,7 @@ namespace CASCExplorer
             if (worker != null)
             {
                 worker.ThrowOnCancel();
-                worker.ReportProgress((int)((float)di++ / (float)(data.Count + 2) * 100));
+                worker.ReportProgress((int)((float)++count / (float)(count + 2) * 100));
             }
 
             // Parse Packages.dat
@@ -147,7 +134,7 @@ namespace CASCExplorer
             if (worker != null)
             {
                 worker.ThrowOnCancel();
-                worker.ReportProgress((int)((float)di++ / (float)(data.Count + 2) * 100));
+                worker.ReportProgress((int)((float)++count / (float)(count + 2) * 100));
             }
         }
 
@@ -512,7 +499,7 @@ namespace CASCExplorer
 
     public class PackagesParser
     {
-        Dictionary<string, string> namesDic = new Dictionary<string, string>(StringComparer.InvariantCultureIgnoreCase);
+        Dictionary<string, string> namesDic = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         public PackagesParser(Stream stream)
         {
