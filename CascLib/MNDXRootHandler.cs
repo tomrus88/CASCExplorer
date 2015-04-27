@@ -151,7 +151,10 @@ namespace CASCExplorer
             for (int i = 0; i < MndxEntriesTotal; ++i)
             {
                 CASC_ROOT_ENTRY_MNDX entry = new CASC_ROOT_ENTRY_MNDX();
-                if (prevEntry != null) prevEntry.Next = entry;
+
+                if (prevEntry != null)
+                    prevEntry.Next = entry;
+
                 prevEntry = entry;
                 entry.Flags = stream.ReadInt32();
                 entry.MD5 = stream.ReadBytes(16);

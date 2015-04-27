@@ -182,7 +182,7 @@ namespace CASCExplorer
                 if (result != DialogResult.OK || sb.SelectedIndex == -1)
                     throw new Exception("Please select build!");
 
-                config.ActiveCDNBuild = sb.SelectedIndex;
+                config.ActiveBuild = sb.SelectedIndex;
             }
 
             CASC = CASCHandler.OpenStorage(config, bgAction);

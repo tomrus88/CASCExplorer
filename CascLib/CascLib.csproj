@@ -48,6 +48,7 @@
     <Compile Include="CASCEntry.cs" />
     <Compile Include="CASCGame.cs" />
     <Compile Include="CASCHandler.cs" />
+    <Compile Include="CDNCache.cs" />
     <Compile Include="CDNIndexHandler.cs" />
     <Compile Include="AsyncAction.cs" />
     <Compile Include="D3RootHandler.cs" />

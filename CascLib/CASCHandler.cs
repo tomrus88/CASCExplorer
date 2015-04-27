@@ -24,7 +24,7 @@ namespace CASCExplorer
 
         private static readonly Jenkins96 Hasher = new Jenkins96();
 
-        private readonly Dictionary<int, FileStream> DataStreams = new Dictionary<int, FileStream>();
+        private readonly Dictionary<int, MMStream> DataStreams = new Dictionary<int, MMStream>();
 
         public InstallHandler Install { get { return InstallHandler; } }
         public EncodingHandler Encoding { get { return EncodingHandler; } }
@@ -110,18 +110,7 @@ namespace CASCExplorer
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for install file missing!");
 
-            MMStream s = TryLocalCache(encInfo.Key, Config.InstallMD5, Path.Combine("data", Config.BuildName, "install"));
-
-            if (s != null)
-                return s;
-
-            s = TryLocalCache(encInfo.Key, Config.InstallMD5, Path.Combine("data", Config.BuildName, "install"));
-
-            if (s != null)
-                return s;
-
-            throw new Exception("OpenInstallFile");
-            //return OpenFile(encInfo.Key); // this line should not be reached
+            return new MMStream(OpenFile(encInfo.Key));
         }
 
         private MMStream OpenRootFile()
@@ -131,58 +120,12 @@ namespace CASCExplorer
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for root file missing!");
 
-            MMStream s = TryLocalCache(encInfo.Key, Config.RootMD5, Path.Combine("data", Config.BuildName, "root"));
-
-            if (s != null)
-                return s;
-
-            s = TryLocalCache(encInfo.Key, Config.RootMD5, Path.Combine("data", Config.BuildName, "root"));
-
-            if (s != null)
-                return s;
-
-            throw new Exception("OpenRootFile");
-            //return OpenFile(encInfo.Key); // this line should not be reached
+            return new MMStream(OpenFile(encInfo.Key));
         }
 
         private MMStream OpenEncodingFile()
         {
-            MMStream s = TryLocalCache(Config.EncodingKey, Config.EncodingMD5, Path.Combine("data", Config.BuildName, "encoding"));
-
-            if (s != null)
-                return s;
-
-            s = TryLocalCache(Config.EncodingKey, Config.EncodingMD5, Path.Combine("data", Config.BuildName, "encoding"));
-
-            if (s != null)
-                return s;
-
-            throw new Exception("OpenEncodingFile");
-            //return OpenFile(Config.EncodingKey); // this line should not be reached
-        }
-
-        public MMStream TryLocalCache(byte[] key, byte[] md5, string name)
-        {
-            if (File.Exists(name))
-            {
-                var fs = new MMStream(name);
-
-                int len = (int)fs.Length;
-                byte[] data = fs.ReadBytes(len);
-                if (MD5.Create().ComputeHash(data).EqualsTo(md5))
-                {
-                    fs.Position = 0;
-                    return fs;
-                }
-
-                fs.Close();
-
-                File.Delete(name);
-            }
-
-            ExtractFile(key, ".", name);
-
-            return null;
+            return new MMStream(OpenFile(Config.EncodingKey));
         }
 
         public Stream OpenFile(byte[] key)
@@ -218,7 +161,7 @@ namespace CASCExplorer
 
                 if (idxInfo != null)
                 {
-                    using (Stream s = CDNIndex.OpenDataFile(key))
+                    using (Stream s = CDNIndex.OpenDataFile(idxInfo))
                     using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
                     {
                         return blte.OpenFile();
@@ -275,7 +218,7 @@ namespace CASCExplorer
 
                 if (idxInfo != null)
                 {
-                    using (Stream s = CDNIndex.OpenDataFile(key))
+                    using (Stream s = CDNIndex.OpenDataFile(idxInfo))
                     using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
                     {
                         blte.ExtractToFile(path, name);
@@ -305,9 +248,9 @@ namespace CASCExplorer
                 stream.Value.Close();
         }
 
-        private FileStream GetDataStream(int index)
+        private MMStream GetDataStream(int index)
         {
-            FileStream stream;
+            MMStream stream;
             if (DataStreams.TryGetValue(index, out stream))
                 return stream;
 
@@ -315,7 +258,7 @@ namespace CASCExplorer
 
             string dataFile = Path.Combine(Config.BasePath, String.Format("{0}\\data\\data.{1:D3}", dataFolder, index));
 
-            stream = new FileStream(dataFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
+            stream = new MMStream(dataFile);
             DataStreams[index] = stream;
 
             return stream;

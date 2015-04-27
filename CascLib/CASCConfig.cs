@@ -17,7 +17,7 @@ namespace CASCExplorer
         public string Region { get; private set; }
         public string BuildConfig { get; private set; }
         public string CDNConfig { get; private set; }
-        public int BuildId { get; private set; }
+        public string BuildId { get; private set; }
         public string VersionsName { get; private set; }
     }
 
@@ -120,10 +120,10 @@ namespace CASCExplorer
 
         public static KeyValueConfig ReadKeyValueConfig(Stream stream)
         {
-            using (var sr = new StreamReader(stream))
-            {
-                return ReadKeyValueConfig(sr);
-            }
+            //using (var sr = new StreamReader(stream))
+            //    return ReadKeyValueConfig(sr);
+            var sr = new StreamReader(stream);
+            return ReadKeyValueConfig(sr);
         }
 
         public static KeyValueConfig ReadKeyValueConfig(TextReader reader)
@@ -190,17 +190,15 @@ namespace CASCExplorer
                 }
             }
 
-            config.Build = config._VersionsData[index].BuildId;
-
             config.GameType = CASCGame.DetectOnlineGame(product);
 
             string cdnKey = config._VersionsData[index].CDNConfig;
-            using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config.CDNUrl, cdnKey))
+            using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, cdnKey))
             {
                 config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
             }
 
-            config.ActiveCDNBuild = 0;
+            config.ActiveBuild = 0;
 
             config._Builds = new List<KeyValueConfig>();
 
@@ -208,7 +206,7 @@ namespace CASCExplorer
             {
                 try
                 {
-                    using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config.CDNUrl, config._CDNConfig["builds"][i]))
+                    using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, config._CDNConfig["builds"][i]))
                     {
                         var cfg = KeyValueConfig.ReadKeyValueConfig(stream);
                         config._Builds.Add(cfg);
@@ -248,26 +246,10 @@ namespace CASCExplorer
             if (bi == null)
                 throw new Exception("Can't find active BuildInfoEntry");
 
-            try
-            {
-                config.Build = Convert.ToInt32(bi.Version.Split('.')[3]);
-            }
-            catch
-            {
-                try
-                {
-                    config.Build = Convert.ToInt32(System.Text.RegularExpressions.Regex.Match(bi.Version, "\\d+").Value);
-                }
-                catch
-                {
-                    config.Build = -1;
-                }
-            }
-
             config.GameType = CASCGame.DetectLocalGame(basePath);
             string dataFolder = CASCGame.GetDataFolder(config.GameType);
 
-            config.ActiveCDNBuild = 0;
+            config.ActiveBuild = 0;
 
             config._Builds = new List<KeyValueConfig>();
 
@@ -292,42 +274,70 @@ namespace CASCExplorer
 
         public bool OnlineMode { get; private set; }
 
-        public int Build { get; private set; }
+        public int ActiveBuild { get; set; }
 
-        public int ActiveCDNBuild { get; set; }
-
-        public string BuildName { get { return _Builds[ActiveCDNBuild]["build-name"][0]; } }
+        public string BuildName { get { return _Builds[ActiveBuild]["build-name"][0]; } }
 
         public string Product { get; private set; }
 
         public byte[] RootMD5
         {
-            get { return _Builds[ActiveCDNBuild]["root"][0].ToByteArray(); }
+            get { return _Builds[ActiveBuild]["root"][0].ToByteArray(); }
         }
 
         public byte[] DownloadMD5
         {
-            get { return _Builds[ActiveCDNBuild]["download"][0].ToByteArray(); }
+            get { return _Builds[ActiveBuild]["download"][0].ToByteArray(); }
         }
 
         public byte[] InstallMD5
         {
-            get { return _Builds[ActiveCDNBuild]["install"][0].ToByteArray(); }
+            get { return _Builds[ActiveBuild]["install"][0].ToByteArray(); }
         }
 
         public byte[] EncodingMD5
         {
-            get { return _Builds[ActiveCDNBuild]["encoding"][0].ToByteArray(); }
+            get { return _Builds[ActiveBuild]["encoding"][0].ToByteArray(); }
         }
 
         public byte[] EncodingKey
         {
-            get { return _Builds[ActiveCDNBuild]["encoding"][1].ToByteArray(); }
+            get { return _Builds[ActiveBuild]["encoding"][1].ToByteArray(); }
         }
 
         public string BuildUID
         {
-            get { return _Builds[ActiveCDNBuild]["build-uid"][0]; }
+            get { return _Builds[ActiveBuild]["build-uid"][0]; }
+        }
+
+        public string CDNHost
+        {
+            get
+            {
+                if (OnlineMode)
+                {
+                    return _CDNData[0].Hosts[0]; // use first
+                }
+                else
+                {
+                    return _BuildInfo[0].CDNHosts[0];
+                }
+            }
+        }
+
+        public string CDNPath
+        {
+            get
+            {
+                if (OnlineMode)
+                {
+                    return _CDNData[0].Path; // use first
+                }
+                else
+                {
+                    return _BuildInfo[0].CDNPath;
+                }
+            }
         }
 
         public string CDNUrl

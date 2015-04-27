@@ -14,6 +14,8 @@ namespace CASCExplorer
 
         public void DownloadFile(string url, string path)
         {
+            Directory.CreateDirectory(Path.GetDirectoryName(path));
+
             HttpWebRequest request = WebRequest.CreateHttp(url);
             HttpWebResponse resp = (HttpWebResponse)request.GetResponse();
 

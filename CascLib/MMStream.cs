@@ -7,42 +7,85 @@ using System.Text;
 
 namespace CASCExplorer
 {
-    public unsafe class MMStream : IDisposable
+    public unsafe class MMStream : Stream
     {
-        private MemoryMappedFile file;
-
-        public MemoryMappedViewAccessor Accessor { get; private set; }
-        public long Position { get; set; }
-        public long Length { get; private set; }
-
+        private MemoryMappedFile _file;
+        private long _length;
+        private MemoryMappedViewAccessor _accessor;
+        private IntPtr BufferPointer;
         private byte* UnsafePointer;
+
+        public override bool CanRead
+        {
+            get { return true; }
+        }
+
+        public override bool CanSeek
+        {
+            get { return true; }
+        }
+
+        public override bool CanWrite
+        {
+            get { return false; }
+        }
+
+        public override long Length
+        {
+            get { return _length; }
+        }
+
+        public override long Position
+        {
+            get; set;
+        }
 
         public MMStream(string path)
         {
-            file = MemoryMappedFile.CreateFromFile(path);
+            _file = MemoryMappedFile.CreateFromFile(path);
+            _length = new FileInfo(path).Length;
 
-            Length = new FileInfo(path).Length;
+            _accessor = _file.CreateViewAccessor();
 
-            Accessor = file.CreateViewAccessor();
-
-            Accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref UnsafePointer);
+            _accessor.SafeMemoryMappedViewHandle.AcquirePointer(ref UnsafePointer);
         }
 
-        public void Close()
+        public MMStream(Stream other)
+        {
+            if (other is MemoryStream)
+            {
+                _length = other.Length;
+
+                byte[] buffer = ((MemoryStream)other).GetBuffer();
+
+                BufferPointer = Marshal.AllocHGlobal((int)_length);
+
+                Marshal.Copy(buffer, 0, BufferPointer, (int)_length);
+
+                UnsafePointer = (byte*)BufferPointer;
+            }
+            else
+                throw new NotSupportedException("Can't create MMStream from " + other.GetType().Name);
+        }
+
+        public override void Close()
         {
             Dispose();
         }
 
-        public void Dispose()
+        public new void Dispose()
         {
-            if (Accessor != null)
+            if (_accessor != null)
             {
-                Accessor.SafeMemoryMappedViewHandle.ReleasePointer();
-                Accessor.Dispose();
+                _accessor.SafeMemoryMappedViewHandle.ReleasePointer();
+                _accessor.Dispose();
             }
 
-            if (file != null)
-                file.Dispose();
+            if (_file != null)
+                _file.Dispose();
+
+            if (BufferPointer != IntPtr.Zero)
+                Marshal.FreeHGlobal(BufferPointer);
         }
 
         public T Read<T>() where T : struct
@@ -68,7 +111,7 @@ namespace CASCExplorer
             return data;
         }
 
-        public byte ReadByte()
+        public new byte ReadByte()
         {
             byte val = *(UnsafePointer + Position);
             Position += 1;
@@ -165,6 +208,45 @@ namespace CASCExplorer
         public void Skip(int count)
         {
             Position += count;
+        }
+
+        public override void Flush()
+        {
+
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            if (origin == SeekOrigin.Begin)
+                Position = offset; // offset should be positive
+            else if (origin == SeekOrigin.Current)
+                Position += offset; // offset can be both positive and negative
+            else
+                Position = _length + offset; // offset should be negative
+
+            return Position;
+        }
+
+        public override void SetLength(long value)
+        {
+            _length = value;
+        }
+
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            int available = count;
+
+            if (Position + available > Length)
+                available = (int)(Length - Position);
+
+            Marshal.Copy((IntPtr)(UnsafePointer + Position), buffer, offset, available);
+            Position += available;
+            return available;
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+
         }
     }
 }

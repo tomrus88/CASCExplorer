@@ -73,7 +73,7 @@ namespace CASCExplorer
 
                 EncodingEntry enc = casc.Encoding.GetEntry(md5);
 
-                using (MMStream s = OpenD3SubRootFile(casc, enc.Key, md5, "data\\" + casc.Config.BuildName + "\\subroot\\" + name))
+                using (MMStream s = new MMStream(casc.OpenFile(enc.Key)))
                 {
                     if (s != null)
                     {
@@ -136,22 +136,6 @@ namespace CASCExplorer
                 worker.ThrowOnCancel();
                 worker.ReportProgress((int)((float)++count / (float)(count + 2) * 100));
             }
-        }
-
-        private MMStream OpenD3SubRootFile(CASCHandler casc, byte[] key, byte[] md5, string name)
-        {
-            MMStream s = casc.TryLocalCache(key, md5, name);
-
-            if (s != null)
-                return s;
-
-            s = casc.TryLocalCache(key, md5, name);
-
-            if (s != null)
-                return s;
-
-            throw new Exception("OpenD3SubRootFile");
-            //return casc.OpenFile(key);
         }
 
         public override void Clear()
