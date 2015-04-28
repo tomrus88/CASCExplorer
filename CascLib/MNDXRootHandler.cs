@@ -446,11 +446,11 @@ namespace CASCExplorer
         private TSparseArray Struct68_00;
         private TSparseArray FileNameIndexes;
         private TSparseArray Struct68_D0;
-        private List<byte> FrgmDist_LoBits;
+        private byte[] FrgmDist_LoBits;
         private TBitEntryArray FrgmDist_HiBits;
         private TNameIndexStruct IndexStruct_174;
         private MARFileNameDB NextDB;
-        private List<NAME_FRAG> NameFragTable;
+        private NAME_FRAG[] NameFragTable;
         private int NameFragIndexMask;
         private int field_214;
         //private TStruct10 Struct10;
@@ -597,7 +597,7 @@ namespace CASCExplorer
             Struct68_00 = new TSparseArray(reader);
             FileNameIndexes = new TSparseArray(reader);
             Struct68_D0 = new TSparseArray(reader);
-            FrgmDist_LoBits = reader.Read<byte>(false);
+            FrgmDist_LoBits = reader.ReadArray<byte>();
             FrgmDist_HiBits = new TBitEntryArray(reader);
             IndexStruct_174 = new TNameIndexStruct(reader);
 
@@ -606,9 +606,9 @@ namespace CASCExplorer
                 NextDB = new MARFileNameDB(reader, true);
             }
 
-            NameFragTable = reader.Read<NAME_FRAG>(false);
+            NameFragTable = reader.ReadArray<NAME_FRAG>();
 
-            NameFragIndexMask = NameFragTable.Count - 1;
+            NameFragIndexMask = NameFragTable.Length - 1;
 
             field_214 = reader.ReadInt32();
 
@@ -1673,7 +1673,7 @@ namespace CASCExplorer
             return GetNameFragmentOffsetEx(LoBitsIndex, Struct68_D0.GetItemValue(LoBitsIndex));
         }
 
-        private bool IsSingleCharMatch(List<NAME_FRAG> Table, int ItemIndex)
+        private bool IsSingleCharMatch(NAME_FRAG[] Table, int ItemIndex)
         {
             return ((Table[ItemIndex].FragOffs & 0xFFFFFF00) == 0xFFFFFF00);
         }
@@ -1719,7 +1719,7 @@ namespace CASCExplorer
             }
         }
 
-        public TBitEntryArray(MMStream reader) : base(reader.Read<int>(false))
+        public TBitEntryArray(MMStream reader) : base(reader.ReadArray<int>())
         {
             BitsPerEntry = reader.ReadInt32();
             EntryBitMask = reader.ReadInt32();
@@ -1729,22 +1729,22 @@ namespace CASCExplorer
 
     public class TSparseArray
     {
-        private List<int> ItemBits;                    // Bit array for each item (1 = item is present)
-        private List<TRIPLET> BaseValues;              // Array of base values for item indexes >= 0x200
-        private List<int> ArrayDwords_38;
-        private List<int> ArrayDwords_50;
+        private int[] ItemBits;                    // Bit array for each item (1 = item is present)
+        private TRIPLET[] BaseValues;              // Array of base values for item indexes >= 0x200
+        private int[] ArrayDwords_38;
+        private int[] ArrayDwords_50;
 
         public int TotalItemCount { get; private set; } // Total number of items in the array
         public int ValidItemCount { get; private set; } // Number of present items in the array
 
         public TSparseArray(MMStream reader)
         {
-            ItemBits = reader.Read<int>(false);
+            ItemBits = reader.ReadArray<int>();
             TotalItemCount = reader.ReadInt32();
             ValidItemCount = reader.ReadInt32();
-            BaseValues = reader.Read<TRIPLET>(false);
-            ArrayDwords_38 = reader.Read<int>(false);
-            ArrayDwords_50 = reader.Read<int>(false);
+            BaseValues = reader.ReadArray<TRIPLET>();
+            ArrayDwords_38 = reader.ReadArray<int>();
+            ArrayDwords_50 = reader.ReadArray<int>();
         }
 
         public bool Contains(int index)
@@ -1869,17 +1869,17 @@ namespace CASCExplorer
 
     public class TNameIndexStruct
     {
-        private List<byte> NameFragments;
+        private byte[] NameFragments;
         private TSparseArray FragmentEnds;
 
         public int Count
         {
-            get { return NameFragments.Count; }
+            get { return NameFragments.Length; }
         }
 
         public TNameIndexStruct(MMStream reader)
         {
-            NameFragments = reader.Read<byte>(false);
+            NameFragments = reader.ReadArray<byte>();
             FragmentEnds = new TSparseArray(reader);
         }
 

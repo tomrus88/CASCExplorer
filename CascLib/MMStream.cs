@@ -95,16 +95,16 @@ namespace CASCExplorer
             return val;
         }
 
-        public List<T> Read<T>(bool fake) where T : struct
+        public T[] ReadArray<T>() where T : struct
         {
             long numBytes = ReadInt64();
 
             int itemCount = (int)numBytes / Marshal.SizeOf(typeof(T));
 
-            List<T> data = new List<T>(itemCount);
+            T[] data = new T[itemCount];
 
             for (int i = 0; i < itemCount; ++i)
-                data.Add(Read<T>());
+                data[i] = Read<T>();
 
             Position += (0 - (int)numBytes) & 0x07;
 
