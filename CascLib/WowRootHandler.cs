@@ -42,7 +42,7 @@ namespace CASCExplorer
 
     public class RootBlock
     {
-        public static RootBlock Empty = new RootBlock();
+        public static RootBlock Empty = new RootBlock() { ContentFlags = ContentFlags.None, LocaleFlags = LocaleFlags.All };
         public ContentFlags ContentFlags;
         public LocaleFlags LocaleFlags;
     }

@@ -3,6 +3,7 @@ using System.Collections.Generic;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
+using System.Text.RegularExpressions;
 
 namespace CASCExplorer
 {
@@ -86,6 +87,7 @@ namespace CASCExplorer
         private Dictionary<int, CASC_ROOT_ENTRY_MNDX> mndxRootEntriesValid;
 
         private Dictionary<int, string> Packages = new Dictionary<int, string>();
+        private Dictionary<int, LocaleFlags> PackagesLocale = new Dictionary<int, LocaleFlags>();
 
         private Dictionary<ulong, RootEntry> mndxData = new Dictionary<ulong, RootEntry>();
 
@@ -334,6 +336,29 @@ namespace CASCExplorer
             foreach (var result in MarFiles[0].EnumerateFiles())
                 Packages.Add(result.FileNameIndex, result.szFoundPath);
 
+            Regex regex1 = new Regex("\\w{4}(?=\\.stormdata)", RegexOptions.Compiled);
+            Regex regex2 = new Regex("\\w{4}(?=\\.stormassets)", RegexOptions.Compiled);
+
+            foreach (var result in MarFiles[0].EnumerateFiles())
+            {
+                Match match1 = regex1.Match(result.szFoundPath);
+                Match match2 = regex2.Match(result.szFoundPath);
+
+                if (match1.Success || match2.Success)
+                {
+                    var localeStr = match1.Success ? match1.Value : match2.Value;
+
+                    LocaleFlags locale;
+
+                    if (!Enum.TryParse(localeStr, true, out locale))
+                        locale = LocaleFlags.All;
+
+                    PackagesLocale.Add(result.FileNameIndex, locale);
+                }
+                else
+                    PackagesLocale.Add(result.FileNameIndex, LocaleFlags.All);
+            }
+
             //MNDXSearchResult result2 = new MNDXSearchResult();
 
             //MARFileNameDB marFile2 = MarFiles[2];
@@ -364,9 +389,12 @@ namespace CASCExplorer
                 //entry.Data = FindMNDXInfo(file, entry.Package);
                 //entry.Name = file;
                 CASCFile.FileNames[fileHash] = file;
+
                 RootEntry entry = new RootEntry();
-                entry.Block = RootBlock.Empty;
-                entry.MD5 = FindMNDXInfo(file, FindMNDXPackage(file)).MD5;
+
+                int package = FindMNDXPackage(file);
+                entry.Block = new RootBlock() { LocaleFlags = PackagesLocale[package], ContentFlags = ContentFlags.None };
+                entry.MD5 = FindMNDXInfo(file, package).MD5;
                 mndxData[fileHash] = entry;
 
                 //Console.WriteLine("{0:X8} - {1:X8} - {2} - {3}", result2.FileNameIndex, root.Flags, root.EncodingKey.ToHexString(), file);
