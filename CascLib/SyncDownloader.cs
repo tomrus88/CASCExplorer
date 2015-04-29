@@ -17,8 +17,8 @@ namespace CASCExplorer
             Directory.CreateDirectory(Path.GetDirectoryName(path));
 
             HttpWebRequest request = WebRequest.CreateHttp(url);
-            HttpWebResponse resp = (HttpWebResponse)request.GetResponse();
 
+            using (HttpWebResponse resp = (HttpWebResponse)request.GetResponse())
             using (Stream stream = resp.GetResponseStream())
             using (Stream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
             {
@@ -29,8 +29,8 @@ namespace CASCExplorer
         public MemoryStream OpenFile(string url)
         {
             HttpWebRequest request = WebRequest.CreateHttp(url);
-            HttpWebResponse resp = (HttpWebResponse)request.GetResponse();
 
+            using (HttpWebResponse resp = (HttpWebResponse)request.GetResponse())
             using (Stream stream = resp.GetResponseStream())
             {
                 MemoryStream ms = new MemoryStream();
@@ -44,11 +44,17 @@ namespace CASCExplorer
 
         public long GetFileSize(string url)
         {
-            HttpWebRequest request = WebRequest.CreateHttp(url);
-            request.Timeout = 3000;
-            HttpWebResponse resp = (HttpWebResponse)request.GetResponse();
+            try
+            {
+                HttpWebRequest request = WebRequest.CreateHttp(url);
 
-            return resp.ContentLength;
+                using (HttpWebResponse resp = (HttpWebResponse)request.GetResponse())
+                    return resp.ContentLength;
+            }
+            catch
+            {
+                return -1;
+            }
         }
 
         private void CopyToStream(Stream src, Stream dst, long len)

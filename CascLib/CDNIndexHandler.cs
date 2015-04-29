@@ -13,7 +13,7 @@ namespace CASCExplorer
         private CASCConfig CASCConfig;
         private AsyncAction worker;
         private SyncDownloader downloader;
-        public static CDNCache Cache = new CDNCache("cache") { Enabled = true };
+        public static CDNCache Cache = new CDNCache("cache");
 
         public int Count
         {
@@ -145,7 +145,7 @@ namespace CASCExplorer
                 return stream;
             }
 
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+            HttpWebRequest req = WebRequest.CreateHttp(url);
             req.AddRange(entry.Offset, entry.Offset + entry.Size - 1);
             HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
             return resp.GetResponseStream();
@@ -187,7 +187,7 @@ namespace CASCExplorer
 
         public static Stream OpenFileDirect(string url)
         {
-            HttpWebRequest req = (HttpWebRequest)WebRequest.Create(url);
+            HttpWebRequest req = WebRequest.CreateHttp(url);
             HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
             return resp.GetResponseStream();
         }

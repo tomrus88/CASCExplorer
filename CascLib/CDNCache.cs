@@ -4,9 +4,9 @@ namespace CASCExplorer
 {
     public class CDNCache
     {
-        public bool Enabled { get; set; }
+        public bool Enabled { get; set; } = true;
         private bool CacheData { get; set; }
-        public bool Validate { get; set; }
+        public bool Validate { get; set; } = true;
         private string cachePath;
         private SyncDownloader downloader = new SyncDownloader(null);
 
