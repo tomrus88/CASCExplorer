@@ -2,10 +2,11 @@
 
 namespace CASCExplorer
 {
-    class CDNCache
+    public class CDNCache
     {
         public bool Enabled { get; set; }
         private bool CacheData { get; set; }
+        public bool Validate { get; set; }
         private string cachePath;
         private SyncDownloader downloader = new SyncDownloader(null);
 
@@ -23,7 +24,9 @@ namespace CASCExplorer
 
             Logger.WriteLine("CDNCache: Opening file {0}", file);
 
-            if (!File.Exists(file))
+            FileInfo fi = new FileInfo(file);
+
+            if (!fi.Exists || (Validate && fi.Length != downloader.GetFileSize(url)))
             {
                 downloader.DownloadFile(url, file);
             }

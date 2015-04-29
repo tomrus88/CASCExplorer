@@ -42,6 +42,15 @@ namespace CASCExplorer
             }
         }
 
+        public long GetFileSize(string url)
+        {
+            HttpWebRequest request = WebRequest.CreateHttp(url);
+            request.Timeout = 3000;
+            HttpWebResponse resp = (HttpWebResponse)request.GetResponse();
+
+            return resp.ContentLength;
+        }
+
         private void CopyToStream(Stream src, Stream dst, long len)
         {
             long done = 0;

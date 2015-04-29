@@ -46,6 +46,8 @@ namespace CASCExplorer
 
             if (!config.OnlineMode)
             {
+                CDNIndexHandler.Cache.Enabled = false;
+
                 Logger.WriteLine("CASCHandler: loading local indices...");
 
                 using (var _ = new PerfCounter("LocalIndexHandler.Initialize()"))
@@ -84,6 +86,11 @@ namespace CASCExplorer
                 {
                     byte[] magic = fs.ReadBytes(4);
                     fs.Position = 0;
+
+                    //using (var fs2 = new FileStream("root", FileMode.Create))
+                    //    fs.CopyTo(fs2);
+
+                    //fs.Position = 0;
 
                     if (magic[0] == 0x4D && magic[1] == 0x4E && magic[2] == 0x44 && magic[3] == 0x58) // MNDX
                     {

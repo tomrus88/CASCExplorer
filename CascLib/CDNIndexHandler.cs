@@ -13,7 +13,7 @@ namespace CASCExplorer
         private CASCConfig CASCConfig;
         private AsyncAction worker;
         private SyncDownloader downloader;
-        private static CDNCache cache = new CDNCache("cache") { Enabled = true };
+        public static CDNCache Cache = new CDNCache("cache") { Enabled = true };
 
         public int Count
         {
@@ -94,7 +94,7 @@ namespace CASCExplorer
                 string file = CASCConfig.CDNPath + "/data/" + archive.Substring(0, 2) + "/" + archive.Substring(2, 2) + "/" + archive + ".index";
                 string url = "http://" + CASCConfig.CDNHost + "/" + file;
 
-                Stream stream = cache.OpenFile(file, url);
+                Stream stream = Cache.OpenFile(file, url);
 
                 if (stream != null)
                 {
@@ -137,7 +137,7 @@ namespace CASCExplorer
             string file = CASCConfig.CDNPath + "/data/" + archive.Substring(0, 2) + "/" + archive.Substring(2, 2) + "/" + archive;
             string url = "http://" + CASCConfig.CDNHost + "/" + file;
 
-            Stream stream = cache.OpenFile(file, url);
+            Stream stream = Cache.OpenFile(file, url);
 
             if (stream != null)
             {
@@ -164,7 +164,7 @@ namespace CASCExplorer
             string file = CASCConfig.CDNPath + "/data/" + keyStr.Substring(0, 2) + "/" + keyStr.Substring(2, 2) + "/" + keyStr;
             string url = "http://" + CASCConfig.CDNHost + "/" + file;
 
-            Stream stream = cache.OpenFile(file, url);
+            Stream stream = Cache.OpenFile(file, url);
 
             if (stream != null)
                 return stream;
@@ -177,7 +177,7 @@ namespace CASCExplorer
             string file = cfg.CDNPath + "/config/" + key.Substring(0, 2) + "/" + key.Substring(2, 2) + "/" + key;
             string url = "http://" + cfg.CDNHost + "/" + file;
 
-            Stream stream = cache.OpenFile(file, url);
+            Stream stream = Cache.OpenFile(file, url);
 
             if (stream != null)
                 return stream;
