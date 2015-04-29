@@ -47,6 +47,7 @@ namespace CASCExplorer
             try
             {
                 HttpWebRequest request = WebRequest.CreateHttp(url);
+                request.Method = "HEAD";
 
                 using (HttpWebResponse resp = (HttpWebResponse)request.GetResponse())
                     return resp.ContentLength;
@@ -54,6 +55,22 @@ namespace CASCExplorer
             catch
             {
                 return -1;
+            }
+        }
+
+        public byte[] GetMD5(string url)
+        {
+            try
+            {
+                HttpWebRequest request = WebRequest.CreateHttp(url);
+                request.Method = "HEAD";
+
+                using (HttpWebResponse resp = (HttpWebResponse)request.GetResponse())
+                    return resp.Headers[HttpResponseHeader.ETag].Split(':')[0].ToByteArray();
+            }
+            catch
+            {
+                return null;
             }
         }
 
