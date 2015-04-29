@@ -312,6 +312,8 @@ namespace CASCExplorer
                     {
                         bw.Write(dir.Key); // dir name
 
+                        Console.WriteLine(dir.Key);
+
                         bw.Write(dirData[dir.Key].Count); // count of files in dir
 
                         foreach (var fh in dirData[dir.Key])
