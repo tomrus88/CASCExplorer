@@ -604,6 +604,8 @@ namespace CASCExplorer
                     unknownFile.FullName += ext;
                 }
             }
+
+            CASC.Root.Dump();
         }
 
         private void getFileExtensionAction_ProgressChanged(object sender, AsyncActionProgressChangedEventArgs e)

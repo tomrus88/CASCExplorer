@@ -5,8 +5,9 @@ namespace CASCExplorer
     public class CDNCache
     {
         public bool Enabled { get; set; } = true;
-        private bool CacheData { get; set; }
+        private bool CacheData { get; set; } = false;
         public bool Validate { get; set; } = true;
+
         private string cachePath;
         private SyncDownloader downloader = new SyncDownloader(null);
 
@@ -15,9 +16,12 @@ namespace CASCExplorer
             cachePath = path;
         }
 
-        public MMStream OpenFile(string name, string url)
+        public MMStream OpenFile(string name, string url, bool isData)
         {
             if (!Enabled)
+                return null;
+
+            if (isData && !CacheData)
                 return null;
 
             string file = cachePath + "/" + name;

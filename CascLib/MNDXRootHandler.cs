@@ -437,6 +437,11 @@ namespace CASCExplorer
             Root.Entries.Clear();
             CASCFile.FileNames.Clear();
         }
+
+        public override void Dump()
+        {
+
+        }
     }
 
     class MARFileNameDB

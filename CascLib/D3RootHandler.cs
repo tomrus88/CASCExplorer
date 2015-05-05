@@ -146,6 +146,11 @@ namespace CASCExplorer
             pkgParser = null;
         }
 
+        public override void Dump()
+        {
+
+        }
+
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
             HashSet<RootEntry> result;

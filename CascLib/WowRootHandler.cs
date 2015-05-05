@@ -115,10 +115,18 @@ namespace CASCExplorer
 
                     //Console.WriteLine("File: {0:X8} {1:X16} {2}", entries[i].FileDataId, hash, entries[i].MD5.ToHexString());
 
-                    if (FileDataStore.ContainsKey(entries[i].FileDataId) && FileDataStore[entries[i].FileDataId] == hash)
+                    if (FileDataStore.ContainsKey(entries[i].FileDataId))
                     {
-                        //Console.WriteLine("2 {0:X8} {1:X16}", entries[i].FileDataId, hash);
-                        continue;
+                        if (FileDataStore[entries[i].FileDataId] == hash)
+                        {
+                            // duplicate, skipping
+                            continue;
+                        }
+                        else
+                        {
+                            Logger.WriteLine("ERROR: got miltiple hashes for filedataid {0}", entries[i].FileDataId);
+                            continue;
+                        }
                     }
 
                     FileDataStore.Add(entries[i].FileDataId, hash);
@@ -389,6 +397,22 @@ namespace CASCExplorer
             UnknownFiles.Clear();
             Root.Entries.Clear();
             CASCFile.FileNames.Clear();
+        }
+
+        public override void Dump()
+        {
+            foreach (var fd in RootData.OrderBy(r => r.Value.First().FileDataId))
+            {
+                //if ((fd.Value.First().Block.LocaleFlags & Locale) != 0)
+                //{
+                    string name;
+
+                    if (!CASCFile.FileNames.TryGetValue(fd.Key, out name))
+                        name = fd.Key.ToString("X16");
+
+                    Logger.WriteLine("{0:D7} {1:X16} {2}", fd.Value.First().FileDataId, fd.Key, name);
+                //}
+            }
         }
     }
 }

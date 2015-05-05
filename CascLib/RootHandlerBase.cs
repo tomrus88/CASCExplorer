@@ -22,6 +22,8 @@ namespace CASCExplorer
 
         public abstract void Clear();
 
+        public abstract void Dump();
+
         protected abstract CASCFolder CreateStorageTree();
 
         protected void CreateSubTree(CASCFolder root, ulong filehash, string file, char separator)

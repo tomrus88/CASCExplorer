@@ -42,9 +42,9 @@ namespace CASCExplorer
                 string archive = config.Archives[i];
 
                 if (config.OnlineMode)
-                    handler.DownloadFile(archive, i);
+                    handler.DownloadIndexFile(archive, i);
                 else
-                    handler.OpenFile(archive, i);
+                    handler.OpenIndexFile(archive, i);
 
                 if (worker != null)
                 {
@@ -87,14 +87,14 @@ namespace CASCExplorer
             }
         }
 
-        private void DownloadFile(string archive, int i)
+        private void DownloadIndexFile(string archive, int i)
         {
             try
             {
                 string file = CASCConfig.CDNPath + "/data/" + archive.Substring(0, 2) + "/" + archive.Substring(2, 2) + "/" + archive + ".index";
                 string url = "http://" + CASCConfig.CDNHost + "/" + file;
 
-                Stream stream = Cache.OpenFile(file, url);
+                Stream stream = Cache.OpenFile(file, url, false);
 
                 if (stream != null)
                 {
@@ -112,7 +112,7 @@ namespace CASCExplorer
             }
         }
 
-        private void OpenFile(string archive, int i)
+        private void OpenIndexFile(string archive, int i)
         {
             try
             {
@@ -137,7 +137,7 @@ namespace CASCExplorer
             string file = CASCConfig.CDNPath + "/data/" + archive.Substring(0, 2) + "/" + archive.Substring(2, 2) + "/" + archive;
             string url = "http://" + CASCConfig.CDNHost + "/" + file;
 
-            Stream stream = Cache.OpenFile(file, url);
+            Stream stream = Cache.OpenFile(file, url, true);
 
             if (stream != null)
             {
@@ -164,7 +164,7 @@ namespace CASCExplorer
             string file = CASCConfig.CDNPath + "/data/" + keyStr.Substring(0, 2) + "/" + keyStr.Substring(2, 2) + "/" + keyStr;
             string url = "http://" + CASCConfig.CDNHost + "/" + file;
 
-            Stream stream = Cache.OpenFile(file, url);
+            Stream stream = Cache.OpenFile(file, url, false);
 
             if (stream != null)
                 return stream;
@@ -177,7 +177,7 @@ namespace CASCExplorer
             string file = cfg.CDNPath + "/config/" + key.Substring(0, 2) + "/" + key.Substring(2, 2) + "/" + key;
             string url = "http://" + cfg.CDNHost + "/" + file;
 
-            Stream stream = Cache.OpenFile(file, url);
+            Stream stream = Cache.OpenFile(file, url, false);
 
             if (stream != null)
                 return stream;
