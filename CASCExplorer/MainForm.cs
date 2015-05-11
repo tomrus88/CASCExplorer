@@ -122,7 +122,7 @@ namespace CASCExplorer
             }
             catch (Exception exc)
             {
-                MessageBox.Show("Error during initialization of required data files:\n" + exc.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                MessageBox.Show("Error during initialization:\n" + exc.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
                 return;
             }
         }

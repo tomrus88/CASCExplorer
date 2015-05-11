@@ -96,13 +96,17 @@ namespace CASCExplorer
                     {
                         RootHandler = new MNDXRootHandler(fs, worker);
                     }
-                    else if (config.BuildUID.StartsWith("d3"))
+                    else if (config.BuildUID.StartsWith("d3", StringComparison.OrdinalIgnoreCase))
                     {
                         RootHandler = new D3RootHandler(fs, worker, this);
                     }
-                    else
+                    else if (config.BuildUID.StartsWith("wow", StringComparison.OrdinalIgnoreCase))
                     {
                         RootHandler = new WowRootHandler(fs, worker);
+                    }
+                    else
+                    {
+                        throw new Exception("Unsupported game " + config.BuildUID);
                     }
                 }
             }
