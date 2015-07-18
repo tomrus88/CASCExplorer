@@ -12,7 +12,7 @@ namespace CASCExplorer
                 worker.ReportProgress(0, "Loading \"root\"...");
             }
 
-            var hash = stream.ReadCString(); // what is is for?
+            var hash = stream.ReadCString(); // what is this for?
 
             if (worker != null)
             {
