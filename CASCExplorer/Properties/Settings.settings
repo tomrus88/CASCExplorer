@@ -6,7 +6,7 @@
       <Value Profile="(Default)">True</Value>
     </Setting>
     <Setting Name="Product" Type="System.String" Scope="User">
-      <Value Profile="(Default)">wowt</Value>
+      <Value Profile="(Default)">agent</Value>
     </Setting>
     <Setting Name="LocaleFlags" Type="CASCExplorer.LocaleFlags" Scope="User">
       <Value Profile="(Default)">enUS</Value>

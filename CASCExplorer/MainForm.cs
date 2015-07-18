@@ -572,7 +572,7 @@ namespace CASCExplorer
             {
                 DB2Reader se = new DB2Reader(stream);
 
-                foreach(var row in se)
+                foreach (var row in se)
                 {
                     string name = row.Value.GetField<string>(2);
 
@@ -761,6 +761,27 @@ namespace CASCExplorer
                 dumpInstallToolStripMenuItem.Enabled = true;
                 MessageBox.Show("Install files saved!", "CASCExplorer", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
+        }
+
+        private void extractRootFileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            var encInfo = CASC.Encoding.GetEntry(CASC.Config.RootMD5);
+
+            if (encInfo == null)
+            {
+                MessageBox.Show("Encoding info for root file missing!");
+                return;
+            }
+
+            using (var s = CASC.OpenFile(encInfo.Key))
+            using (var fs = new FileStream("root", FileMode.Create))
+                s.CopyTo(fs);
+        }
+
+        private void bruteforceNamesToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            BruteforceForm bf = new BruteforceForm();
+            bf.Show();
         }
     }
 }

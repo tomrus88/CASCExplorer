@@ -82,7 +82,7 @@ namespace CASCExplorer
                 if (worker != null)
                 {
                     worker.ThrowOnCancel();
-                    worker.ReportProgress((int)((float)i / (float)(numEntries - 1) * 100));
+                    worker.ReportProgress((int)((float)i / (float)numEntries * 100));
                 }
             }
             //var pos = br.BaseStream.Position;

@@ -87,11 +87,6 @@ namespace CASCExplorer
                     byte[] magic = fs.ReadBytes(4);
                     fs.Position = 0;
 
-                    //using (var fs2 = new FileStream("root", FileMode.Create))
-                    //    fs.CopyTo(fs2);
-
-                    //fs.Position = 0;
-
                     if (magic[0] == 0x4D && magic[1] == 0x4E && magic[2] == 0x44 && magic[3] == 0x58) // MNDX
                     {
                         RootHandler = new MNDXRootHandler(fs, worker);
@@ -103,6 +98,10 @@ namespace CASCExplorer
                     else if (config.BuildUID.StartsWith("wow", StringComparison.OrdinalIgnoreCase))
                     {
                         RootHandler = new WowRootHandler(fs, worker);
+                    }
+                    else if (config.BuildUID.StartsWith("agent", StringComparison.OrdinalIgnoreCase))
+                    {
+                        RootHandler = new AgentRootHandler(fs, worker);
                     }
                     else
                     {
@@ -130,6 +129,8 @@ namespace CASCExplorer
 
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for root file missing!");
+
+            //ExtractFile(encInfo.Key, ".", "agent_root");
 
             return new MMStream(OpenFile(encInfo.Key));
         }

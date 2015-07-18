@@ -6,7 +6,7 @@ namespace CASCExplorer
     {
         public bool Enabled { get; set; } = true;
         private bool CacheData { get; set; } = false;
-        public bool Validate { get; set; } = true;
+        public bool Validate { get; set; } = false;
 
         private string cachePath;
         private SyncDownloader downloader = new SyncDownloader(null);

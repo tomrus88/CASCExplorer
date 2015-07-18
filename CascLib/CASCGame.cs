@@ -8,7 +8,8 @@ namespace CASCExplorer
         HotS,
         WoW,
         D3,
-        S2
+        S2,
+        Agent
     }
 
     class CASCGame
@@ -52,6 +53,9 @@ namespace CASCExplorer
 
             if (uid.StartsWith("d3"))
                 return CASCGameType.D3;
+
+            if (uid.StartsWith("agent"))
+                return CASCGameType.Agent;
 
             return CASCGameType.Unknown;
         }

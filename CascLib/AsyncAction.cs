@@ -39,7 +39,7 @@ namespace CASCExplorer
         private CancellationTokenSource cts;
         private Task task;
         private Action action;
-        private int lastPercent;
+        //private int lastPercent;
 
         public event EventHandler<AsyncActionProgressChangedEventArgs> ProgressChanged
         {
@@ -60,12 +60,11 @@ namespace CASCExplorer
                 progress = new AsyncActionProgress(progressAction);
             else
                 progress = new AsyncActionProgress();
-
-            cts = new CancellationTokenSource();
         }
 
         public async Task DoAction()
         {
+            cts = new CancellationTokenSource();
             task = Task.Factory.StartNew(action, cts.Token);
             await task;
         }
@@ -75,11 +74,14 @@ namespace CASCExplorer
             if (cts.IsCancellationRequested)
                 return;
 
-            if (lastPercent != percent)
-            {
-                lastPercent = percent;
-                progress.Report(new AsyncActionProgressChangedEventArgs(percent, userData));
-            }
+            //if (lastPercent != percent)
+            //{
+            //    lastPercent = percent;
+            //if (percent == -2147483648)
+            //    Console.WriteLine();
+
+            progress.Report(new AsyncActionProgressChangedEventArgs(percent, userData));
+            //}
         }
 
         public void ThrowOnCancel()

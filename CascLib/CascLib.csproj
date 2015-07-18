@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CascLib</RootNamespace>
     <AssemblyName>CascLib</AssemblyName>
-    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -66,6 +66,7 @@
     <Compile Include="PerfCounter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
     <Compile Include="SyncDownloader.cs" />
+    <Compile Include="AgentRootHandler.cs" />
     <Compile Include="WowRootHandler.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
