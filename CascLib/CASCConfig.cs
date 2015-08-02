@@ -35,6 +35,8 @@ namespace CASCExplorer
         public string Armadillo { get; private set; }
         public string LastActivated { get; private set; }
         public string Version { get; private set; }
+        public string Keyring { get; private set; }
+        public string KeyService { get; private set; }
     }
 
     class VerBarConfig<T> where T : new()
