@@ -89,7 +89,12 @@ namespace CASCExplorer
 
                     for (int i = 0; i < tokens.Length; ++i)
                     {
-                        Type propt = t.GetProperty(fields[i]).PropertyType;
+                        var prop = t.GetProperty(fields[i]);
+
+                        if (prop == null)
+                            throw new Exception("Unknown field: " + fields[i] + " in " + t.Name);
+
+                        Type propt = prop.PropertyType;
 
                         if (propt.IsArray)
                         {

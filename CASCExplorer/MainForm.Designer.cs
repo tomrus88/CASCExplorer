@@ -62,10 +62,10 @@
             this.dumpInstallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.cDNToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.extractRootFileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.bruteforceNamesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.storageFolderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
-            this.bruteforceNamesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -311,14 +311,14 @@
             // localeFlagsToolStripMenuItem
             // 
             this.localeFlagsToolStripMenuItem.Name = "localeFlagsToolStripMenuItem";
-            this.localeFlagsToolStripMenuItem.Size = new System.Drawing.Size(113, 22);
+            this.localeFlagsToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
             this.localeFlagsToolStripMenuItem.Text = "Locale";
             this.localeFlagsToolStripMenuItem.DropDownItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.localeToolStripMenuItem_DropDownItemClicked);
             // 
             // useLWToolStripMenuItem
             // 
             this.useLWToolStripMenuItem.Name = "useLWToolStripMenuItem";
-            this.useLWToolStripMenuItem.Size = new System.Drawing.Size(113, 22);
+            this.useLWToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
             this.useLWToolStripMenuItem.Text = "Use LW";
             this.useLWToolStripMenuItem.Click += new System.EventHandler(this.contentFlagsToolStripMenuItem_Click);
             // 
@@ -333,7 +333,7 @@
             this.extractRootFileToolStripMenuItem,
             this.bruteforceNamesToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
-            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(48, 20);
+            this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
             // 
             // onlineModeToolStripMenuItem
@@ -377,6 +377,14 @@
             this.extractRootFileToolStripMenuItem.Text = "Extract root file";
             this.extractRootFileToolStripMenuItem.Click += new System.EventHandler(this.extractRootFileToolStripMenuItem_Click);
             // 
+            // bruteforceNamesToolStripMenuItem
+            // 
+            this.bruteforceNamesToolStripMenuItem.Enabled = false;
+            this.bruteforceNamesToolStripMenuItem.Name = "bruteforceNamesToolStripMenuItem";
+            this.bruteforceNamesToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
+            this.bruteforceNamesToolStripMenuItem.Text = "Bruteforce names";
+            this.bruteforceNamesToolStripMenuItem.Click += new System.EventHandler(this.bruteforceNamesToolStripMenuItem_Click);
+            // 
             // helpToolStripMenuItem
             // 
             this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -391,13 +399,6 @@
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.aboutToolStripMenuItem.Text = "About...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
-            // 
-            // bruteforceNamesToolStripMenuItem
-            // 
-            this.bruteforceNamesToolStripMenuItem.Name = "bruteforceNamesToolStripMenuItem";
-            this.bruteforceNamesToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
-            this.bruteforceNamesToolStripMenuItem.Text = "Bruteforce names";
-            this.bruteforceNamesToolStripMenuItem.Click += new System.EventHandler(this.bruteforceNamesToolStripMenuItem_Click);
             // 
             // MainForm
             // 
