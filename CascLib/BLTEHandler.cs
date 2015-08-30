@@ -58,12 +58,9 @@ namespace CASCExplorer
 
             int frameHeaderSize = reader.ReadInt32BE();
             int chunkCount = 0;
-            //int totalSize = 0;
 
             if (frameHeaderSize == 0)
             {
-                //totalSize = size - 8;// - 38;
-
                 chunkCount = 1;
             }
             else
@@ -119,16 +116,16 @@ namespace CASCExplorer
 
                 switch (chunk.Data[0])
                 {
-                    //case 0x45: // E
+                    //case 0x45: // E (or is it C?) (encrypted)
                     //    break;
-                    //case 0x46: // F
+                    //case 0x46: // F (frame, recursive)
                     //    break;
-                    case 0x4E: // N
+                    case 0x4E: // N (not compressed)
                         if (chunk.Data.Length - 1 != chunk.DecompSize)
                             throw new InvalidDataException("Possible error (1) !");
                         stream.Write(chunk.Data, 1, chunk.DecompSize);
                         break;
-                    case 0x5A: // Z
+                    case 0x5A: // Z (zlib compressed)
                         Decompress(stream, chunk.Data);
                         break;
                     default:

@@ -47,12 +47,17 @@ namespace CASCExplorer
             //    br.ReadBytes(16);
             //}
 
+            long chunkStart = stream.Position;
+
             for (int i = 0; i < numEntries; ++i)
             {
                 ushort keysCount;
 
                 while ((keysCount = stream.ReadUInt16()) != 0)
                 {
+                    if (keysCount == 0)
+                        throw new System.Exception("keysCount == 0");
+
                     int fileSize = stream.ReadInt32BE();
                     byte[] md5 = stream.ReadBytes(16);
 
@@ -75,9 +80,15 @@ namespace CASCExplorer
                     EncodingData.Add(md5, entry);
                 }
 
+                // each chunk is 4096 bytes, and zero padding at the end
                 //br.ReadBytes(28);
-                while (stream.PeekByte() == 0)
-                    stream.Skip(1);
+                //while (stream.PeekByte() == 0)
+                //    stream.Skip(1);
+
+                long remaining = 4096 - ((stream.Position - chunkStart) % 4096);
+
+                if (remaining > 0)
+                    stream.Position += remaining;
 
                 if (worker != null)
                 {
