@@ -5,60 +5,26 @@ using System.Linq;
 
 namespace CASCExplorer
 {
-    class CDNConfigEntry
+    class VerBarConfig
     {
-        public string Name { get; private set; }
-        public string Path { get; private set; }
-        public string[] Hosts { get; private set; }
-    }
-
-    class VersionsConfigEntry
-    {
-        public string Region { get; private set; }
-        public string BuildConfig { get; private set; }
-        public string CDNConfig { get; private set; }
-        public string BuildId { get; private set; }
-        public string VersionsName { get; private set; }
-    }
-
-    class BuildInfoEntry
-    {
-        public string Branch { get; private set; }
-        public int Active { get; private set; }
-        public string BuildKey { get; private set; }
-        public string CDNKey { get; private set; }
-        public string InstallKey { get; private set; }
-        public int IMSize { get; private set; }
-        public string CDNPath { get; private set; }
-        public string[] CDNHosts { get; private set; }
-        public string Tags { get; private set; }
-        public string Armadillo { get; private set; }
-        public string LastActivated { get; private set; }
-        public string Version { get; private set; }
-        public string Keyring { get; private set; }
-        public string KeyService { get; private set; }
-    }
-
-    class VerBarConfig<T> where T : new()
-    {
-        private readonly List<T> Data = new List<T>();
+        private readonly List<Dictionary<string, string>> Data = new List<Dictionary<string, string>>();
 
         public int Count { get { return Data.Count; } }
 
-        public T this[int index]
+        public Dictionary<string, string> this[int index]
         {
             get { return Data[index]; }
         }
 
-        public static VerBarConfig<T> ReadVerBarConfig(Stream stream)
+        public static VerBarConfig ReadVerBarConfig(Stream stream)
         {
             using (var sr = new StreamReader(stream))
                 return ReadVerBarConfig(sr);
         }
 
-        public static VerBarConfig<T> ReadVerBarConfig(TextReader reader)
+        public static VerBarConfig ReadVerBarConfig(TextReader reader)
         {
-            var result = new VerBarConfig<T>();
+            var result = new VerBarConfig();
             string line;
 
             int lineNum = 0;
@@ -72,8 +38,6 @@ namespace CASCExplorer
 
                 string[] tokens = line.Split(new char[] { '|' });
 
-                Type t = typeof(T);
-
                 if (lineNum == 0) // keys
                 {
                     fields = new string[tokens.Length];
@@ -85,28 +49,12 @@ namespace CASCExplorer
                 }
                 else // values
                 {
-                    var v = new T();
+                    result.Data.Add(new Dictionary<string, string>());
 
                     for (int i = 0; i < tokens.Length; ++i)
                     {
-                        var prop = t.GetProperty(fields[i]);
-
-                        if (prop == null)
-                            throw new Exception("Unknown field: " + fields[i] + " in " + t.Name);
-
-                        Type propt = prop.PropertyType;
-
-                        if (propt.IsArray)
-                        {
-                            t.GetProperty(fields[i]).SetValue(v, tokens[i].Split(' '));
-                        }
-                        else
-                        {
-                            t.GetProperty(fields[i]).SetValue(v, Convert.ChangeType(tokens[i], propt));
-                        }
+                        result.Data[lineNum - 1].Add(fields[i], tokens[i]);
                     }
-
-                    result.Data.Add(v);
                 }
 
                 lineNum++;
@@ -127,8 +75,6 @@ namespace CASCExplorer
 
         public static KeyValueConfig ReadKeyValueConfig(Stream stream)
         {
-            //using (var sr = new StreamReader(stream))
-            //    return ReadKeyValueConfig(sr);
             var sr = new StreamReader(stream);
             return ReadKeyValueConfig(sr);
         }
@@ -162,9 +108,9 @@ namespace CASCExplorer
 
         List<KeyValueConfig> _Builds;
 
-        VerBarConfig<BuildInfoEntry> _BuildInfo;
-        VerBarConfig<CDNConfigEntry> _CDNData;
-        VerBarConfig<VersionsConfigEntry> _VersionsData;
+        VerBarConfig _BuildInfo;
+        VerBarConfig _CDNData;
+        VerBarConfig _VersionsData;
 
         public string Region { get; private set; }
         public CASCGameType GameType { get; private set; }
@@ -178,19 +124,19 @@ namespace CASCExplorer
 
             using (var cdnsStream = CDNIndexHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/cdns", product)))
             {
-                config._CDNData = VerBarConfig<CDNConfigEntry>.ReadVerBarConfig(cdnsStream);
+                config._CDNData = VerBarConfig.ReadVerBarConfig(cdnsStream);
             }
 
             using (var versionsStream = CDNIndexHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/versions", product)))
             {
-                config._VersionsData = VerBarConfig<VersionsConfigEntry>.ReadVerBarConfig(versionsStream);
+                config._VersionsData = VerBarConfig.ReadVerBarConfig(versionsStream);
             }
 
             int index = 0;
 
             for (int i = 0; i < config._VersionsData.Count; ++i)
             {
-                if (config._VersionsData[i].Region == region)
+                if (config._VersionsData[i]["Region"] == region)
                 {
                     index = i;
                     break;
@@ -199,7 +145,7 @@ namespace CASCExplorer
 
             config.GameType = CASCGame.DetectOnlineGame(product);
 
-            string cdnKey = config._VersionsData[index].CDNConfig;
+            string cdnKey = config._VersionsData[index]["CDNConfig"];
             using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, cdnKey))
             {
                 config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
@@ -236,14 +182,14 @@ namespace CASCExplorer
 
             using (Stream buildInfoStream = new FileStream(buildInfoPath, FileMode.Open))
             {
-                config._BuildInfo = VerBarConfig<BuildInfoEntry>.ReadVerBarConfig(buildInfoStream);
+                config._BuildInfo = VerBarConfig.ReadVerBarConfig(buildInfoStream);
             }
 
-            BuildInfoEntry bi = null;
+            Dictionary<string, string> bi = null;
 
             for (int i = 0; i < config._BuildInfo.Count; ++i)
             {
-                if (config._BuildInfo[i].Active == 1)
+                if (config._BuildInfo[i]["Active"] == "1")
                 {
                     bi = config._BuildInfo[i];
                     break;
@@ -260,14 +206,14 @@ namespace CASCExplorer
 
             config._Builds = new List<KeyValueConfig>();
 
-            string buildKey = bi.BuildKey;
+            string buildKey = bi["BuildKey"];
             string buildCfgPath = Path.Combine(basePath, String.Format("{0}\\config\\", dataFolder), buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
             using (Stream stream = new FileStream(buildCfgPath, FileMode.Open))
             {
                 config._Builds.Add(KeyValueConfig.ReadKeyValueConfig(stream));
             }
 
-            string cdnKey = bi.CDNKey;
+            string cdnKey = bi["CDNKey"];
             string cdnCfgPath = Path.Combine(basePath, String.Format("{0}\\config\\", dataFolder), cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
             using (Stream stream = new FileStream(cdnCfgPath, FileMode.Open))
             {
@@ -323,11 +269,11 @@ namespace CASCExplorer
             {
                 if (OnlineMode)
                 {
-                    return _CDNData[0].Hosts[0]; // use first
+                    return _CDNData[0]["Hosts"].Split(' ')[0]; // use first
                 }
                 else
                 {
-                    return _BuildInfo[0].CDNHosts[0];
+                    return _BuildInfo[0]["CDNHosts"].Split(' ')[0];
                 }
             }
         }
@@ -338,11 +284,11 @@ namespace CASCExplorer
             {
                 if (OnlineMode)
                 {
-                    return _CDNData[0].Path; // use first
+                    return _CDNData[0]["Path"]; // use first
                 }
                 else
                 {
-                    return _BuildInfo[0].CDNPath;
+                    return _BuildInfo[0]["CDNPath"];
                 }
             }
         }
@@ -357,18 +303,16 @@ namespace CASCExplorer
 
                     for (int i = 0; i < _CDNData.Count; ++i)
                     {
-                        if (_CDNData[i].Name == Region)
+                        if (_CDNData[i]["Name"] == Region)
                         {
                             index = i;
                             break;
                         }
                     }
-                    // use first CDN address for now
-                    string cdns = _CDNData[index].Hosts[0];
-                    return String.Format("http://{0}/{1}", cdns, _CDNData[index].Path);
+                    return String.Format("http://{0}/{1}", _CDNData[index]["Hosts"].Split(' ')[0], _CDNData[index]["Path"]);
                 }
                 else
-                    return String.Format("http://{0}{1}", _BuildInfo[0].CDNHosts[0], _BuildInfo[0].CDNPath);
+                    return String.Format("http://{0}{1}", _BuildInfo[0]["CDNHosts"].Split(' ')[0], _BuildInfo[0]["CDNPath"]);
             }
         }
 

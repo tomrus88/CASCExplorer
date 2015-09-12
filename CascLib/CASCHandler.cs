@@ -24,7 +24,7 @@ namespace CASCExplorer
 
         private static readonly Jenkins96 Hasher = new Jenkins96();
 
-        private readonly Dictionary<int, MMStream> DataStreams = new Dictionary<int, MMStream>();
+        private readonly Dictionary<int, Stream> DataStreams = new Dictionary<int, Stream>();
 
         public InstallHandler Install { get { return InstallHandler; } }
         public EncodingHandler Encoding { get { return EncodingHandler; } }
@@ -120,6 +120,8 @@ namespace CASCExplorer
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for install file missing!");
 
+            //ExtractFile(encInfo.Key, ".", "install");
+
             return new MMStream(OpenFile(encInfo.Key));
         }
 
@@ -130,13 +132,15 @@ namespace CASCExplorer
             if (encInfo == null)
                 throw new FileNotFoundException("encoding info for root file missing!");
 
-            //ExtractFile(encInfo.Key, ".", "agent_root");
+            //ExtractFile(encInfo.Key, ".", "root");
 
             return new MMStream(OpenFile(encInfo.Key));
         }
 
         private MMStream OpenEncodingFile()
         {
+            //ExtractFile(Config.EncodingKey, ".", "encoding");
+
             return new MMStream(OpenFile(Config.EncodingKey));
         }
 
@@ -260,9 +264,9 @@ namespace CASCExplorer
                 stream.Value.Close();
         }
 
-        private MMStream GetDataStream(int index)
+        private Stream GetDataStream(int index)
         {
-            MMStream stream;
+            Stream stream;
             if (DataStreams.TryGetValue(index, out stream))
                 return stream;
 
@@ -270,7 +274,8 @@ namespace CASCExplorer
 
             string dataFile = Path.Combine(Config.BasePath, String.Format("{0}\\data\\data.{1:D3}", dataFolder, index));
 
-            stream = new MMStream(dataFile);
+            stream = new FileStream(dataFile, FileMode.Open);
+
             DataStreams[index] = stream;
 
             return stream;

@@ -126,7 +126,7 @@ namespace CASCExplorer
                         stream.Write(chunk.Data, 1, chunk.DecompSize);
                         break;
                     case 0x5A: // Z (zlib compressed)
-                        Decompress(stream, chunk.Data);
+                        Decompress(chunk.Data, stream);
                         break;
                     default:
                         throw new InvalidDataException("Unknown BLTE chunk type!");
@@ -134,8 +134,9 @@ namespace CASCExplorer
             }
         }
 
-        private static void Decompress(Stream outS, byte[] data)
+        private static void Decompress(byte[] data, Stream outS)
         {
+            // skip first 3 bytes (zlib)
             using (var ms = new MemoryStream(data, 3, data.Length - 3))
             using (var dStream = new DeflateStream(ms, CompressionMode.Decompress))
             {

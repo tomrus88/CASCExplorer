@@ -1,5 +1,7 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace CASCExplorer
 {
@@ -13,6 +15,8 @@ namespace CASCExplorer
     {
         private static readonly ByteArrayComparer comparer = new ByteArrayComparer();
         private readonly Dictionary<byte[], EncodingEntry> EncodingData = new Dictionary<byte[], EncodingEntry>(comparer);
+
+        private const int CHUNK_SIZE = 4096;
 
         public int Count
         {
@@ -29,39 +33,38 @@ namespace CASCExplorer
 
             stream.Skip(2); // EN
             byte b1 = stream.ReadByte();
-            byte b2 = stream.ReadByte();
-            byte b3 = stream.ReadByte();
-            ushort s1 = stream.ReadUInt16();
-            ushort s2 = stream.ReadUInt16();
-            int numEntries = stream.ReadInt32BE();
-            int i1 = stream.ReadInt32BE();
+            byte checksumSizeA = stream.ReadByte();
+            byte checksumSizeB = stream.ReadByte();
+            ushort flagsA = stream.ReadUInt16();
+            ushort flagsB = stream.ReadUInt16();
+            int numEntriesA = stream.ReadInt32BE();
+            int numEntriesB = stream.ReadInt32BE();
             byte b4 = stream.ReadByte();
-            int entriesOfs = stream.ReadInt32BE();
+            int stringBlockSize = stream.ReadInt32BE();
 
-            stream.Position += entriesOfs; // skip strings
+            string[] strings = Encoding.ASCII.GetString(stream.ReadBytes(stringBlockSize)).Split(new[] { '\0' }, StringSplitOptions.RemoveEmptyEntries);
 
-            stream.Position += numEntries * 32;
-            //for (int i = 0; i < numEntries; ++i)
-            //{
-            //    br.ReadBytes(16);
-            //    br.ReadBytes(16);
-            //}
+            for (int i = 0; i < numEntriesA; ++i)
+            {
+                byte[] firstHash = stream.ReadBytes(16);
+                byte[] blockHash = stream.ReadBytes(16);
+            }
 
             long chunkStart = stream.Position;
 
-            for (int i = 0; i < numEntries; ++i)
+            for (int i = 0; i < numEntriesA; ++i)
             {
                 ushort keysCount;
 
                 while ((keysCount = stream.ReadUInt16()) != 0)
                 {
                     if (keysCount == 0)
-                        throw new System.Exception("keysCount == 0");
+                        throw new Exception("keysCount == 0");
 
                     int fileSize = stream.ReadInt32BE();
                     byte[] md5 = stream.ReadBytes(16);
 
-                    var entry = new EncodingEntry();
+                    EncodingEntry entry = new EncodingEntry();
                     entry.Size = fileSize;
 
                     // how do we handle multiple keys?
@@ -72,8 +75,8 @@ namespace CASCExplorer
                         // use first key for now
                         if (ki == 0)
                             entry.Key = key;
-                        //else
-                        //    Logger.WriteLine("Multiple encoding keys for MD5 {0}: {1}", md5.ToHexString(), key.ToHexString());
+                        else
+                            Logger.WriteLine("Multiple encoding keys for MD5 {0}: {1}", md5.ToHexString(), key.ToHexString());
                     }
 
                     //Encodings[md5] = entry;
@@ -81,11 +84,7 @@ namespace CASCExplorer
                 }
 
                 // each chunk is 4096 bytes, and zero padding at the end
-                //br.ReadBytes(28);
-                //while (stream.PeekByte() == 0)
-                //    stream.Skip(1);
-
-                long remaining = 4096 - ((stream.Position - chunkStart) % 4096);
+                long remaining = CHUNK_SIZE - ((stream.Position - chunkStart) % CHUNK_SIZE);
 
                 if (remaining > 0)
                     stream.Position += remaining;
@@ -93,15 +92,33 @@ namespace CASCExplorer
                 if (worker != null)
                 {
                     worker.ThrowOnCancel();
-                    worker.ReportProgress((int)((float)i / (float)numEntries * 100));
+                    worker.ReportProgress((int)((float)i / (float)numEntriesA * 100));
                 }
             }
-            //var pos = br.BaseStream.Position;
-            //for (int i = 0; i < i1; ++i)
-            //{
-            //    br.ReadBytes(16);
-            //    br.ReadBytes(16);
-            //}
+
+            for (int i = 0; i < numEntriesB; ++i)
+            {
+                byte[] firstKey = stream.ReadBytes(16);
+                byte[] blockHash = stream.ReadBytes(16);
+            }
+
+            long chunkStart2 = stream.Position;
+
+            for (int i = 0; i < numEntriesB; ++i)
+            {
+                byte[] key = stream.ReadBytes(16);
+                int stringIndex = stream.ReadInt32BE();
+                byte unk1 = stream.ReadByte();
+                int fileSize = stream.ReadInt32BE();
+
+                // each chunk is 4096 bytes, and zero padding at the end
+                long remaining = CHUNK_SIZE - ((stream.Position - chunkStart2) % CHUNK_SIZE);
+
+                if (remaining > 0)
+                    stream.Position += remaining;
+            }
+
+            // string block till the end of file
         }
 
         public EncodingEntry GetEntry(byte[] md5)
