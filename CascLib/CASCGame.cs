@@ -9,7 +9,8 @@ namespace CASCExplorer
         WoW,
         D3,
         S2,
-        Agent
+        Agent,
+        Hearthstone
     }
 
     class CASCGame
@@ -21,6 +22,9 @@ namespace CASCExplorer
 
             if (Directory.Exists(Path.Combine(path, "SC2Data")))
                 return CASCGameType.S2;
+
+            if (Directory.Exists(Path.Combine(path, "Hearthstone_Data")))
+                return CASCGameType.Hearthstone;
 
             if (Directory.Exists(Path.Combine(path, "Data")))
             {
@@ -42,11 +46,14 @@ namespace CASCExplorer
 
         public static CASCGameType DetectOnlineGame(string uid)
         {
-            if (uid == "hero")
+            if (uid == "hero" || uid == "herot")
                 return CASCGameType.HotS;
 
-            if (uid == "sc2" || uid == "s2b")
+            if (uid == "sc2" || uid == "s2b" || uid == "s2t")
                 return CASCGameType.S2;
+
+            if (uid == "hsb")
+                return CASCGameType.Hearthstone;
 
             if (uid.StartsWith("wow"))
                 return CASCGameType.WoW;
@@ -67,6 +74,9 @@ namespace CASCExplorer
 
             if (gameType == CASCGameType.S2)
                 return "SC2Data";
+
+            if (gameType == CASCGameType.Hearthstone)
+                return "Hearthstone_Data";
 
             if (gameType == CASCGameType.WoW || gameType == CASCGameType.D3)
                 return "Data";

@@ -58,9 +58,6 @@ namespace CASCExplorer
 
                 while ((keysCount = stream.ReadUInt16()) != 0)
                 {
-                    if (keysCount == 0)
-                        throw new Exception("keysCount == 0");
-
                     int fileSize = stream.ReadInt32BE();
                     byte[] md5 = stream.ReadBytes(16);
 

@@ -103,6 +103,10 @@ namespace CASCExplorer
                     {
                         RootHandler = new AgentRootHandler(fs, worker);
                     }
+                    else if (config.BuildUID.StartsWith("hsb", StringComparison.OrdinalIgnoreCase))
+                    {
+                        RootHandler = new HSRootHandler(fs, worker);
+                    }
                     else
                     {
                         throw new Exception("Unsupported game " + config.BuildUID);
