@@ -178,6 +178,11 @@ namespace CASCExplorer
         {
             var config = new CASCConfig { OnlineMode = false, BasePath = basePath };
 
+            config.GameType = CASCGame.DetectLocalGame(basePath);
+
+            if (config.GameType == CASCGameType.Agent || config.GameType == CASCGameType.Hearthstone)
+                throw new Exception("Local mode not supported for this game!");
+
             string buildInfoPath = Path.Combine(basePath, ".build.info");
 
             using (Stream buildInfoStream = new FileStream(buildInfoPath, FileMode.Open))
@@ -199,7 +204,6 @@ namespace CASCExplorer
             if (bi == null)
                 throw new Exception("Can't find active BuildInfoEntry");
 
-            config.GameType = CASCGame.DetectLocalGame(basePath);
             string dataFolder = CASCGame.GetDataFolder(config.GameType);
 
             config.ActiveBuild = 0;
