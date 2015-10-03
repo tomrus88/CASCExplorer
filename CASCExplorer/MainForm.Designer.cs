@@ -43,6 +43,9 @@
             this.menuStrip1 = new System.Windows.Forms.MenuStrip();
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openStorageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openOnlineStorageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.woWRetailToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.openLastStorageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.findToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -60,15 +63,12 @@
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.storageFolderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
-            this.openLastStorageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.openOnlineStorageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.fileList = new CASCExplorer.NoFlickerListView();
             this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.woWRetailToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -229,6 +229,28 @@
             this.openStorageToolStripMenuItem.Text = "Open Storage...";
             this.openStorageToolStripMenuItem.Click += new System.EventHandler(this.openStorageToolStripMenuItem_Click);
             // 
+            // openOnlineStorageToolStripMenuItem
+            // 
+            this.openOnlineStorageToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.woWRetailToolStripMenuItem});
+            this.openOnlineStorageToolStripMenuItem.Name = "openOnlineStorageToolStripMenuItem";
+            this.openOnlineStorageToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
+            this.openOnlineStorageToolStripMenuItem.Text = "Open Online Storage";
+            // 
+            // woWRetailToolStripMenuItem
+            // 
+            this.woWRetailToolStripMenuItem.Name = "woWRetailToolStripMenuItem";
+            this.woWRetailToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
+            this.woWRetailToolStripMenuItem.Text = "WoW (Retail)";
+            this.woWRetailToolStripMenuItem.Click += new System.EventHandler(this.woWRetailToolStripMenuItem_Click);
+            // 
+            // openLastStorageToolStripMenuItem
+            // 
+            this.openLastStorageToolStripMenuItem.Name = "openLastStorageToolStripMenuItem";
+            this.openLastStorageToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
+            this.openLastStorageToolStripMenuItem.Text = "Open Last Storage";
+            this.openLastStorageToolStripMenuItem.Click += new System.EventHandler(this.openLastStorageToolStripMenuItem_Click);
+            // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
@@ -331,7 +353,6 @@
             // 
             // bruteforceNamesToolStripMenuItem
             // 
-            this.bruteforceNamesToolStripMenuItem.Enabled = false;
             this.bruteforceNamesToolStripMenuItem.Name = "bruteforceNamesToolStripMenuItem";
             this.bruteforceNamesToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.bruteforceNamesToolStripMenuItem.Text = "Bruteforce names";
@@ -351,21 +372,6 @@
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.aboutToolStripMenuItem.Text = "About...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
-            // 
-            // openLastStorageToolStripMenuItem
-            // 
-            this.openLastStorageToolStripMenuItem.Name = "openLastStorageToolStripMenuItem";
-            this.openLastStorageToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
-            this.openLastStorageToolStripMenuItem.Text = "Open Last Storage";
-            this.openLastStorageToolStripMenuItem.Click += new System.EventHandler(this.openLastStorageToolStripMenuItem_Click);
-            // 
-            // openOnlineStorageToolStripMenuItem
-            // 
-            this.openOnlineStorageToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.woWRetailToolStripMenuItem});
-            this.openOnlineStorageToolStripMenuItem.Name = "openOnlineStorageToolStripMenuItem";
-            this.openOnlineStorageToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
-            this.openOnlineStorageToolStripMenuItem.Text = "Open Online Storage";
             // 
             // fileList
             // 
@@ -419,13 +425,6 @@
             this.columnHeader4.Text = "Size";
             this.columnHeader4.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
             this.columnHeader4.Width = 80;
-            // 
-            // woWRetailToolStripMenuItem
-            // 
-            this.woWRetailToolStripMenuItem.Name = "woWRetailToolStripMenuItem";
-            this.woWRetailToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
-            this.woWRetailToolStripMenuItem.Text = "WoW (Retail)";
-            this.woWRetailToolStripMenuItem.Click += new System.EventHandler(this.woWRetailToolStripMenuItem_Click);
             // 
             // MainForm
             // 

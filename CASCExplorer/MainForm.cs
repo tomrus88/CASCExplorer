@@ -396,8 +396,8 @@ namespace CASCExplorer
 
         private void aboutToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            AboutBox about = new AboutBox();
-            about.ShowDialog();
+            using (AboutBox about = new AboutBox())
+                about.ShowDialog();
         }
 
         private void copyNameToolStripMenuItem_Click(object sender, EventArgs e)
@@ -624,7 +624,7 @@ namespace CASCExplorer
 
         private void openLastStorageToolStripMenuItem_Click(object sender, EventArgs e)
         {
-
+            MessageBox.Show("Not implemented!");
         }
 
         private void woWRetailToolStripMenuItem_Click(object sender, EventArgs e)

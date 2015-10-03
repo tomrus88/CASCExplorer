@@ -1,10 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
-using System.Data;
-using System.Drawing;
-using System.Linq;
-using System.Text;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -13,83 +8,65 @@ namespace CASCExplorer
     public partial class BruteforceForm : Form
     {
         bool running;
-        AsyncAction bgAction;
 
         public BruteforceForm()
         {
             InitializeComponent();
-
-            bgAction = new AsyncAction(() => BruteForce());
-            bgAction.ProgressChanged += A_ProgressChanged;
         }
 
-        private async void button1_Click(object sender, EventArgs e)
+        private void button1_Click(object sender, EventArgs e)
         {
-            try
+            if (!running)
             {
-                running = !running;
-
-                if (running)
+                if (!backgroundWorker1.IsBusy)
                 {
-                    await bgAction.DoAction();
-                    MessageBox.Show("Done!");
-                }
-                else
-                {
-                    bgAction.Cancel();
+                    backgroundWorker1.RunWorkerAsync();
+                    button1.Text = "Stop";
+                    running = true;
                 }
             }
-            catch (AggregateException)
+            else
             {
-                MessageBox.Show("Cancelled!");
-            }
-            catch (OperationCanceledException)
-            {
-                MessageBox.Show("Cancelled!");
-            }
-            catch (Exception exc)
-            {
-                MessageBox.Show("Error during bruteforce:\n" + exc.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                backgroundWorker1.CancelAsync();
+                button1.Text = "Start";
+                running = false;
             }
         }
 
-        private void A_ProgressChanged(object sender, AsyncActionProgressChangedEventArgs e)
+        private void backgroundWorker1_DoWork(object sender, System.ComponentModel.DoWorkEventArgs e)
         {
-            progressBar1.Value = e.Progress;
+            PassEnumerator en = new PassEnumerator("abcdefghijklmnopqrstuvwxyz", 7);
 
-            if (e.UserData != null)
-                label1.Text = (string)e.UserData;
-        }
+            IEnumerable<string> variations = en.Enumerate();
 
-        private void BruteForce()
-        {
-            PassEnumerator e = new PassEnumerator("abcdefghijklmnopqrstuvwxyz", 7);
-
-            IEnumerable<string> variations = e.Enumerate();
-
-            Parallel.ForEach(variations, (s) =>
+            Parallel.ForEach(variations, (val, ps) =>
             {
-                bgAction.ThrowOnCancel();
-
-                int pct = (int)((double)e.Processed / (double)e.TotalCount * 100.0f);
-
-                if (e.Processed % 2000 == 0)
+                if (backgroundWorker1.CancellationPending)
                 {
-                    bgAction.ReportProgress(pct, s);
+                    ps.Stop();
+                    return;
+                }
+
+                int pct = (int)(en.Processed / (double)en.TotalCount * 100.0f);
+
+                if (en.Processed % 2000 == 0)
+                {
+                    backgroundWorker1.ReportProgress(pct, val);
                 }
             });
+        }
 
-            //foreach (var s in variations)
-            //{
-            //    bgAction.ThrowOnCancel();
+        private void backgroundWorker1_RunWorkerCompleted(object sender, System.ComponentModel.RunWorkerCompletedEventArgs e)
+        {
+            MessageBox.Show("Done!");
+        }
 
-            //    int pct = (int)((double)e.Processed / (double)e.TotalCount * 100.0f);
+        private void backgroundWorker1_ProgressChanged(object sender, System.ComponentModel.ProgressChangedEventArgs e)
+        {
+            progressBar1.Value = e.ProgressPercentage;
 
-            //    if (e.Processed % 2000 == 0)
-            //    {
-            //        bgAction.ReportProgress(pct, s);
-            //    }
-            //}
+            if (e.UserState != null)
+                label1.Text = (string)e.UserState;
         }
     }
 }
