@@ -1,13 +1,14 @@
-﻿using System.IO;
+﻿using System.ComponentModel;
+using System.IO;
 using System.Net;
 
 namespace CASCExplorer
 {
     public class SyncDownloader
     {
-        AsyncAction progressReporter;
+        BackgroundWorkerEx progressReporter;
 
-        public SyncDownloader(AsyncAction progressReporter)
+        public SyncDownloader(BackgroundWorkerEx progressReporter)
         {
             this.progressReporter = progressReporter;
         }
@@ -83,7 +84,7 @@ namespace CASCExplorer
             int count;
             do
             {
-                if (progressReporter != null && progressReporter.IsCancellationRequested)
+                if (progressReporter != null && progressReporter.CancellationPending)
                     return;
 
                 count = src.Read(buf, 0, buf.Length);
@@ -91,8 +92,7 @@ namespace CASCExplorer
 
                 done += count;
 
-                if (progressReporter != null)
-                    progressReporter.ReportProgress((int)((float)done / (float)len * 100.0f));
+                progressReporter?.ReportProgress((int)(done / (float)len * 100.0f));
             } while (count > 0);
         }
     }

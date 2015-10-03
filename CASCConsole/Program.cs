@@ -1,8 +1,9 @@
-﻿using System;
+﻿using CASCConsole.Properties;
+using CASCExplorer;
+using System;
+using System.ComponentModel;
 using System.IO;
 using System.Text.RegularExpressions;
-using CASCConsole.Properties;
-using CASCExplorer;
 
 namespace CASCConsole
 {
@@ -25,7 +26,7 @@ namespace CASCConsole
 
             Console.WriteLine("Loading...");
 
-            AsyncAction bgLoader = new AsyncAction(() => { });
+            BackgroundWorkerEx bgLoader = new BackgroundWorkerEx();
             bgLoader.ProgressChanged += BgLoader_ProgressChanged;
             CASCHandler cascHandler = Settings.Default.OnlineMode
                 ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, bgLoader)
@@ -71,14 +72,14 @@ namespace CASCConsole
             Console.WriteLine("Extracted.");
         }
 
-        private static void BgLoader_ProgressChanged(object sender, AsyncActionProgressChangedEventArgs e)
+        private static void BgLoader_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             lock (progressLock)
             {
-                if (e.UserData != null)
-                    Console.WriteLine(e.UserData);
+                if (e.UserState != null)
+                    Console.WriteLine(e.UserState);
 
-                DrawProgressBar(e.Progress, 100, 72, '#');
+                DrawProgressBar(e.ProgressPercentage, 100, 72, '#');
             }
         }
 

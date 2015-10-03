@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Security.Cryptography;
@@ -31,7 +32,7 @@ namespace CASCExplorer
         public RootHandlerBase Root { get { return RootHandler; } }
         public CASCConfig Config { get; private set; }
 
-        private CASCHandler(CASCConfig config, AsyncAction worker)
+        private CASCHandler(CASCConfig config, BackgroundWorkerEx worker)
         {
             this.Config = config;
 
@@ -285,26 +286,26 @@ namespace CASCExplorer
             return stream;
         }
 
-        public static CASCHandler OpenStorage(CASCConfig config, AsyncAction worker = null)
+        public static CASCHandler OpenStorage(CASCConfig config, BackgroundWorkerEx worker = null)
         {
             return Open(worker, config);
         }
 
-        public static CASCHandler OpenLocalStorage(string basePath, AsyncAction worker = null)
+        public static CASCHandler OpenLocalStorage(string basePath, BackgroundWorkerEx worker = null)
         {
             CASCConfig config = CASCConfig.LoadLocalStorageConfig(basePath);
 
             return Open(worker, config);
         }
 
-        public static CASCHandler OpenOnlineStorage(string product, AsyncAction worker = null)
+        public static CASCHandler OpenOnlineStorage(string product, BackgroundWorkerEx worker = null)
         {
             CASCConfig config = CASCConfig.LoadOnlineStorageConfig(product, "us");
 
             return Open(worker, config);
         }
 
-        private static CASCHandler Open(AsyncAction worker, CASCConfig config)
+        private static CASCHandler Open(BackgroundWorkerEx worker, CASCConfig config)
         {
             using (var _ = new PerfCounter("new CASCHandler()"))
             {

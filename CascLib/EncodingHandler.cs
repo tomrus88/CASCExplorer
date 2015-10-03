@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Text;
 
@@ -23,13 +24,9 @@ namespace CASCExplorer
             get { return EncodingData.Count; }
         }
 
-        public EncodingHandler(MMStream stream, AsyncAction worker)
+        public EncodingHandler(MMStream stream, BackgroundWorkerEx worker)
         {
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(0, "Loading \"encoding\"...");
-            }
+            worker?.ReportProgress(0, "Loading \"encoding\"...");
 
             stream.Skip(2); // EN
             byte b1 = stream.ReadByte();
@@ -86,11 +83,7 @@ namespace CASCExplorer
                 if (remaining > 0)
                     stream.Position += remaining;
 
-                if (worker != null)
-                {
-                    worker.ThrowOnCancel();
-                    worker.ReportProgress((int)((float)i / (float)numEntriesA * 100));
-                }
+                worker?.ReportProgress((int)(i / (float)numEntriesA * 100));
             }
 
             for (int i = 0; i < numEntriesB; ++i)

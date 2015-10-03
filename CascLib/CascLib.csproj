@@ -42,6 +42,9 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BackgroundWorkerEx.cs">
+      <SubType>Component</SubType>
+    </Compile>
     <Compile Include="HSRootHandler.cs" />
     <Compile Include="BLTEHandler.cs" />
     <Compile Include="ByteArrayComparer.cs" />

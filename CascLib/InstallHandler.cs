@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Linq;
 
 namespace CASCExplorer
@@ -30,13 +31,9 @@ namespace CASCExplorer
             get { return InstallData.Count; }
         }
 
-        public InstallHandler(MMStream stream, AsyncAction worker)
+        public InstallHandler(MMStream stream, BackgroundWorkerEx worker)
         {
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(0, "Loading \"install\"...");
-            }
+            worker?.ReportProgress(0, "Loading \"install\"...");
 
             stream.ReadBytes(2); // IN
 
@@ -78,11 +75,7 @@ namespace CASCExplorer
                     if (tag.Bits[i])
                         entry.Tags.Add(tag);
 
-                if (worker != null)
-                {
-                    worker.ThrowOnCancel();
-                    worker.ReportProgress((int)((float)i / (float)(numFiles - 1) * 100));
-                }
+                worker?.ReportProgress((int)(i / (float)(numFiles - 1) * 100));
             }
 
             //Print();

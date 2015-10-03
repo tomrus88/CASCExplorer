@@ -1,24 +1,17 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace CASCExplorer
 {
     public class AgentRootHandler : RootHandlerBase
     {
-        public AgentRootHandler(MMStream stream, AsyncAction worker)
+        public AgentRootHandler(MMStream stream, BackgroundWorkerEx worker)
         {
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(0, "Loading \"root\"...");
-            }
+            worker?.ReportProgress(0, "Loading \"root\"...");
 
             var hash = stream.ReadCString(); // what is this for?
 
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(100);
-            }
+            worker?.ReportProgress(100);
         }
 
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
@@ -32,7 +25,7 @@ namespace CASCExplorer
             yield break;
         }
 
-        public override void LoadListFile(string path, AsyncAction worker = null)
+        public override void LoadListFile(string path, BackgroundWorkerEx worker = null)
         {
 
         }

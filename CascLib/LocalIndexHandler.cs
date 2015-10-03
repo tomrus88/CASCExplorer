@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 
@@ -20,7 +21,7 @@ namespace CASCExplorer
 
         }
 
-        public static LocalIndexHandler Initialize(CASCConfig config, AsyncAction worker)
+        public static LocalIndexHandler Initialize(CASCConfig config, BackgroundWorkerEx worker)
         {
             var handler = new LocalIndexHandler();
 
@@ -29,11 +30,7 @@ namespace CASCExplorer
             if (idxFiles.Count == 0)
                 throw new FileNotFoundException("idx files missing!");
 
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(0, "Loading \"local indexes\"...");
-            }
+            worker?.ReportProgress(0, "Loading \"local indexes\"...");
 
             int idxIndex = 0;
 
@@ -41,11 +38,7 @@ namespace CASCExplorer
             {
                 handler.ParseIndex(idx);
 
-                if (worker != null)
-                {
-                    worker.ThrowOnCancel();
-                    worker.ReportProgress((int)((float)++idxIndex / (float)idxFiles.Count * 100));
-                }
+                worker?.ReportProgress((int)(++idxIndex / (float)idxFiles.Count * 100));
             }
 
             Logger.WriteLine("LocalIndexHandler: loaded {0} indexes", handler.Count);
@@ -74,10 +67,10 @@ namespace CASCExplorer
                 {
                     IndexEntry info = new IndexEntry();
                     byte[] key = br.ReadBytes(9);
-                    int indexHigh = br.ReadByte();
+                    byte indexHigh = br.ReadByte();
                     int indexLow = br.ReadInt32BE();
 
-                    info.Index = (int)((byte)(indexHigh << 2) | ((indexLow & 0xC0000000) >> 30));
+                    info.Index = (indexHigh << 2 | (byte)((indexLow & 0xC0000000) >> 30));
                     info.Offset = (indexLow & 0x3FFFFFFF);
                     info.Size = br.ReadInt32();
 
@@ -96,8 +89,8 @@ namespace CASCExplorer
                 //    var bytes = br.ReadBytes(18); // unknown data
                 //}
 
-                if (fs.Position != fs.Position)
-                    throw new Exception("idx file under read");
+                //if (fs.Position != fs.Length)
+                //    throw new Exception("idx file under read");
             }
         }
 

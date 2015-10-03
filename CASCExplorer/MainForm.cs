@@ -1,4 +1,6 @@
-﻿using System;
+﻿using CASCExplorer.Properties;
+using SereniaBLPLib;
+using System;
 using System.Collections.Generic;
 using System.ComponentModel;
 using System.Data;
@@ -6,9 +8,8 @@ using System.Drawing;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Threading.Tasks;
 using System.Windows.Forms;
-using CASCExplorer.Properties;
-using SereniaBLPLib;
 
 namespace CASCExplorer
 {
@@ -19,7 +20,6 @@ namespace CASCExplorer
         private ExtractProgress extractProgress;
         private CASCHandler CASC;
         private CASCFolder Root;
-        private AsyncAction bgAction;
         private AsyncAction getFileExtensionAction;
         private CASCEntrySorter Sorter;
         private NumberFormatInfo sizeNumberFmt = new NumberFormatInfo()
@@ -39,7 +39,7 @@ namespace CASCExplorer
             Application.Exit();
         }
 
-        private async void Form1_Load(object sender, EventArgs e)
+        private void Form1_Load(object sender, EventArgs e)
         {
             iconsList.Images.Add(Resources.folder);
             iconsList.Images.Add(Resources.openFolder);
@@ -72,70 +72,6 @@ namespace CASCExplorer
             useLWToolStripMenuItem.Checked = Settings.Default.ContentFlags == ContentFlags.LowViolence;
 
             Sorter = new CASCEntrySorter();
-
-            bgAction = new AsyncAction(() => LoadData());
-            bgAction.ProgressChanged += new EventHandler<AsyncActionProgressChangedEventArgs>(bgAction_ProgressChanged);
-
-            await LoadStorage();
-        }
-
-        private async System.Threading.Tasks.Task LoadStorage()
-        {
-            if (CASC != null)
-            {
-                CASC.Clear();
-                Sorter.CASC = null;
-            }
-
-            CASC = null;
-
-            Root = null;
-
-            //GC.Collect();
-
-            statusLabel.Text = "Loading...";
-            statusProgress.Visible = true;
-
-            fileList.VirtualListSize = 0;
-
-            //folderTree.Nodes.Clear();
-
-            //cDNToolStripMenuItem.DropDownItems.Clear();
-
-            try
-            {
-                await bgAction.DoAction();
-
-                //var e = CASC.Root.GetAllEntries(0);
-                //var build = CASC.Config.BuildName.ToString();
-                //foreach (var entry in e)
-                //{
-                //    var enc = CASC.Encoding.GetEntry(entry.MD5);
-                //    CASC.ExtractFile(enc.Key, "data\\" + build + "\\rootfiles", entry.MD5.ToHexString());
-                //}
-
-                OnStorageChanged();
-            }
-            catch (OperationCanceledException)
-            {
-                Application.Exit();
-            }
-            catch (Exception exc)
-            {
-                MessageBox.Show("Error during initialization:\n" + exc.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-        }
-
-        private void bgAction_ProgressChanged(object sender, AsyncActionProgressChangedEventArgs progress)
-        {
-            if (bgAction.IsCancellationRequested)
-                return;
-
-            statusProgress.Value = progress.Progress;
-
-            if (progress.UserData != null)
-                statusLabel.Text = progress.UserData as string;
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -166,36 +102,6 @@ namespace CASCExplorer
 
             statusProgress.Visible = false;
             statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.Root.CountSelect - CASC.Root.CountUnknown, CASC.Root.CountUnknown);
-        }
-
-        private void LoadData()
-        {
-            CASCConfig config = Settings.Default.OnlineMode
-                ? CASCConfig.LoadOnlineStorageConfig(Settings.Default.Product, "us")
-                : CASCConfig.LoadLocalStorageConfig(Settings.Default.StoragePath);
-
-            if (Settings.Default.OnlineMode)
-            {
-                SelectBuildForm sb = new SelectBuildForm(config);
-                var result = sb.ShowDialog();
-
-                if (result != DialogResult.OK || sb.SelectedIndex == -1)
-                    throw new Exception("Please select build!");
-
-                config.ActiveBuild = sb.SelectedIndex;
-            }
-
-            CASC = CASCHandler.OpenStorage(config, bgAction);
-
-            CASC.Root.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), bgAction);
-            Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
-
-            if (true)
-            {
-                CASC.Install.MergeData(Root);
-            }
-
-            Sorter.CASC = CASC;
         }
 
         private void treeView1_BeforeSelect(object sender, TreeViewCancelEventArgs e)
@@ -519,11 +425,6 @@ namespace CASCExplorer
             MessageBox.Show("Please restart CASCExplorer to apply changes", "Restart required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
         }
 
-        private void MainForm_FormClosing(object sender, FormClosingEventArgs e)
-        {
-            bgAction.Cancel();
-        }
-
         private void scanFilesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (scanForm == null)
@@ -592,7 +493,7 @@ namespace CASCExplorer
             foreach (var unknownEntry in unknownFolder.Entries)
             {
                 getFileExtensionAction.ThrowOnCancel();
-                getFileExtensionAction.ReportProgress((int)((float)(++numDone) / (float)numTotal * 100));
+                getFileExtensionAction.ReportProgress((int)(++numDone / (float)numTotal * 100.0f));
                 CASCFile unknownFile = unknownEntry.Value as CASCFile;
 
                 string name;
@@ -632,6 +533,7 @@ namespace CASCExplorer
             Settings.Default.Save();
 
             Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
+            CASC.Install.MergeData(Root);
             OnStorageChanged();
         }
 
@@ -649,7 +551,7 @@ namespace CASCExplorer
 
             long size = files.Sum(f => (long)f.GetSize(CASC));
 
-            MessageBox.Show(String.Format(sizeNumberFmt, "{0:N} bytes", size));
+            MessageBox.Show(string.Format(sizeNumberFmt, "{0:N} bytes", size));
         }
 
         private void contentFlagsToolStripMenuItem_Click(object sender, EventArgs e)
@@ -664,10 +566,11 @@ namespace CASCExplorer
             Settings.Default.Save();
 
             Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
+            CASC.Install.MergeData(Root);
             OnStorageChanged();
         }
 
-        private async void openStorageToolStripMenuItem_Click(object sender, EventArgs e)
+        private void openStorageToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (storageFolderBrowserDialog.ShowDialog() != DialogResult.OK)
             {
@@ -683,9 +586,67 @@ namespace CASCExplorer
 
             Settings.Default.OnlineMode = false;
             Settings.Default.StoragePath = storageFolderBrowserDialog.SelectedPath;
-            //Settings.Default.Save();
+            Settings.Default.Save();
 
-            await LoadStorage();
+            Cleanup();
+
+            using (var initForm = new InitForm())
+            {
+                initForm.LoadLocalStorage(storageFolderBrowserDialog.SelectedPath);
+
+                DialogResult res = initForm.ShowDialog();
+
+                if (res != DialogResult.OK)
+                    return;
+
+                CASC = initForm.CASC;
+                Root = initForm.Root;
+            }
+
+            Sorter.CASC = CASC;
+
+            OnStorageChanged();
+        }
+
+        private void Cleanup()
+        {
+            if (CASC != null)
+            {
+                CASC.Clear();
+                CASC = null;
+                Sorter.CASC = null;
+            }
+
+            Root = null;
+
+            fileList.VirtualListSize = 0;
+        }
+
+        private void openLastStorageToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+
+        }
+
+        private void woWRetailToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Cleanup();
+
+            using (var initForm = new InitForm())
+            {
+                initForm.LoadOnlineStorage("wow");
+
+                DialogResult res = initForm.ShowDialog();
+
+                if (res != DialogResult.OK)
+                    return;
+
+                CASC = initForm.CASC;
+                Root = initForm.Root;
+            }
+
+            Sorter.CASC = CASC;
+
+            OnStorageChanged();
         }
 
         private void findToolStripMenuItem_Click(object sender, EventArgs e)
@@ -736,7 +697,11 @@ namespace CASCExplorer
 
         private async void dumpInstallToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            AsyncAction action = new AsyncAction(() =>
+            try
+            {
+                dumpInstallToolStripMenuItem.Enabled = false;
+
+                await Task.Run(() =>
                 {
                     var installFiles = CASC.Install.GetEntries("Windows");
                     var build = CASC.Config.BuildName;
@@ -746,11 +711,6 @@ namespace CASCExplorer
                         CASC.ExtractFile(CASC.Encoding.GetEntry(file.MD5).Key, "data\\" + build + "\\install_files", file.Name);
                     }
                 });
-
-            try
-            {
-                dumpInstallToolStripMenuItem.Enabled = false;
-                await action.DoAction();
             }
             catch (Exception exc)
             {

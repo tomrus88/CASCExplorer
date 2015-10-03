@@ -18,7 +18,7 @@ namespace CASCExplorer
 
         public abstract IEnumerable<RootEntry> GetEntries(ulong hash);
 
-        public abstract void LoadListFile(string path, AsyncAction worker = null);
+        public abstract void LoadListFile(string path, BackgroundWorkerEx worker = null);
 
         public abstract void Clear();
 

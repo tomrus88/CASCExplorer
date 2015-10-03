@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Net;
 
@@ -11,7 +12,7 @@ namespace CASCExplorer
         private readonly Dictionary<byte[], IndexEntry> CDNIndexData = new Dictionary<byte[], IndexEntry>(comparer);
 
         private CASCConfig CASCConfig;
-        private AsyncAction worker;
+        private BackgroundWorkerEx worker;
         private SyncDownloader downloader;
         public static CDNCache Cache = new CDNCache("cache");
 
@@ -20,22 +21,18 @@ namespace CASCExplorer
             get { return CDNIndexData.Count; }
         }
 
-        private CDNIndexHandler(CASCConfig cascConfig, AsyncAction worker)
+        private CDNIndexHandler(CASCConfig cascConfig, BackgroundWorkerEx worker)
         {
             CASCConfig = cascConfig;
             this.worker = worker;
             downloader = new SyncDownloader(worker);
         }
 
-        public static CDNIndexHandler Initialize(CASCConfig config, AsyncAction worker)
+        public static CDNIndexHandler Initialize(CASCConfig config, BackgroundWorkerEx worker)
         {
             var handler = new CDNIndexHandler(config, worker);
 
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(0, "Loading \"CDN indexes\"...");
-            }
+            worker?.ReportProgress(0, "Loading \"CDN indexes\"...");
 
             for (int i = 0; i < config.Archives.Count; i++)
             {
@@ -46,11 +43,7 @@ namespace CASCExplorer
                 else
                     handler.OpenIndexFile(archive, i);
 
-                if (worker != null)
-                {
-                    worker.ThrowOnCancel();
-                    worker.ReportProgress((int)((float)i / (float)(config.Archives.Count - 1) * 100.0f));
-                }
+                worker?.ReportProgress((int)(i / (float)(config.Archives.Count - 1) * 100.0f));
             }
 
             return handler;
@@ -117,7 +110,7 @@ namespace CASCExplorer
             try
             {
                 string dataFolder = CASCGame.GetDataFolder(CASCConfig.GameType);
-                string indexPath = String.Format("{0}\\indices\\", dataFolder);
+                string indexPath = string.Format("{0}\\indices\\", dataFolder);
 
                 string path = Path.Combine(CASCConfig.BasePath, indexPath, archive + ".index");
 
@@ -153,13 +146,9 @@ namespace CASCExplorer
 
         public Stream OpenDataFileDirect(byte[] key)
         {
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(0, "Downloading file...");
-            }
-
             var keyStr = key.ToHexString().ToLower();
+
+            worker?.ReportProgress(0, string.Format("Downloading {0} file...", keyStr));
 
             string file = CASCConfig.CDNPath + "/data/" + keyStr.Substring(0, 2) + "/" + keyStr.Substring(2, 2) + "/" + keyStr;
             string url = "http://" + CASCConfig.CDNHost + "/" + file;

@@ -1,24 +1,17 @@
 ﻿using System.Collections.Generic;
+using System.ComponentModel;
 
 namespace CASCExplorer
 {
     public class HSRootHandler : RootHandlerBase
     {
-        public HSRootHandler(MMStream stream, AsyncAction worker)
+        public HSRootHandler(MMStream stream, BackgroundWorkerEx worker)
         {
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(0, "Loading \"root\"...");
-            }
+            worker?.ReportProgress(0, "Loading \"root\"...");
 
             // Hearthstone root file happened to be game executable! Just ignore it.
 
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(100);
-            }
+            worker?.ReportProgress(100);
         }
 
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
@@ -32,7 +25,7 @@ namespace CASCExplorer
             yield break;
         }
 
-        public override void LoadListFile(string path, AsyncAction worker = null)
+        public override void LoadListFile(string path, BackgroundWorkerEx worker = null)
         {
 
         }

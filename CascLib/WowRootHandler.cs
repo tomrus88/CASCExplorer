@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 
@@ -68,13 +69,9 @@ namespace CASCExplorer
         public override int Count { get { return RootData.Count; } }
         public override int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
 
-        public WowRootHandler(MMStream stream, AsyncAction worker)
+        public WowRootHandler(MMStream stream, BackgroundWorkerEx worker)
         {
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(0, "Loading \"root\"...");
-            }
+            worker?.ReportProgress(0, "Loading \"root\"...");
 
             while (stream.Position < stream.Length)
             {
@@ -132,11 +129,7 @@ namespace CASCExplorer
                     FileDataStore.Add(entries[i].FileDataId, hash);
                 }
 
-                if (worker != null)
-                {
-                    worker.ThrowOnCancel();
-                    worker.ReportProgress((int)((float)stream.Position / (float)stream.Length * 100));
-                }
+                worker?.ReportProgress((int)(stream.Position / (float)stream.Length * 100));
             }
         }
 
@@ -188,15 +181,11 @@ namespace CASCExplorer
                 yield return entry;
         }
 
-        private bool LoadPreHashedListFile(string pathbin, string pathtext, AsyncAction worker = null)
+        private bool LoadPreHashedListFile(string pathbin, string pathtext, BackgroundWorkerEx worker = null)
         {
             using (var _ = new PerfCounter("WowRootHandler::LoadPreHashedListFile()"))
             {
-                if (worker != null)
-                {
-                    worker.ThrowOnCancel();
-                    worker.ReportProgress(0, "Loading \"listfile\"...");
-                }
+                worker?.ReportProgress(0, "Loading \"listfile\"...");
 
                 if (!File.Exists(pathbin))
                     return false;
@@ -237,11 +226,7 @@ namespace CASCExplorer
                             CASCFile.FileNames[fileHash] = fileNameFull;
                         }
 
-                        if (worker != null)
-                        {
-                            worker.ThrowOnCancel();
-                            worker.ReportProgress((int)((float)br.BaseStream.Position / (float)br.BaseStream.Length * 100));
-                        }
+                        worker?.ReportProgress((int)(br.BaseStream.Position / (float)br.BaseStream.Length * 100));
                     }
 
                     Logger.WriteLine("WowRootHandler: loaded {0} valid file names", CASCFile.FileNames.Count);
@@ -251,18 +236,14 @@ namespace CASCExplorer
             return true;
         }
 
-        public override void LoadListFile(string path, AsyncAction worker = null)
+        public override void LoadListFile(string path, BackgroundWorkerEx worker = null)
         {
             if (LoadPreHashedListFile("listfile.bin", path, worker))
                 return;
 
             using (var _ = new PerfCounter("WowRootHandler::LoadListFile()"))
             {
-                if (worker != null)
-                {
-                    worker.ThrowOnCancel();
-                    worker.ReportProgress(0, "Loading \"listfile\"...");
-                }
+                worker?.ReportProgress(0, "Loading \"listfile\"...");
 
                 if (!File.Exists(path))
                     throw new FileNotFoundException("list file missing!");
@@ -307,11 +288,7 @@ namespace CASCExplorer
                         else
                             dirData[""][fileHash] = file;
 
-                        if (worker != null)
-                        {
-                            worker.ThrowOnCancel();
-                            worker.ReportProgress((int)((float)sr.BaseStream.Position / (float)sr.BaseStream.Length * 100));
-                        }
+                        worker?.ReportProgress((int)(sr.BaseStream.Position / (float)sr.BaseStream.Length * 100));
                     }
 
                     bw.Write(dirData.Count); // count of dirs

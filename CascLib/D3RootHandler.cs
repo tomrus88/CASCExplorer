@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
@@ -48,13 +49,9 @@ namespace CASCExplorer
         public override int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
         public override ContentFlags Content { get { return ContentFlags.None; } }
 
-        public D3RootHandler(MMStream stream, AsyncAction worker, CASCHandler casc)
+        public D3RootHandler(MMStream stream, BackgroundWorkerEx worker, CASCHandler casc)
         {
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(0, "Loading \"root\"...");
-            }
+            worker?.ReportProgress(0, "Loading \"root\"...");
 
             byte b1 = stream.ReadByte();
             byte b2 = stream.ReadByte();
@@ -102,11 +99,7 @@ namespace CASCExplorer
                     }
                 }
 
-                if (worker != null)
-                {
-                    worker.ThrowOnCancel();
-                    worker.ReportProgress((int)((float)++j / (float)(count + 2) * 100));
-                }
+                worker?.ReportProgress((int)(++j / (float)(count + 2) * 100));
             }
 
             // Parse CoreTOC.dat
@@ -117,11 +110,7 @@ namespace CASCExplorer
             using (var file = casc.OpenFile(enc1.Key))
                 tocParser = new CoreTOCParser(file);
 
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress((int)((float)++count / (float)(count + 2) * 100));
-            }
+            worker?.ReportProgress((int)(++count / (float)(count + 2) * 100));
 
             // Parse Packages.dat
             var pkgEntry = D3RootData["Base"].Find(e => e.Name == "Data_D3\\PC\\Misc\\Packages.dat");
@@ -131,11 +120,7 @@ namespace CASCExplorer
             using (var file = casc.OpenFile(enc2.Key))
                 pkgParser = new PackagesParser(file);
 
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress((int)((float)++count / (float)(count + 2) * 100));
-            }
+            worker?.ReportProgress((int)(++count / (float)(count + 2) * 100));
         }
 
         public override void Clear()
@@ -225,13 +210,9 @@ namespace CASCExplorer
             RootData.Add(fileHash, entry);
         }
 
-        public override void LoadListFile(string path, AsyncAction worker = null)
+        public override void LoadListFile(string path, BackgroundWorkerEx worker = null)
         {
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(0, "Loading \"listfile\"...");
-            }
+            worker?.ReportProgress(0, "Loading \"listfile\"...");
 
             Logger.WriteLine("D3RootHandler: loading file names...");
 
@@ -245,11 +226,7 @@ namespace CASCExplorer
                 {
                     AddFile(kv.Key, e);
 
-                    if (worker != null)
-                    {
-                        worker.ThrowOnCancel();
-                        worker.ReportProgress((int)((float)i++ / (float)numFiles * 100.0f));
-                    }
+                    worker?.ReportProgress((int)(i++ / (float)numFiles * 100.0f));
                 }
             }
 

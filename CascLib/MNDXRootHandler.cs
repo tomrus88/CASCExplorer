@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.ComponentModel;
 using System.Diagnostics;
 using System.Runtime.InteropServices;
 using System.Text;
@@ -97,13 +98,9 @@ namespace CASCExplorer
         public override ContentFlags Content { get { return ContentFlags.None; } }
         public int PackagesCount { get { return MarFiles[0].NumFiles; } }
 
-        public MNDXRootHandler(MMStream stream, AsyncAction worker)
+        public MNDXRootHandler(MMStream stream, BackgroundWorkerEx worker)
         {
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(0, "Loading \"root\"...");
-            }
+            worker?.ReportProgress(0, "Loading \"root\"...");
 
             var header = stream.Read<MNDXHeader>();
 
@@ -218,6 +215,8 @@ namespace CASCExplorer
             //        mndxRootEntriesValid[j] = mndxRootEntries[i];
             //    }
             //}
+
+            worker?.ReportProgress(100);
         }
 
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
@@ -319,13 +318,9 @@ namespace CASCExplorer
             throw new Exception("File not found!");
         }
 
-        public override void LoadListFile(string path, AsyncAction worker = null)
+        public override void LoadListFile(string path, BackgroundWorkerEx worker = null)
         {
-            if (worker != null)
-            {
-                worker.ThrowOnCancel();
-                worker.ReportProgress(0, "Loading \"listfile\"...");
-            }
+            worker?.ReportProgress(0, "Loading \"listfile\"...");
 
             Logger.WriteLine("MNDXRootHandler: loading file names...");
 
@@ -399,11 +394,7 @@ namespace CASCExplorer
 
                 //Console.WriteLine("{0:X8} - {1:X8} - {2} - {3}", result2.FileNameIndex, root.Flags, root.EncodingKey.ToHexString(), file);
 
-                if (worker != null)
-                {
-                    worker.ThrowOnCancel();
-                    worker.ReportProgress((int)((float)i++ / (float)MarFiles[2].NumFiles * 100.0f));
-                }
+                worker?.ReportProgress((int)(i++ / (float)MarFiles[2].NumFiles * 100.0f));
             }
 
             //var sorted = data.OrderBy(e => e.Key);
