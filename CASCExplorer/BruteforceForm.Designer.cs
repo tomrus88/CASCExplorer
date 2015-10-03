@@ -86,6 +86,7 @@
             this.Controls.Add(this.progressBar1);
             this.Name = "BruteforceForm";
             this.Text = "BruteforceForm";
+            this.FormClosing += new System.Windows.Forms.FormClosingEventHandler(this.BruteforceForm_FormClosing);
             this.ResumeLayout(false);
             this.PerformLayout();
 

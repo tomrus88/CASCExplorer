@@ -68,5 +68,10 @@ namespace CASCExplorer
             if (e.UserState != null)
                 label1.Text = (string)e.UserState;
         }
+
+        private void BruteforceForm_FormClosing(object sender, FormClosingEventArgs e)
+        {
+            backgroundWorker1.CancelAsync();
+        }
     }
 }

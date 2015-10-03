@@ -20,7 +20,6 @@ namespace CASCExplorer
         private ExtractProgress extractProgress;
         private CASCHandler CASC;
         private CASCFolder Root;
-        private AsyncAction getFileExtensionAction;
         private CASCEntrySorter Sorter;
         private NumberFormatInfo sizeNumberFmt = new NumberFormatInfo()
         {
@@ -441,20 +440,14 @@ namespace CASCExplorer
             statusProgress.Value = 0;
             statusProgress.Visible = true;
             statusLabel.Text = "Processing...";
-            getFileExtensionAction = new AsyncAction(() => GetUnknownFileExtensions());
-            getFileExtensionAction.ProgressChanged += new EventHandler<AsyncActionProgressChangedEventArgs>(getFileExtensionAction_ProgressChanged);
 
             try
             {
-                await getFileExtensionAction.DoAction();
+                await Task.Run(() => GetUnknownFileExtensions());
 
                 statusProgress.Value = 0;
                 statusProgress.Visible = false;
                 statusLabel.Text = "All unknown files processed.";
-            }
-            catch (OperationCanceledException)
-            {
-
             }
             catch (Exception exc)
             {
@@ -492,9 +485,9 @@ namespace CASCExplorer
 
             foreach (var unknownEntry in unknownFolder.Entries)
             {
-                getFileExtensionAction.ThrowOnCancel();
-                getFileExtensionAction.ReportProgress((int)(++numDone / (float)numTotal * 100.0f));
                 CASCFile unknownFile = unknownEntry.Value as CASCFile;
+
+                Invoke((MethodInvoker)(() => statusProgress.Value = (int)(++numDone / (float)numTotal * 100.0f)));
 
                 string name;
                 if (idToName.TryGetValue(CASC.Root.GetEntries(unknownFile.Hash).First().FileDataId, out name))
@@ -507,12 +500,6 @@ namespace CASCExplorer
             }
 
             CASC.Root.Dump();
-        }
-
-        private void getFileExtensionAction_ProgressChanged(object sender, AsyncActionProgressChangedEventArgs e)
-        {
-            statusProgress.Value = e.Progress;
-            statusLabel.Text = "Processing...";
         }
 
         private void localeToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
@@ -740,8 +727,8 @@ namespace CASCExplorer
 
         private void bruteforceNamesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            BruteforceForm bf = new BruteforceForm();
-            bf.Show();
+            using (BruteforceForm bf = new BruteforceForm())
+                bf.ShowDialog();
         }
     }
 }
