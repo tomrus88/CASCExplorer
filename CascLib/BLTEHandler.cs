@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Security.Cryptography;
@@ -23,14 +22,14 @@ namespace CASCExplorer
 
         public BLTEHandler(Stream stream, int _size)
         {
-            this.reader = new BinaryReader(stream, Encoding.ASCII, true);
-            this.size = _size;
+            reader = new BinaryReader(stream, Encoding.ASCII, true);
+            size = _size;
         }
 
         public void ExtractToFile(string path, string name)
         {
-            var fullPath = Path.Combine(path, name);
-            var dir = Path.GetDirectoryName(fullPath);
+            string fullPath = Path.Combine(path, name);
+            string dir = Path.GetDirectoryName(fullPath);
 
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
@@ -79,11 +78,12 @@ namespace CASCExplorer
             if (chunkCount < 0)
                 throw new InvalidDataException(String.Format("Possible error ({0}) at offset: 0x" + reader.BaseStream.Position.ToString("X"), chunkCount));
 
-            var chunks = new List<BLTEChunk>(chunkCount);
+            BLTEChunk[] chunks = new BLTEChunk[chunkCount];
 
             for (int i = 0; i < chunkCount; ++i)
             {
-                var chunk = new BLTEChunk();
+                BLTEChunk chunk = new BLTEChunk();
+
                 if (frameHeaderSize != 0)
                 {
                     chunk.CompSize = reader.ReadInt32BE();
@@ -96,7 +96,8 @@ namespace CASCExplorer
                     chunk.DecompSize = size - 8 - 1;
                     chunk.Hash = null;
                 }
-                chunks.Add(chunk);
+
+                chunks[i] = chunk;
             }
 
             foreach (var chunk in chunks)
@@ -106,7 +107,7 @@ namespace CASCExplorer
                 if (chunk.Data.Length != chunk.CompSize)
                     throw new Exception("chunks[i].data.Length != chunks[i].compSize");
 
-                if (frameHeaderSize != 0)
+                if (chunk.Hash != null)
                 {
                     byte[] hh = md5.ComputeHash(chunk.Data);
 
@@ -143,16 +144,6 @@ namespace CASCExplorer
                 dStream.CopyTo(outS);
             }
         }
-
-        //private static void Copy(Stream input, Stream output, int count)
-        //{
-        //    byte[] buffer = new byte[32768];
-        //    int read;
-        //    while ((read = input.Read(buffer, 0, buffer.Length)) > 0)
-        //    {
-        //        output.Write(buffer, 0, read);
-        //    }
-        //}
 
         public void Dispose()
         {
