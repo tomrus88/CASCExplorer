@@ -725,7 +725,6 @@ namespace CASCExplorer
                 });
 
                 statusLabel.Text = "All install files has been extracted.";
-                MessageBox.Show("Install files saved!", "CASCExplorer", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception exc)
             {
