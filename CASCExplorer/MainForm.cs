@@ -82,9 +82,8 @@ namespace CASCExplorer
         {
             folderTree.Nodes.Clear();
 
-            TreeNode node = folderTree.Nodes.Add("Root [Read only]");
-            node.Tag = Root;
-            node.Name = Root.Name;
+            TreeNode node = new TreeNode() { Name = Root.Name, Tag = Root, Text = "Root [Read only]" };
+            folderTree.Nodes.Add(node);
             node.Nodes.Add(new TreeNode() { Name = "tempnode" }); // add dummy node
             node.Expand();
             folderTree.SelectedNode = node;
@@ -100,7 +99,7 @@ namespace CASCExplorer
             }
 
             statusProgress.Visible = false;
-            statusLabel.Text = String.Format("Loaded {0} files ({1} names missing)", CASC.Root.CountSelect - CASC.Root.CountUnknown, CASC.Root.CountUnknown);
+            statusLabel.Text = string.Format("Loaded {0} files ({1} names missing)", CASC.Root.CountSelect - CASC.Root.CountUnknown, CASC.Root.CountUnknown);
         }
 
         private void treeView1_BeforeSelect(object sender, TreeViewCancelEventArgs e)
@@ -237,9 +236,8 @@ namespace CASCExplorer
                 localeFlags.ToString(),
                 contentFlags.ToString(),
                 size
-            });
+            }) { ImageIndex = entry is CASCFolder ? 0 : 2 };
 
-            item.ImageIndex = entry is CASCFolder ? 0 : 2;
             e.Item = item;
         }
 
@@ -426,6 +424,9 @@ namespace CASCExplorer
 
         private void scanFilesToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (CASC == null || Root == null)
+                return;
+
             if (scanForm == null)
             {
                 scanForm = new ScanForm();
@@ -437,73 +438,83 @@ namespace CASCExplorer
 
         private async void analyseUnknownFilesToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            statusProgress.Value = 0;
-            statusProgress.Visible = true;
-            statusLabel.Text = "Processing...";
-
             try
             {
-                await Task.Run(() => GetUnknownFileExtensions());
-
                 statusProgress.Value = 0;
-                statusProgress.Visible = false;
-                statusLabel.Text = "All unknown files processed.";
+                statusProgress.Visible = true;
+                analyseUnknownFilesToolStripMenuItem.Enabled = false;
+
+                statusLabel.Text = "Analysing...";
+
+                IProgress<int> progress = new Progress<int>((p) => statusProgress.Value = p);
+
+                await Task.Run(() =>
+                {
+                    FileScanner scanner = new FileScanner(CASC, Root);
+
+                    Dictionary<int, string> idToName = new Dictionary<int, string>();
+
+                    using (Stream stream = CASC.OpenFile("DBFilesClient\\SoundEntries.db2"))
+                    {
+                        DB2Reader se = new DB2Reader(stream);
+
+                        foreach (var row in se)
+                        {
+                            string name = row.Value.GetField<string>(2);
+
+                            int type = row.Value.GetField<int>(1);
+
+                            bool many = row.Value.GetField<int>(4) > 0;
+
+                            for (int i = 3; i < 23; i++)
+                                idToName[row.Value.GetField<int>(i)] = "unknown\\sound\\" + name + (many ? "_" + (i - 2).ToString("D2") : "") + (type == 28 ? ".mp3" : ".ogg");
+                        }
+                    }
+
+                    CASCFolder unknownFolder = Root.GetEntry("unknown") as CASCFolder;
+                    int numTotal = unknownFolder.Entries.Count;
+                    int numDone = 0;
+
+                    foreach (var unknownEntry in unknownFolder.Entries)
+                    {
+                        CASCFile unknownFile = unknownEntry.Value as CASCFile;
+
+                        string name;
+                        if (idToName.TryGetValue(CASC.Root.GetEntries(unknownFile.Hash).First().FileDataId, out name))
+                            unknownFile.FullName = name;
+                        else
+                        {
+                            string ext = scanner.GetFileExtension(unknownFile);
+                            unknownFile.FullName += ext;
+                        }
+
+                        progress.Report((int)(++numDone / (float)numTotal * 100.0f));
+
+                    }
+
+                    CASC.Root.Dump();
+                });
+
+                statusLabel.Text = "All unknown files has been analyzed.";
             }
             catch (Exception exc)
             {
+                statusLabel.Text = "Failed to analyze unknown files.";
                 MessageBox.Show("Error during analysis of unknown files:\n" + exc.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
             }
-        }
-
-        private void GetUnknownFileExtensions()
-        {
-            FileScanner scanner = new FileScanner(CASC, Root);
-
-            Dictionary<int, string> idToName = new Dictionary<int, string>();
-
-            using (Stream stream = CASC.OpenFile("DBFilesClient\\SoundEntries.db2"))
+            finally
             {
-                DB2Reader se = new DB2Reader(stream);
-
-                foreach (var row in se)
-                {
-                    string name = row.Value.GetField<string>(2);
-
-                    int type = row.Value.GetField<int>(1);
-
-                    bool many = row.Value.GetField<int>(4) > 0;
-
-                    for (int i = 3; i < 23; i++)
-                        idToName[row.Value.GetField<int>(i)] = "unknown\\sound\\" + name + (many ? "_" + (i - 2).ToString("D2") : "") + (type == 28 ? ".mp3" : ".ogg");
-                }
+                statusProgress.Value = 0;
+                statusProgress.Visible = false;
+                analyseUnknownFilesToolStripMenuItem.Enabled = true;
             }
-
-            CASCFolder unknownFolder = Root.GetEntry("unknown") as CASCFolder;
-            int numTotal = unknownFolder.Entries.Count;
-            int numDone = 0;
-
-            foreach (var unknownEntry in unknownFolder.Entries)
-            {
-                CASCFile unknownFile = unknownEntry.Value as CASCFile;
-
-                Invoke((MethodInvoker)(() => statusProgress.Value = (int)(++numDone / (float)numTotal * 100.0f)));
-
-                string name;
-                if (idToName.TryGetValue(CASC.Root.GetEntries(unknownFile.Hash).First().FileDataId, out name))
-                    unknownFile.FullName = name;
-                else
-                {
-                    string ext = scanner.GetFileExtension(unknownFile);
-                    unknownFile.FullName += ext;
-                }
-            }
-
-            CASC.Root.Dump();
         }
 
         private void localeToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
+            if (CASC == null)
+                return;
+
             var item = e.ClickedItem as ToolStripMenuItem;
 
             var parent = (sender as ToolStripMenuItem);
@@ -543,6 +554,9 @@ namespace CASCExplorer
 
         private void contentFlagsToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (CASC == null)
+                return;
+
             useLWToolStripMenuItem.Checked = !useLWToolStripMenuItem.Checked;
 
             if (useLWToolStripMenuItem.Checked)
@@ -595,20 +609,6 @@ namespace CASCExplorer
             OnStorageChanged();
         }
 
-        private void Cleanup()
-        {
-            if (CASC != null)
-            {
-                CASC.Clear();
-                CASC = null;
-                Sorter.CASC = null;
-            }
-
-            Root = null;
-
-            fileList.VirtualListSize = 0;
-        }
-
         private void openLastStorageToolStripMenuItem_Click(object sender, EventArgs e)
         {
             MessageBox.Show("Not implemented!");
@@ -634,6 +634,20 @@ namespace CASCExplorer
             Sorter.CASC = CASC;
 
             OnStorageChanged();
+        }
+
+        private void Cleanup()
+        {
+            if (CASC != null)
+            {
+                CASC.Clear();
+                CASC = null;
+                Sorter.CASC = null;
+            }
+
+            Root = null;
+
+            fileList.VirtualListSize = 0;
         }
 
         private void findToolStripMenuItem_Click(object sender, EventArgs e)
@@ -686,32 +700,51 @@ namespace CASCExplorer
         {
             try
             {
+                statusProgress.Value = 0;
+                statusProgress.Visible = true;
                 dumpInstallToolStripMenuItem.Enabled = false;
+
+                statusLabel.Text = "Extracting...";
+
+                IProgress<int> progress = new Progress<int>((p) => statusProgress.Value = p);
 
                 await Task.Run(() =>
                 {
                     var installFiles = CASC.Install.GetEntries("Windows");
                     var build = CASC.Config.BuildName;
 
+                    int numFiles = installFiles.Count();
+                    int numDone = 0;
+
                     foreach (var file in installFiles)
                     {
                         CASC.ExtractFile(CASC.Encoding.GetEntry(file.MD5).Key, "data\\" + build + "\\install_files", file.Name);
+
+                        progress.Report((int)(++numDone / (float)numFiles * 100.0f));
                     }
                 });
+
+                statusLabel.Text = "All install files has been extracted.";
+                MessageBox.Show("Install files saved!", "CASCExplorer", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
             catch (Exception exc)
             {
-                MessageBox.Show(exc.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                statusLabel.Text = "Failed to extract install files.";
+                MessageBox.Show("Error during extraction of install files:\n" + exc.Message, "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
             }
             finally
             {
+                statusProgress.Value = 0;
+                statusProgress.Visible = false;
                 dumpInstallToolStripMenuItem.Enabled = true;
-                MessageBox.Show("Install files saved!", "CASCExplorer", MessageBoxButtons.OK, MessageBoxIcon.Information);
             }
         }
 
         private void extractRootFileToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (CASC == null)
+                return;
+
             var encInfo = CASC.Encoding.GetEntry(CASC.Config.RootMD5);
 
             if (encInfo == null)
