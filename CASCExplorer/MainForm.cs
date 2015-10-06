@@ -236,7 +236,8 @@ namespace CASCExplorer
                 localeFlags.ToString(),
                 contentFlags.ToString(),
                 size
-            }) { ImageIndex = entry is CASCFolder ? 0 : 2 };
+            })
+            { ImageIndex = entry is CASCFolder ? 0 : 2 };
 
             e.Item = item;
         }
@@ -744,17 +745,18 @@ namespace CASCExplorer
             if (CASC == null)
                 return;
 
-            var encInfo = CASC.Encoding.GetEntry(CASC.Config.RootMD5);
-
-            if (encInfo == null)
+            var files = new Dictionary<string, byte[]>()
             {
-                MessageBox.Show("Encoding info for root file missing!");
-                return;
-            }
+                { "root", CASC.Encoding.GetEntry(CASC.Config.RootMD5).Key },
+                { "install", CASC.Encoding.GetEntry(CASC.Config.InstallMD5).Key },
+                { "encoding", CASC.Config.EncodingKey },
+                { "download", CASC.Encoding.GetEntry(CASC.Config.DownloadMD5).Key }
+            };
 
-            using (var s = CASC.OpenFile(encInfo.Key))
-            using (var fs = new FileStream("root", FileMode.Create))
-                s.CopyTo(fs);
+            foreach (var file in files)
+            {
+                CASC.ExtractFile(file.Value, ".", file.Key);
+            }
         }
 
         private void bruteforceNamesToolStripMenuItem_Click(object sender, EventArgs e)

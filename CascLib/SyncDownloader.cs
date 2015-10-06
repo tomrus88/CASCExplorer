@@ -92,7 +92,7 @@ namespace CASCExplorer
 
                 done += count;
 
-                progressReporter?.ReportProgress((int)(done / (float)len * 100.0f));
+                progressReporter?.ReportProgress((int)(done / (float)len * 100));
             } while (count > 0);
         }
     }

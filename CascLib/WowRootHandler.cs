@@ -226,7 +226,7 @@ namespace CASCExplorer
                             CASCFile.FileNames[fileHash] = fileNameFull;
                         }
 
-                        worker?.ReportProgress((int)(br.BaseStream.Position / (float)br.BaseStream.Length * 100));
+                        worker?.ReportProgress((int)(fs.Position / (float)fs.Length * 100));
                     }
 
                     Logger.WriteLine("WowRootHandler: loaded {0} valid file names", CASCFile.FileNames.Count);

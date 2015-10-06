@@ -19,6 +19,7 @@ namespace CASCExplorer
 
         private InstallHandler InstallHandler;
         private EncodingHandler EncodingHandler;
+        private DownloadHandler DownloadHandler;
         private RootHandlerBase RootHandler;
 
         private static readonly Jenkins96 Hasher = new Jenkins96();
@@ -66,6 +67,16 @@ namespace CASCExplorer
             }
 
             Logger.WriteLine("CASCHandler: loaded {0} encoding data", EncodingHandler.Count);
+
+            //Logger.WriteLine("CASCHandler: loading download data...");
+
+            //using (var _ = new PerfCounter("new DownloadHandler()"))
+            //{
+            //    using (var fs = OpenDownloadFile())
+            //        DownloadHandler = new DownloadHandler(fs, worker);
+            //}
+
+            //Logger.WriteLine("CASCHandler: loaded {0} download data", EncodingHandler.Count);
 
             Logger.WriteLine("CASCHandler: loading install data...");
 
@@ -124,6 +135,18 @@ namespace CASCExplorer
                 throw new FileNotFoundException("encoding info for install file missing!");
 
             //ExtractFile(encInfo.Key, ".", "install");
+
+            return new MMStream(OpenFile(encInfo.Key));
+        }
+
+        private MMStream OpenDownloadFile()
+        {
+            var encInfo = EncodingHandler.GetEntry(Config.DownloadMD5);
+
+            if (encInfo == null)
+                throw new FileNotFoundException("encoding info for download file missing!");
+
+            //ExtractFile(encInfo.Key, ".", "download");
 
             return new MMStream(OpenFile(encInfo.Key));
         }

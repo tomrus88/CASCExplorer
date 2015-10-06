@@ -394,7 +394,7 @@ namespace CASCExplorer
 
                 //Console.WriteLine("{0:X8} - {1:X8} - {2} - {3}", result2.FileNameIndex, root.Flags, root.EncodingKey.ToHexString(), file);
 
-                worker?.ReportProgress((int)(i++ / (float)MarFiles[2].NumFiles * 100.0f));
+                worker?.ReportProgress((int)(++i / (float)MarFiles[2].NumFiles * 100));
             }
 
             //var sorted = data.OrderBy(e => e.Key);

@@ -11,7 +11,7 @@ namespace CASCExplorer
         public byte[] MD5;
         public int Size;
 
-        public List<InstallTag> Tags = new List<InstallTag>();
+        public List<InstallTag> Tags;
     }
 
     public class InstallTag
@@ -46,7 +46,7 @@ namespace CASCExplorer
 
             List<InstallTag> Tags = new List<InstallTag>();
 
-            for (int i = 0; i < numMasks; ++i)
+            for (int i = 0; i < numMasks; i++)
             {
                 InstallTag mask = new InstallTag();
                 mask.Name = stream.ReadCString();
@@ -62,7 +62,7 @@ namespace CASCExplorer
                 Tags.Add(mask);
             }
 
-            for (int i = 0; i < numFiles; ++i)
+            for (int i = 0; i < numFiles; i++)
             {
                 InstallEntry entry = new InstallEntry();
                 entry.Name = stream.ReadCString();
@@ -71,11 +71,9 @@ namespace CASCExplorer
 
                 InstallData.Add(entry);
 
-                foreach (InstallTag tag in Tags)
-                    if (tag.Bits[i])
-                        entry.Tags.Add(tag);
+                entry.Tags = Tags.FindAll(tag => tag.Bits[i]);
 
-                worker?.ReportProgress((int)(i / (float)(numFiles - 1) * 100));
+                worker?.ReportProgress((int)((i + 1) / (float)numFiles * 100));
             }
 
             //Print();

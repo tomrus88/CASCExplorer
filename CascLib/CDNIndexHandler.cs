@@ -43,7 +43,7 @@ namespace CASCExplorer
                 else
                     handler.OpenIndexFile(archive, i);
 
-                worker?.ReportProgress((int)(i / (float)(config.Archives.Count - 1) * 100.0f));
+                worker?.ReportProgress((int)((i + 1) / (float)config.Archives.Count * 100));
             }
 
             return handler;

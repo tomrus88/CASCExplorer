@@ -99,7 +99,7 @@ namespace CASCExplorer
                     }
                 }
 
-                worker?.ReportProgress((int)(++j / (float)(count + 2) * 100));
+                worker?.ReportProgress((int)((j + 1) / (float)(count + 2) * 100));
             }
 
             // Parse CoreTOC.dat
@@ -110,7 +110,7 @@ namespace CASCExplorer
             using (var file = casc.OpenFile(enc1.Key))
                 tocParser = new CoreTOCParser(file);
 
-            worker?.ReportProgress((int)(++count / (float)(count + 2) * 100));
+            worker?.ReportProgress((int)((count + 1) / (float)(count + 2) * 100));
 
             // Parse Packages.dat
             var pkgEntry = D3RootData["Base"].Find(e => e.Name == "Data_D3\\PC\\Misc\\Packages.dat");
@@ -120,7 +120,7 @@ namespace CASCExplorer
             using (var file = casc.OpenFile(enc2.Key))
                 pkgParser = new PackagesParser(file);
 
-            worker?.ReportProgress((int)(++count / (float)(count + 2) * 100));
+            worker?.ReportProgress(100);
         }
 
         public override void Clear()
@@ -226,7 +226,7 @@ namespace CASCExplorer
                 {
                     AddFile(kv.Key, e);
 
-                    worker?.ReportProgress((int)(i++ / (float)numFiles * 100.0f));
+                    worker?.ReportProgress((int)(++i / (float)numFiles * 100));
                 }
             }
 

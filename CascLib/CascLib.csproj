@@ -45,6 +45,7 @@
     <Compile Include="BackgroundWorkerEx.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="DownloadHandler.cs" />
     <Compile Include="HSRootHandler.cs" />
     <Compile Include="BLTEHandler.cs" />
     <Compile Include="ByteArrayComparer.cs" />
