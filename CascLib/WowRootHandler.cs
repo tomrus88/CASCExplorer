@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 
@@ -387,7 +386,7 @@ namespace CASCExplorer
                     if (!CASCFile.FileNames.TryGetValue(fd.Key, out name))
                         name = fd.Key.ToString("X16");
 
-                    Logger.WriteLine("{0:D7} {1:X16} {2}", fd.Value.First().FileDataId, fd.Key, name);
+                    Logger.WriteLine("{0:D7} {1:X16} {2} {3}", fd.Value.First().FileDataId, fd.Key, string.Join(",", fd.Value.Select(r => r.Block.LocaleFlags.ToString())), name);
                 //}
             }
         }

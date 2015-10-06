@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Net;
 
@@ -148,7 +147,7 @@ namespace CASCExplorer
         {
             var keyStr = key.ToHexString().ToLower();
 
-            worker?.ReportProgress(0, string.Format("Downloading {0} file...", keyStr));
+            worker?.ReportProgress(0, string.Format("Downloading \"{0}\" file...", keyStr));
 
             string file = CASCConfig.CDNPath + "/data/" + keyStr.Substring(0, 2) + "/" + keyStr.Substring(2, 2) + "/" + keyStr;
             string url = "http://" + CASCConfig.CDNHost + "/" + file;

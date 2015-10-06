@@ -1,11 +1,12 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.Linq;
 
 namespace CASCExplorer
 {
     public class DownloadEntry
     {
-        public byte[] MD5;
+        public byte[] Key;
         public byte[] Unk;
 
         public List<DownloadTag> Tags;
@@ -40,46 +41,41 @@ namespace CASCExplorer
 
             int numFiles = stream.ReadInt32BE();
 
-            short numMasks = stream.ReadInt16BE();
+            short numTags = stream.ReadInt16BE();
 
             int numMaskBytes = numFiles / 8 + (numFiles % 8 > 0 ? 1 : 0);
 
             for (int i = 0; i < numFiles; i++)
             {
-                byte[] hash = stream.ReadBytes(16);
+                byte[] key = stream.ReadBytes(16);
 
-                byte[] unk = stream.ReadBytes(10); // probably it's data index and offset, may be something else
+                byte[] unk = stream.ReadBytes(10);
 
-                Logger.WriteLine("{0} {1}", hash.ToHexString(), unk.ToHexString());
-
-                DownloadData.Add(new DownloadEntry() { MD5 = hash, Unk = unk });
+                DownloadData.Add(new DownloadEntry() { Key = key, Unk = unk });
             }
 
-            for (int i = 0; i < numMasks; i++)
+            for (int i = 0; i < numTags; i++)
             {
-                DownloadTag mask = new DownloadTag();
-                mask.Name = stream.ReadCString();
-                mask.Type = stream.ReadInt16BE();
+                DownloadTag tag = new DownloadTag();
+                tag.Name = stream.ReadCString();
+                tag.Type = stream.ReadInt16BE();
 
                 byte[] bits = stream.ReadBytes(numMaskBytes);
 
-                //for (int j = 0; j < numMaskBytes; ++j)
-                //    bits[j] = (byte)((bits[j] * 0x0202020202 & 0x010884422010) % 1023);
+                for (int j = 0; j < numMaskBytes; j++)
+                    bits[j] = (byte)((bits[j] * 0x0202020202 & 0x010884422010) % 1023);
 
-                mask.Bits = new BitArray(bits);
+                tag.Bits = new BitArray(bits);
 
-                Tags.Add(mask);
+                Tags.Add(tag);
             }
 
-            for(int i = 0; i < numFiles; i++)
+            for (int i = 0; i < numFiles; i++)
             {
-                DownloadData[i].Tags = GetTagsForEntry(i);
-            }
-        }
+                DownloadData[i].Tags = Tags.FindAll(tag => tag.Bits[i]);
 
-        private List<DownloadTag> GetTagsForEntry(int index)
-        {
-            return Tags.FindAll(tag => tag.Bits[index]);
+                Logger.WriteLine("{0} {1} {2}", DownloadData[i].Key.ToHexString(), DownloadData[i].Unk.ToHexString(), string.Join(",", DownloadData[i].Tags.Select(tag => tag.Name)));
+            }
         }
     }
 }

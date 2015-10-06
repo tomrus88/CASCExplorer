@@ -1,6 +1,5 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.Linq;
 
 namespace CASCExplorer
@@ -39,27 +38,27 @@ namespace CASCExplorer
 
             byte b1 = stream.ReadByte();
             byte b2 = stream.ReadByte();
-            short numMasks = stream.ReadInt16BE();
+            short numTags = stream.ReadInt16BE();
             int numFiles = stream.ReadInt32BE();
 
             int numMaskBytes = numFiles / 8 + (numFiles % 8 > 0 ? 1 : 0);
 
             List<InstallTag> Tags = new List<InstallTag>();
 
-            for (int i = 0; i < numMasks; i++)
+            for (int i = 0; i < numTags; i++)
             {
-                InstallTag mask = new InstallTag();
-                mask.Name = stream.ReadCString();
-                mask.Type = stream.ReadInt16BE();
+                InstallTag tag = new InstallTag();
+                tag.Name = stream.ReadCString();
+                tag.Type = stream.ReadInt16BE();
 
                 byte[] bits = stream.ReadBytes(numMaskBytes);
 
-                for (int j = 0; j < numMaskBytes; ++j)
+                for (int j = 0; j < numMaskBytes; j++)
                     bits[j] = (byte)((bits[j] * 0x0202020202 & 0x010884422010) % 1023);
 
-                mask.Bits = new BitArray(bits);
+                tag.Bits = new BitArray(bits);
 
-                Tags.Add(mask);
+                Tags.Add(tag);
             }
 
             for (int i = 0; i < numFiles; i++)
@@ -75,8 +74,6 @@ namespace CASCExplorer
 
                 worker?.ReportProgress((int)((i + 1) / (float)numFiles * 100));
             }
-
-            //Print();
         }
 
         public InstallEntry GetEntry(string name)
