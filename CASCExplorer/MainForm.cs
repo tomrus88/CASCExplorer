@@ -2,7 +2,9 @@
 using SereniaBLPLib;
 using System;
 using System.Collections.Generic;
+using System.Collections.Specialized;
 using System.ComponentModel;
+using System.Configuration;
 using System.Data;
 using System.Drawing;
 using System.Globalization;
@@ -66,6 +68,22 @@ namespace CASCExplorer
                 var item = new ToolStripMenuItem(locale);
                 item.Checked = Settings.Default.LocaleFlags.ToString() == locale;
                 localeFlagsToolStripMenuItem.DropDownItems.Add(item);
+            }
+
+            NameValueCollection onlineStorageList = (NameValueCollection)ConfigurationManager.GetSection("OnlineStorageList");
+
+            if (onlineStorageList != null)
+            {
+                foreach (string game in onlineStorageList)
+                {
+                    var item = new ToolStripMenuItem(onlineStorageList[game]);
+                    item.Tag = game;
+                    openOnlineStorageToolStripMenuItem.DropDownItems.Add(item);
+                }
+            }
+            else
+            {
+                openOnlineStorageToolStripMenuItem.Enabled = false;
             }
 
             useLWToolStripMenuItem.Checked = Settings.Default.ContentFlags == ContentFlags.LowViolence;
@@ -615,28 +633,6 @@ namespace CASCExplorer
             MessageBox.Show("Not implemented!");
         }
 
-        private void woWRetailToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Cleanup();
-
-            using (var initForm = new InitForm())
-            {
-                initForm.LoadOnlineStorage("wow");
-
-                DialogResult res = initForm.ShowDialog();
-
-                if (res != DialogResult.OK)
-                    return;
-
-                CASC = initForm.CASC;
-                Root = initForm.Root;
-            }
-
-            Sorter.CASC = CASC;
-
-            OnStorageChanged();
-        }
-
         private void Cleanup()
         {
             if (CASC != null)
@@ -763,6 +759,28 @@ namespace CASCExplorer
         {
             using (BruteforceForm bf = new BruteforceForm())
                 bf.ShowDialog();
+        }
+
+        private void openOnlineStorageToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+            Cleanup();
+
+            using (var initForm = new InitForm())
+            {
+                initForm.LoadOnlineStorage((string)e.ClickedItem.Tag);
+
+                DialogResult res = initForm.ShowDialog();
+
+                if (res != DialogResult.OK)
+                    return;
+
+                CASC = initForm.CASC;
+                Root = initForm.Root;
+            }
+
+            Sorter.CASC = CASC;
+
+            OnStorageChanged();
         }
     }
 }

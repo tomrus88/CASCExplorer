@@ -50,7 +50,6 @@
             this.fileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openStorageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openOnlineStorageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.woWRetailToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openLastStorageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -284,18 +283,10 @@
             // 
             // openOnlineStorageToolStripMenuItem
             // 
-            this.openOnlineStorageToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.woWRetailToolStripMenuItem});
             this.openOnlineStorageToolStripMenuItem.Name = "openOnlineStorageToolStripMenuItem";
             this.openOnlineStorageToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
             this.openOnlineStorageToolStripMenuItem.Text = "Open Online Storage";
-            // 
-            // woWRetailToolStripMenuItem
-            // 
-            this.woWRetailToolStripMenuItem.Name = "woWRetailToolStripMenuItem";
-            this.woWRetailToolStripMenuItem.Size = new System.Drawing.Size(143, 22);
-            this.woWRetailToolStripMenuItem.Text = "WoW (Retail)";
-            this.woWRetailToolStripMenuItem.Click += new System.EventHandler(this.woWRetailToolStripMenuItem_Click);
+            this.openOnlineStorageToolStripMenuItem.DropDownItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.openOnlineStorageToolStripMenuItem_DropDownItemClicked);
             // 
             // openLastStorageToolStripMenuItem
             // 
@@ -497,7 +488,6 @@
         private System.Windows.Forms.ToolStripMenuItem bruteforceNamesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openLastStorageToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openOnlineStorageToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem woWRetailToolStripMenuItem;
     }
 }
 
