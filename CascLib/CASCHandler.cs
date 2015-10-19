@@ -19,7 +19,7 @@ namespace CASCExplorer
 
         private InstallHandler InstallHandler;
         private EncodingHandler EncodingHandler;
-        private DownloadHandler DownloadHandler;
+        //private DownloadHandler DownloadHandler;
         private RootHandlerBase RootHandler;
 
         private static readonly Jenkins96 Hasher = new Jenkins96();
@@ -68,15 +68,15 @@ namespace CASCExplorer
 
             Logger.WriteLine("CASCHandler: loaded {0} encoding data", EncodingHandler.Count);
 
-            Logger.WriteLine("CASCHandler: loading download data...");
+            //Logger.WriteLine("CASCHandler: loading download data...");
 
-            using (var _ = new PerfCounter("new DownloadHandler()"))
-            {
-                using (var fs = OpenDownloadFile())
-                    DownloadHandler = new DownloadHandler(fs, worker);
-            }
+            //using (var _ = new PerfCounter("new DownloadHandler()"))
+            //{
+            //    using (var fs = OpenDownloadFile())
+            //        DownloadHandler = new DownloadHandler(fs, worker);
+            //}
 
-            Logger.WriteLine("CASCHandler: loaded {0} download data", EncodingHandler.Count);
+            //Logger.WriteLine("CASCHandler: loaded {0} download data", EncodingHandler.Count);
 
             Logger.WriteLine("CASCHandler: loading install data...");
 

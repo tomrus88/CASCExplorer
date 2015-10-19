@@ -405,7 +405,7 @@ namespace CASCExplorer
 
         protected override CASCFolder CreateStorageTree()
         {
-            var root = new CASCFolder("root");
+            var root = new CASCFolder("root", null);
 
             CountSelect = 0;
 

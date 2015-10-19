@@ -55,7 +55,7 @@ namespace CASCExplorer
 
         public override string ToString()
         {
-            return String.Format("RootBlock: {0:X8} {1:X8}, File: {2:X8} {3}", Block.ContentFlags, Block.LocaleFlags, FileDataId, MD5.ToHexString());
+            return string.Format("RootBlock: {0:X8} {1:X8}, File: {2:X8} {3}", Block.ContentFlags, Block.LocaleFlags, FileDataId, MD5.ToHexString());
         }
     }
 
@@ -316,7 +316,7 @@ namespace CASCExplorer
 
         protected override CASCFolder CreateStorageTree()
         {
-            var root = new CASCFolder("root");
+            var root = new CASCFolder("root", null);
 
             CountSelect = 0;
 

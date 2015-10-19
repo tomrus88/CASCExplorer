@@ -145,7 +145,7 @@ namespace CASCExplorer
                     }
                     else
                     {
-                        entry = new CASCFolder(entryName);
+                        entry = new CASCFolder(entryName, folder);
                     }
 
                     folder.Entries[entryName] = entry;
