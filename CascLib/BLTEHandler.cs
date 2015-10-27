@@ -119,6 +119,7 @@ namespace CASCExplorer
                 {
                     case 0x45: // E (encrypted)
                         // for now just store them as is
+                        // it's encrypted with salsa20
                         stream.Write(chunk.Data, 1, chunk.Data.Length - 1);
                         break;
                     //case 0x46: // F (frame, recursive)
