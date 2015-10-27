@@ -67,7 +67,6 @@
             // 
             // button2
             // 
-            this.button2.DialogResult = System.Windows.Forms.DialogResult.OK;
             this.button2.Enabled = false;
             this.button2.Location = new System.Drawing.Point(122, 68);
             this.button2.Name = "button2";
@@ -98,7 +97,6 @@
             // 
             // ExtractProgress
             // 
-            this.AcceptButton = this.button2;
             this.AutoScaleDimensions = new System.Drawing.SizeF(6F, 13F);
             this.AutoScaleMode = System.Windows.Forms.AutoScaleMode.Font;
             this.CancelButton = this.button3;
