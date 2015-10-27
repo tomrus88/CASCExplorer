@@ -1,4 +1,6 @@
 ﻿using System.Collections.Generic;
+using System.IO;
+using System;
 
 namespace CASCExplorer
 {
@@ -6,7 +8,7 @@ namespace CASCExplorer
     {
         private readonly Dictionary<ulong, RootEntry> RootData = new Dictionary<ulong, RootEntry>();
 
-        public OWRootHandler(MMStream stream, BackgroundWorkerEx worker)
+        public OWRootHandler(MMStream stream, BackgroundWorkerEx worker, CASCHandler casc)
         {
             worker?.ReportProgress(0, "Loading \"root\"...");
 
@@ -22,10 +24,51 @@ namespace CASCExplorer
 
                 string[] filedata = array[i].Split('|');
 
-                ulong fileHash = Hasher.ComputeHash(filedata[2]);
-                RootData[fileHash] = new RootEntry() { MD5 = filedata[0].ToByteArray(), Block = RootBlock.Empty };
+                //ulong fileHash = Hasher.ComputeHash(filedata[2]);
+                //RootData[fileHash] = new RootEntry() { MD5 = filedata[0].ToByteArray(), Block = RootBlock.Empty };
 
-                CASCFile.FileNames[fileHash] = filedata[2];
+                //CASCFile.FileNames[fileHash] = filedata[2];
+
+                if (Path.GetExtension(filedata[2]) == ".apm")
+                {
+                    byte[] md5 = filedata[0].ToByteArray();
+
+                    EncodingEntry enc = casc.Encoding.GetEntry(md5);
+
+                    using (MMStream s = new MMStream(casc.OpenFile(enc.Key)))
+                    {
+                        if (s != null)
+                        {
+                            s.Position = 0xC;
+
+                            uint count = s.ReadUInt32();
+
+                            s.Position = 0x8CC;
+
+                            for (int j = 0; j < count; j++)
+                            {
+                                //int size = s.ReadInt32();
+                                byte[] md5_2 = s.ReadBytes(16);
+
+                                EncodingEntry enc2 = casc.Encoding.GetEntry(md5_2);
+
+                                if (enc2 == null)
+                                {
+                                    throw new Exception("boom!");
+                                }
+
+                                string fakeName = Path.GetFileNameWithoutExtension(filedata[2]) + "/" + md5_2.ToHexString();
+
+                                ulong fileHash = Hasher.ComputeHash(fakeName);
+                                RootData[fileHash] = new RootEntry() { MD5 = md5_2, Block = RootBlock.Empty };
+
+                                CASCFile.FileNames[fileHash] = fakeName;
+
+                                s.Position += (0x48 - 0x10);
+                            }
+                        }
+                    }
+                }
             }
 
             worker?.ReportProgress(100);

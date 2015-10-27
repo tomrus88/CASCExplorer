@@ -117,8 +117,10 @@ namespace CASCExplorer
 
                 switch (chunk.Data[0])
                 {
-                    //case 0x45: // E (or is it C?) (encrypted)
-                    //    break;
+                    case 0x45: // E (encrypted)
+                        // for now just store them as is
+                        stream.Write(chunk.Data, 1, chunk.Data.Length - 1);
+                        break;
                     //case 0x46: // F (frame, recursive)
                     //    break;
                     case 0x4E: // N (not compressed)

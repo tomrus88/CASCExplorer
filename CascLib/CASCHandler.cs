@@ -119,7 +119,7 @@ namespace CASCExplorer
                     }
                     else if (config.BuildUID.StartsWith("pro", StringComparison.OrdinalIgnoreCase))
                     {
-                        RootHandler = new OWRootHandler(fs, worker);
+                        RootHandler = new OWRootHandler(fs, worker, this);
                     }
                     else
                     {
