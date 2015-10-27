@@ -191,7 +191,7 @@ namespace CASCExplorer
         {
             int len = 0;
 
-            while (*(UnsafePointer + Position + len) != 0)
+            while (*(UnsafePointer + Position + len) != 0 && Position + len < _length)
                 len++;
 
             string val = new string((sbyte*)(UnsafePointer + Position), 0, len, Encoding.UTF8);

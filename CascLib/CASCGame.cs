@@ -10,7 +10,8 @@ namespace CASCExplorer
         D3,
         S2,
         Agent,
-        Hearthstone
+        Hearthstone,
+        Overwatch
     }
 
     class CASCGame
@@ -42,6 +43,9 @@ namespace CASCExplorer
 
                 if (File.Exists(Path.Combine(path, "Agent.exe")))
                     return CASCGameType.Agent;
+
+                if (File.Exists(Path.Combine(path, "Overwatch Launcher.exe")))
+                    return CASCGameType.Overwatch;
             }
 
             return CASCGameType.Unknown;
@@ -67,6 +71,9 @@ namespace CASCExplorer
             if (uid.StartsWith("agent"))
                 return CASCGameType.Agent;
 
+            if (uid.StartsWith("pro"))
+                return CASCGameType.Agent;
+
             return CASCGameType.Unknown;
         }
 
@@ -83,6 +90,9 @@ namespace CASCExplorer
 
             if (gameType == CASCGameType.WoW || gameType == CASCGameType.D3)
                 return "Data";
+
+            if (gameType == CASCGameType.Overwatch)
+                return "data/casc";
 
             return null;
         }

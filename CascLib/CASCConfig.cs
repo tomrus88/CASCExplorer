@@ -171,6 +171,12 @@ namespace CASCExplorer
                 }
             }
 
+            //using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, "85f2a2c9a8e18462aed1769e883e13e5"))
+            //{
+            //    var cfg = KeyValueConfig.ReadKeyValueConfig(stream);
+            //    config._Builds.Add(cfg);
+            //}
+
             return config;
         }
 
@@ -289,6 +295,7 @@ namespace CASCExplorer
                 if (OnlineMode)
                 {
                     return _CDNData[0]["Path"]; // use first
+                    //return "tpr/pro";
                 }
                 else
                 {
@@ -314,6 +321,7 @@ namespace CASCExplorer
                         }
                     }
                     return String.Format("http://{0}/{1}", _CDNData[index]["Hosts"].Split(' ')[0], _CDNData[index]["Path"]);
+                    //return "http://blzddist1-a.akamaihd.net/tpr/pro";
                 }
                 else
                     return String.Format("http://{0}{1}", _BuildInfo[0]["CDNHosts"].Split(' ')[0], _BuildInfo[0]["CDNPath"]);

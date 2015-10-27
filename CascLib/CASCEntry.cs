@@ -1,6 +1,5 @@
 ﻿using System;
 using System.Collections.Generic;
-using System.ComponentModel;
 using System.IO;
 using System.Linq;
 
@@ -12,58 +11,17 @@ namespace CASCExplorer
         ulong Hash { get; }
     }
 
-    public class CASCFolder : ICASCEntry, INotifyPropertyChanged
+    public class CASCFolder : ICASCEntry
     {
-        private CASCFolder _parent;
-        private bool _isSelected;
-        private bool _isExpanded;
         private string _name;
         private ulong _hash;
 
-        public event PropertyChangedEventHandler PropertyChanged;
+        public Dictionary<string, ICASCEntry> Entries { get; set; }
 
-        public Dictionary<string, ICASCEntry> Entries { get; private set; }
-
-        public CASCFolder Parent
-        {
-            get { return _parent; }
-            set { _parent = value; }
-        }
-
-        public bool IsSelected
-        {
-            get { return _isSelected; }
-            set
-            {
-                if(_isSelected != value)
-                {
-                    _isSelected = value;
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsSelected)));
-                }
-            }
-        }
-
-        public bool IsExpanded
-        {
-            get { return _isExpanded; }
-            set
-            {
-                if (_isExpanded != value)
-                {
-                    _isExpanded = value;
-                    PropertyChanged?.Invoke(this, new PropertyChangedEventArgs(nameof(IsExpanded)));
-                }
-
-                if (_isExpanded && _parent != null)
-                    _parent.IsExpanded = true;
-            }
-        }
-
-        public CASCFolder(string name, CASCFolder parent)
+        public CASCFolder(string name)
         {
             Entries = new Dictionary<string, ICASCEntry>(StringComparer.OrdinalIgnoreCase);
             _name = name;
-            _parent = parent;
             _hash = 0;
         }
 

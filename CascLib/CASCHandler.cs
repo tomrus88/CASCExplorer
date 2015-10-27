@@ -117,6 +117,10 @@ namespace CASCExplorer
                     {
                         RootHandler = new HSRootHandler(fs, worker);
                     }
+                    else if (config.BuildUID.StartsWith("pro", StringComparison.OrdinalIgnoreCase))
+                    {
+                        RootHandler = new OWRootHandler(fs, worker);
+                    }
                     else
                     {
                         throw new Exception("Unsupported game " + config.BuildUID);

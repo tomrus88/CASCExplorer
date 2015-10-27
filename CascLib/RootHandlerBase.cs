@@ -49,7 +49,7 @@ namespace CASCExplorer
                     }
                     else
                     {
-                        entry = new CASCFolder(entryName, folder);
+                        entry = new CASCFolder(entryName);
                     }
 
                     folder.Entries[entryName] = entry;
