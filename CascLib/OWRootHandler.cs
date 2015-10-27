@@ -1,6 +1,6 @@
-﻿using System.Collections.Generic;
+﻿using System;
+using System.Collections.Generic;
 using System.IO;
-using System;
 
 namespace CASCExplorer
 {
@@ -18,19 +18,19 @@ namespace CASCExplorer
 
             // need to figure out what to do with those apm files
 
-            for (int i = 0; i < array.Length; i++)
+            for (int i = 1; i < array.Length; i++)
             {
-                if (i == 0) continue;
-
                 string[] filedata = array[i].Split('|');
-
-                //ulong fileHash = Hasher.ComputeHash(filedata[2]);
-                //RootData[fileHash] = new RootEntry() { MD5 = filedata[0].ToByteArray(), Block = RootBlock.Empty };
-
-                //CASCFile.FileNames[fileHash] = filedata[2];
 
                 if (Path.GetExtension(filedata[2]) == ".apm")
                 {
+                    // add apm file for dev purposes
+                    ulong fileHash1 = Hasher.ComputeHash(filedata[2]);
+                    RootData[fileHash1] = new RootEntry() { MD5 = filedata[0].ToByteArray(), Block = RootBlock.Empty };
+
+                    CASCFile.FileNames[fileHash1] = filedata[2];
+
+                    // add files listed in apm file
                     byte[] md5 = filedata[0].ToByteArray();
 
                     EncodingEntry enc = casc.Encoding.GetEntry(md5);
@@ -39,6 +39,8 @@ namespace CASCExplorer
                     {
                         if (s != null)
                         {
+                            // still need to figure out complete apm structure
+                            // at start of file there's a lot of data that are same in all apm files
                             s.Position = 0xC;
 
                             uint count = s.ReadUInt32();
@@ -47,6 +49,7 @@ namespace CASCExplorer
 
                             for (int j = 0; j < count; j++)
                             {
+                                // size of each entry seems to be 0x48 bytes (int size; byte[16] md5; ???)
                                 //int size = s.ReadInt32();
                                 byte[] md5_2 = s.ReadBytes(16);
 
