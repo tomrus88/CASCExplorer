@@ -118,9 +118,7 @@ namespace CASCExplorer
                 switch (chunk.Data[0])
                 {
                     case 0x45: // E (encrypted)
-                        // for now just store them as is
-                        // it's encrypted with salsa20
-                        stream.Write(chunk.Data, 1, chunk.Data.Length - 1);
+                        Decrypt(chunk.Data, stream);
                         break;
                     //case 0x46: // F (frame, recursive)
                     //    break;
@@ -136,6 +134,53 @@ namespace CASCExplorer
                         throw new InvalidDataException("Unknown BLTE chunk type!");
                 }
             }
+        }
+
+        private static void Decrypt(byte[] data, Stream outS)
+        {
+            //byte keySeedSize = data[1];
+
+            //if (keySeedSize == 0)
+            //    return;
+
+            //byte[] keySeed = data.Skip(2).Take(keySeedSize).ToArray();
+
+            //byte IVSeedSize = data[keySeedSize + 2];
+
+            //if (IVSeedSize > 0x10)
+            //    return;
+
+            //byte[] IVSeed = data.Skip(keySeedSize + 3).Take(IVSeedSize).ToArray();
+
+            //if (data.Length < IVSeedSize + keySeedSize + 4)
+            //    return;
+
+            //int dataOffset = keySeedSize + IVSeedSize + 3;
+
+            //if (data[dataOffset] != 0x53) // 'S'
+            //    return;
+
+            //byte[] key = new byte[16]; // unknown, calculated by IKeyService using keySeed
+
+            //byte[] IV = new byte[8];
+
+            //for (int i = 0; i < IVSeed.Length; i++)
+            //    IV[i] = IVSeed[i];
+
+            //int someValue = 0; // unknown value
+
+            //for (int i = 0, j = 0; i < 32; i += 8, j++)
+            //{
+            //    IV[j] ^= (byte)(someValue >> i);
+            //}
+
+            //Salsa20 salsa = new Salsa20();
+            //var decryptor = salsa.CreateDecryptor(key, IV);
+
+            //var data2 = decryptor.TransformFinalBlock(data, dataOffset + 1, data.Length - (dataOffset + 1));
+
+            // for now just store them as is
+            outS.Write(data, 0, data.Length);
         }
 
         private static void Decompress(byte[] data, Stream outS)
