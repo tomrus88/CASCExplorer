@@ -192,9 +192,9 @@ namespace CASCExplorer
             if (!keys.TryGetValue(keyName, out key))
             {
                 string msg = string.Format("Unknown keyname {0:X16}", keyName);
-                Logger.WriteLine(msg);
-                //throw new Exception(msg);
-                key = new byte[16];
+                //Logger.WriteLine(msg);
+                throw new Exception(msg);
+                //key = new byte[16];
             }
 
             Salsa20 salsa = new Salsa20();

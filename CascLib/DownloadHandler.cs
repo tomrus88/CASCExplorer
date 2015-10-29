@@ -6,23 +6,21 @@ namespace CASCExplorer
 {
     public class DownloadEntry
     {
-        public byte[] Key;
         public byte[] Unk;
 
-        public List<DownloadTag> Tags;
+        public Dictionary<string, DownloadTag> Tags;
     }
 
     public class DownloadTag
     {
-        public string Name;
         public short Type;
         public BitArray Bits;
     }
 
-    class DownloadHandler
+    public class DownloadHandler
     {
-        private readonly List<DownloadEntry> DownloadData = new List<DownloadEntry>();
-        private readonly List<DownloadTag> Tags = new List<DownloadTag>();
+        private static readonly ByteArrayComparer comparer = new ByteArrayComparer();
+        private readonly Dictionary<byte[], DownloadEntry> DownloadData = new Dictionary<byte[], DownloadEntry>(comparer);
 
         public int Count
         {
@@ -45,19 +43,26 @@ namespace CASCExplorer
 
             int numMaskBytes = numFiles / 8 + (numFiles % 8 > 0 ? 1 : 0);
 
+            List<DownloadEntry> entries = new List<DownloadEntry>();
+
             for (int i = 0; i < numFiles; i++)
             {
                 byte[] key = stream.ReadBytes(16);
 
                 byte[] unk = stream.ReadBytes(10);
 
-                DownloadData.Add(new DownloadEntry() { Key = key, Unk = unk });
+                var entry = new DownloadEntry() { Unk = unk };
+
+                DownloadData.Add(key, entry);
+                entries.Add(entry);
             }
+
+            Dictionary<string, DownloadTag> Tags = new Dictionary<string, DownloadTag>();
 
             for (int i = 0; i < numTags; i++)
             {
                 DownloadTag tag = new DownloadTag();
-                tag.Name = stream.ReadCString();
+                string name = stream.ReadCString();
                 tag.Type = stream.ReadInt16BE();
 
                 byte[] bits = stream.ReadBytes(numMaskBytes);
@@ -67,15 +72,25 @@ namespace CASCExplorer
 
                 tag.Bits = new BitArray(bits);
 
-                Tags.Add(tag);
+                Tags.Add(name, tag);
             }
 
             for (int i = 0; i < numFiles; i++)
             {
-                DownloadData[i].Tags = Tags.FindAll(tag => tag.Bits[i]);
-
-                Logger.WriteLine("{0} {1} {2}", DownloadData[i].Key.ToHexString(), DownloadData[i].Unk.ToHexString(), string.Join(",", DownloadData[i].Tags.Select(tag => tag.Name)));
+                entries[i].Tags = Tags.Where(kv => kv.Value.Bits[i]).ToDictionary(kv => kv.Key, kv => kv.Value);
             }
+
+            foreach (var entry in DownloadData)
+            {
+                Logger.WriteLine("{0} {1} {2}", entry.Key.ToHexString(), entry.Value.Unk.ToHexString(), string.Join(",", entry.Value.Tags.Select(tag => tag.Key)));
+            }
+        }
+
+        public DownloadEntry GetEntry(byte[] key)
+        {
+            DownloadEntry entry;
+            DownloadData.TryGetValue(key, out entry);
+            return entry;
         }
     }
 }

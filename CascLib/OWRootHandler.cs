@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Linq;
 
 namespace CASCExplorer
 {
@@ -76,12 +77,24 @@ namespace CASCExplorer
 
             foreach (var entry in casc.Encoding.Entries)
             {
-                string fakeName = "other" + "/" + entry.Key[0].ToString("X2") + "/" + entry.Key.ToHexString();
+                DownloadEntry dl = casc.Download.GetEntry(entry.Value.Key);
 
-                ulong fileHash = Hasher.ComputeHash(fakeName);
-                RootData[fileHash] = new RootEntry() { MD5 = entry.Key, Block = RootBlock.Empty };
+                if (dl != null)
+                {
+                    string fakeName = "other" + "/" + entry.Key[0].ToString("X2") + "/" + entry.Key.ToHexString();
 
-                CASCFile.FileNames[fileHash] = fakeName;
+                    var locales = dl.Tags.Where(tag => tag.Value.Type == 4).Select(tag => (LocaleFlags)Enum.Parse(typeof(LocaleFlags), tag.Key));
+
+                    LocaleFlags locale = LocaleFlags.None;
+
+                    foreach (var loc in locales)
+                        locale |= loc;
+
+                    ulong fileHash = Hasher.ComputeHash(fakeName);
+                    RootData[fileHash] = new RootEntry() { MD5 = entry.Key, Block = new RootBlock() { LocaleFlags = locale } };
+
+                    CASCFile.FileNames[fileHash] = fakeName;
+                }
             }
 
             worker?.ReportProgress(100);
@@ -124,11 +137,14 @@ namespace CASCExplorer
 
             foreach (var rootEntry in RootData)
             {
+                if ((rootEntry.Value.Block.LocaleFlags & Locale) == 0)
+                    continue;
+
                 CreateSubTree(root, rootEntry.Key, CASCFile.FileNames[rootEntry.Key], '/');
                 CountSelect++;
             }
 
-            Logger.WriteLine("HSRootHandler: {0} file names missing for locale {1}", CountUnknown, Locale);
+            Logger.WriteLine("OWRootHandler: {0} file names missing for locale {1}", CountUnknown, Locale);
 
             return root;
         }

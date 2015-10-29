@@ -17,18 +17,20 @@ namespace CASCExplorer
         private LocalIndexHandler LocalIndex;
         private CDNIndexHandler CDNIndex;
 
-        private InstallHandler InstallHandler;
         private EncodingHandler EncodingHandler;
         private DownloadHandler DownloadHandler;
         private RootHandlerBase RootHandler;
+        private InstallHandler InstallHandler;
 
         private static readonly Jenkins96 Hasher = new Jenkins96();
 
         private readonly Dictionary<int, Stream> DataStreams = new Dictionary<int, Stream>();
 
-        public InstallHandler Install { get { return InstallHandler; } }
         public EncodingHandler Encoding { get { return EncodingHandler; } }
+        public DownloadHandler Download { get { return DownloadHandler; } }
         public RootHandlerBase Root { get { return RootHandler; } }
+        public InstallHandler Install { get { return InstallHandler; } }
+
         public CASCConfig Config { get; private set; }
 
         private CASCHandler(CASCConfig config, BackgroundWorkerEx worker)
@@ -78,16 +80,6 @@ namespace CASCExplorer
 
             Logger.WriteLine("CASCHandler: loaded {0} download data", EncodingHandler.Count);
 
-            Logger.WriteLine("CASCHandler: loading install data...");
-
-            using (var _ = new PerfCounter("new InstallHandler()"))
-            {
-                using (var fs = OpenInstallFile())
-                    InstallHandler = new InstallHandler(fs, worker);
-            }
-
-            Logger.WriteLine("CASCHandler: loaded {0} install data", InstallHandler.Count);
-
             Logger.WriteLine("CASCHandler: loading root data...");
 
             using (var _ = new PerfCounter("new RootHandler()"))
@@ -129,6 +121,16 @@ namespace CASCExplorer
             }
 
             Logger.WriteLine("CASCHandler: loaded {0} root data", RootHandler.Count);
+
+            Logger.WriteLine("CASCHandler: loading install data...");
+
+            using (var _ = new PerfCounter("new InstallHandler()"))
+            {
+                using (var fs = OpenInstallFile())
+                    InstallHandler = new InstallHandler(fs, worker);
+            }
+
+            Logger.WriteLine("CASCHandler: loaded {0} install data", InstallHandler.Count);
         }
 
         private MMStream OpenInstallFile()
