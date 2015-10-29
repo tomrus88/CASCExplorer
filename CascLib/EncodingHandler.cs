@@ -109,6 +109,15 @@ namespace CASCExplorer
             // string block till the end of file
         }
 
+        public IEnumerable<KeyValuePair<byte[], EncodingEntry>> Entries
+        {
+            get
+            {
+                foreach (var entry in EncodingData)
+                    yield return entry;
+            }
+        }
+
         public EncodingEntry GetEntry(byte[] md5)
         {
             EncodingEntry result;

@@ -1,6 +1,8 @@
 ﻿using System;
+using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
+using System.Linq;
 using System.Security.Cryptography;
 using System.Text;
 
@@ -136,51 +138,74 @@ namespace CASCExplorer
             }
         }
 
+        static Dictionary<ulong, byte[]> keys = new Dictionary<ulong, byte[]>()
+        {
+            [0X402CD9D8D6BFED98] = new byte[] { 0xAE, 0xB0, 0xEA, 0xDE, 0xA4, 0x76, 0x12, 0xFE, 0x6C, 0x04, 0x1A, 0x03, 0x95, 0x8D, 0xF2, 0x41 },
+            [0xFB680CB6A8BF81F3] = new byte[] { 0x62, 0xD9, 0x0E, 0xFA, 0x7F, 0x36, 0xD7, 0x1C, 0x39, 0x8A, 0xE2, 0xF1, 0xFE, 0x37, 0xBD, 0xB9 },
+        };
+
         private static void Decrypt(byte[] data, Stream outS)
         {
-            //byte keySeedSize = data[1];
+            byte keySeedSize = data[1];
 
-            //if (keySeedSize == 0)
-            //    return;
+            if (keySeedSize == 0)
+                return;
 
-            //byte[] keySeed = data.Skip(2).Take(keySeedSize).ToArray();
+            byte[] keySeed = data.Skip(2).Take(keySeedSize).ToArray();
 
-            //byte IVSeedSize = data[keySeedSize + 2];
+            ulong keyName = BitConverter.ToUInt64(keySeed, 0);
 
-            //if (IVSeedSize > 0x10)
-            //    return;
+            byte IVSeedSize = data[keySeedSize + 2];
 
-            //byte[] IVSeed = data.Skip(keySeedSize + 3).Take(IVSeedSize).ToArray();
+            if (IVSeedSize > 0x10)
+                return;
 
-            //if (data.Length < IVSeedSize + keySeedSize + 4)
-            //    return;
+            byte[] IVSeed = data.Skip(keySeedSize + 3).Take(IVSeedSize).ToArray();
 
-            //int dataOffset = keySeedSize + IVSeedSize + 3;
+            if (data.Length < IVSeedSize + keySeedSize + 4)
+                return;
 
-            //if (data[dataOffset] != 0x53) // 'S'
-            //    return;
+            int dataOffset = keySeedSize + IVSeedSize + 3;
 
-            //byte[] key = new byte[16]; // unknown, calculated by IKeyService using keySeed
+            byte encType = data[dataOffset];
 
-            //byte[] IV = new byte[8];
+            if (encType != 0x53 && encType != 0x41) // 'S' or 'A'
+                return;
 
-            //for (int i = 0; i < IVSeed.Length; i++)
-            //    IV[i] = IVSeed[i];
+            if (encType == 'A')
+                throw new Exception("enc type A not yet done");
 
-            //int someValue = 0; // unknown value
+            byte[] IV = new byte[8];
 
-            //for (int i = 0, j = 0; i < 32; i += 8, j++)
+            for (int i = 0; i < IVSeed.Length; i++)
+                IV[i] = IVSeed[i];
+
+            //int someValue = 0; // unknown value (ulong on x64)
+
+            //for (int i = 0, j = 0; i < 32; i += 8, j++) // that loop is 32 bit on x86 and 64 bit on x64 - wtf Blizzard?
             //{
             //    IV[j] ^= (byte)(someValue >> i);
             //}
 
-            //Salsa20 salsa = new Salsa20();
-            //var decryptor = salsa.CreateDecryptor(key, IV);
+            byte[] key;
 
-            //var data2 = decryptor.TransformFinalBlock(data, dataOffset + 1, data.Length - (dataOffset + 1));
+            if (!keys.TryGetValue(keyName, out key))
+            {
+                string msg = string.Format("Unknown keyname {0:X16}", keyName);
+                Logger.WriteLine(msg);
+                //throw new Exception(msg);
+                key = new byte[16];
+            }
+
+            Salsa20 salsa = new Salsa20();
+            var decryptor = salsa.CreateDecryptor(key, IV);
+
+            var data2 = decryptor.TransformFinalBlock(data, dataOffset + 1, data.Length - (dataOffset + 1));
+
+            outS.Write(data2, 0, data2.Length);
 
             // for now just store them as is
-            outS.Write(data, 0, data.Length);
+            //outS.Write(data, 0, data.Length);
         }
 
         private static void Decompress(byte[] data, Stream outS)

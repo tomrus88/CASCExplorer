@@ -74,6 +74,16 @@ namespace CASCExplorer
                 }
             }
 
+            foreach (var entry in casc.Encoding.Entries)
+            {
+                string fakeName = "other" + "/" + entry.Key[0].ToString("X2") + "/" + entry.Key.ToHexString();
+
+                ulong fileHash = Hasher.ComputeHash(fakeName);
+                RootData[fileHash] = new RootEntry() { MD5 = entry.Key, Block = RootBlock.Empty };
+
+                CASCFile.FileNames[fileHash] = fakeName;
+            }
+
             worker?.ReportProgress(100);
         }
 
