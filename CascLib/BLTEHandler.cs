@@ -212,9 +212,6 @@ namespace CASCExplorer
             var data2 = decryptor.TransformFinalBlock(data, dataOffset + 1, data.Length - (dataOffset + 1));
 
             outS.Write(data2, 0, data2.Length);
-
-            // for now just store them as is
-            //outS.Write(data, 0, data.Length);
         }
 
         private static void Decompress(byte[] data, Stream outS)
