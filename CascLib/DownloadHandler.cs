@@ -57,7 +57,7 @@ namespace CASCExplorer
                 entries.Add(entry);
             }
 
-            Dictionary<string, DownloadTag> Tags = new Dictionary<string, DownloadTag>();
+            Dictionary<string, DownloadTag> tags = new Dictionary<string, DownloadTag>();
 
             for (int i = 0; i < numTags; i++)
             {
@@ -72,18 +72,18 @@ namespace CASCExplorer
 
                 tag.Bits = new BitArray(bits);
 
-                Tags.Add(name, tag);
+                tags.Add(name, tag);
             }
 
             for (int i = 0; i < numFiles; i++)
             {
-                entries[i].Tags = Tags.Where(kv => kv.Value.Bits[i]).ToDictionary(kv => kv.Key, kv => kv.Value);
+                entries[i].Tags = tags.Where(kv => kv.Value.Bits[i]).ToDictionary(kv => kv.Key, kv => kv.Value);
             }
 
-            foreach (var entry in DownloadData)
-            {
-                Logger.WriteLine("{0} {1} {2}", entry.Key.ToHexString(), entry.Value.Unk.ToHexString(), string.Join(",", entry.Value.Tags.Select(tag => tag.Key)));
-            }
+            //foreach (var entry in DownloadData)
+            //{
+            //    Logger.WriteLine("{0} {1} {2}", entry.Key.ToHexString(), entry.Value.Unk.ToHexString(), string.Join(",", entry.Value.Tags.Select(tag => tag.Key)));
+            //}
         }
 
         public DownloadEntry GetEntry(byte[] key)
