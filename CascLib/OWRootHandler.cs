@@ -13,9 +13,9 @@ namespace CASCExplorer
         {
             worker?.ReportProgress(0, "Loading \"root\"...");
 
-            var str = stream.ReadCString();
+            string str = stream.ReadCString();
 
-            var array = str.Split(new[] { '\r', '\n' }, System.StringSplitOptions.RemoveEmptyEntries);
+            string[] array = str.Split(new[] { '\r', '\n' }, System.StringSplitOptions.RemoveEmptyEntries);
 
             // need to figure out what to do with those apm files
 
@@ -41,7 +41,7 @@ namespace CASCExplorer
                         if (s != null)
                         {
                             // still need to figure out complete apm structure
-                            // at start of file there's a lot of data that are same in all apm files
+                            // at start of file there's a lot of data that is same in all apm files
                             s.Position = 0xC;
 
                             uint count = s.ReadUInt32();

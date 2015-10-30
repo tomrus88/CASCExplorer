@@ -45,17 +45,9 @@ namespace CASCExplorer
 
             List<DownloadEntry> entries = new List<DownloadEntry>();
 
-            for (int i = 0; i < numFiles; i++)
-            {
-                byte[] key = stream.ReadBytes(16);
+            long filesPos = stream.Position;
 
-                byte[] unk = stream.ReadBytes(10);
-
-                var entry = new DownloadEntry() { Unk = unk };
-
-                DownloadData.Add(key, entry);
-                entries.Add(entry);
-            }
+            stream.Position += numFiles * 0x1A; // skip to tags
 
             Dictionary<string, DownloadTag> tags = new Dictionary<string, DownloadTag>();
 
@@ -75,9 +67,20 @@ namespace CASCExplorer
                 tags.Add(name, tag);
             }
 
+            stream.Position = filesPos; // go back to files
+
             for (int i = 0; i < numFiles; i++)
             {
-                entries[i].Tags = tags.Where(kv => kv.Value.Bits[i]).ToDictionary(kv => kv.Key, kv => kv.Value);
+                byte[] key = stream.ReadBytes(0x10);
+
+                byte[] unk = stream.ReadBytes(0xA);
+
+                var entry = new DownloadEntry() { Unk = unk };
+
+                entry.Tags = tags.Where(kv => kv.Value.Bits[i]).ToDictionary(kv => kv.Key, kv => kv.Value);
+
+                DownloadData.Add(key, entry);
+                entries.Add(entry);
             }
 
             //foreach (var entry in DownloadData)
