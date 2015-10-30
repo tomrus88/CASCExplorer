@@ -46,19 +46,21 @@ namespace CASCExplorer
 
                             uint count = s.ReadUInt32();
 
-                            s.Position = 0x8CC;
+                            s.Position = 0x894;
 
+                            // size of each entry seems to be 0x48 bytes (0x2C bytes unk data; int size; ulong unk; byte[16] md5)
                             for (int j = 0; j < count; j++)
                             {
-                                // size of each entry seems to be 0x48 bytes (int size; byte[16] md5; ???)
-                                //int size = s.ReadInt32();
+                                s.Position += 0x2C; // skip unknown
+                                int size = s.ReadInt32(); // size (matches size in encoding file)
+                                s.Position += 8; // skip unknown
                                 byte[] md5_2 = s.ReadBytes(16);
 
                                 EncodingEntry enc2 = casc.Encoding.GetEntry(md5_2);
 
                                 if (enc2 == null)
                                 {
-                                    throw new Exception("boom!");
+                                    throw new Exception("enc2 == null");
                                 }
 
                                 string fakeName = Path.GetFileNameWithoutExtension(filedata[2]) + "/" + md5_2.ToHexString();
@@ -67,8 +69,6 @@ namespace CASCExplorer
                                 RootData[fileHash] = new RootEntry() { MD5 = md5_2, Block = RootBlock.Empty };
 
                                 CASCFile.FileNames[fileHash] = fakeName;
-
-                                s.Position += (0x48 - 0x10);
                             }
                         }
                     }

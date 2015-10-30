@@ -1,5 +1,4 @@
 ﻿using System;
-using System.Collections.Generic;
 using System.IO;
 using System.IO.Compression;
 using System.Linq;
@@ -193,9 +192,9 @@ namespace CASCExplorer
             if (encType == 0x53)
             {
                 Salsa20 salsa = new Salsa20();
-                var decryptor = salsa.CreateDecryptor(key, IV);
+                ICryptoTransform decryptor = salsa.CreateDecryptor(key, IV);
 
-                var dataOut = decryptor.TransformFinalBlock(data, dataOffset, data.Length - dataOffset);
+                byte[] dataOut = decryptor.TransformFinalBlock(data, dataOffset, data.Length - dataOffset);
                 outS.Write(dataOut, 0, dataOut.Length);
             }
             else
