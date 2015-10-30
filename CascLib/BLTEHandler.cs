@@ -181,12 +181,14 @@ namespace CASCExplorer
             if (encType != 0x53 && encType != 0x41) // 'S' or 'A'
                 throw new Exception("encType != 0x53 && encType != 0x41");
 
+            dataOffset++;
+
             // expand to 8 bytes
             byte[] IV = new byte[8];
 
-            for (int i = 0; i < IVpart.Length; i++)
-                IV[i] = IVpart[i];
+            Array.Copy(IVpart, IV, IVpart.Length);
 
+            // some magic
             //int someValue = 0; // unknown value (ulong on x64)
 
             //for (int i = 0, j = 0; i < 32; i += 8, j++) // that loop is 32 bit on x86 and 64 bit on x64 - wtf Blizzard?
@@ -208,7 +210,7 @@ namespace CASCExplorer
                 Salsa20 salsa = new Salsa20();
                 var decryptor = salsa.CreateDecryptor(key, IV);
 
-                var dataOut = decryptor.TransformFinalBlock(data, dataOffset + 1, data.Length - (dataOffset + 1));
+                var dataOut = decryptor.TransformFinalBlock(data, dataOffset, data.Length - dataOffset);
                 outS.Write(dataOut, 0, dataOut.Length);
             }
             else
