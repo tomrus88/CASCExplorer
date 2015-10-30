@@ -122,8 +122,8 @@ namespace CASCExplorer
                     case 0x45: // E (encrypted)
                         Decrypt(chunk.Data, stream);
                         break;
-                    //case 0x46: // F (frame, recursive)
-                    //    break;
+                    case 0x46: // F (frame, recursive)
+                        throw new Exception("DecoderFrame: implement me!");
                     case 0x4E: // N (not compressed)
                         if (chunk.Data.Length - 1 != chunk.DecompSize)
                             throw new InvalidDataException("Possible error (1) !");
@@ -155,39 +155,37 @@ namespace CASCExplorer
 
         private static void Decrypt(byte[] data, Stream outS)
         {
-            byte keySeedSize = data[1];
+            byte keyNameSize = data[1];
 
-            if (keySeedSize == 0)
-                return;
+            if (keyNameSize == 0 || keyNameSize != 8)
+                throw new Exception("keyNameSize == 0 || keyNameSize != 8");
 
-            byte[] keySeed = data.Skip(2).Take(keySeedSize).ToArray();
+            byte[] keyNameBytes = data.Skip(2).Take(keyNameSize).ToArray();
 
-            ulong keyName = BitConverter.ToUInt64(keySeed, 0);
+            ulong keyName = BitConverter.ToUInt64(keyNameBytes, 0);
 
-            byte IVSeedSize = data[keySeedSize + 2];
+            byte IVSize = data[keyNameSize + 2];
 
-            if (IVSeedSize > 0x10)
-                return;
+            if (IVSize > 0x10)
+                throw new Exception("IVSize > 0x10");
 
-            byte[] IVSeed = data.Skip(keySeedSize + 3).Take(IVSeedSize).ToArray();
+            byte[] IVpart = data.Skip(keyNameSize + 3).Take(IVSize).ToArray();
 
-            if (data.Length < IVSeedSize + keySeedSize + 4)
-                return;
+            if (data.Length < IVSize + keyNameSize + 4)
+                throw new Exception("data.Length < IVSize + keyNameSize + 4");
 
-            int dataOffset = keySeedSize + IVSeedSize + 3;
+            int dataOffset = keyNameSize + IVSize + 3;
 
             byte encType = data[dataOffset];
 
             if (encType != 0x53 && encType != 0x41) // 'S' or 'A'
-                return;
+                throw new Exception("encType != 0x53 && encType != 0x41");
 
-            if (encType == 'A')
-                throw new Exception("enc type A not yet done");
-
+            // expand to 8 bytes
             byte[] IV = new byte[8];
 
-            for (int i = 0; i < IVSeed.Length; i++)
-                IV[i] = IVSeed[i];
+            for (int i = 0; i < IVpart.Length; i++)
+                IV[i] = IVpart[i];
 
             //int someValue = 0; // unknown value (ulong on x64)
 
@@ -203,15 +201,21 @@ namespace CASCExplorer
                 string msg = string.Format("Unknown keyname {0:X16}", keyName);
                 //Logger.WriteLine(msg);
                 throw new Exception(msg);
-                //key = new byte[16];
             }
 
-            Salsa20 salsa = new Salsa20();
-            var decryptor = salsa.CreateDecryptor(key, IV);
+            if (encType == 0x53)
+            {
+                Salsa20 salsa = new Salsa20();
+                var decryptor = salsa.CreateDecryptor(key, IV);
 
-            var data2 = decryptor.TransformFinalBlock(data, dataOffset + 1, data.Length - (dataOffset + 1));
-
-            outS.Write(data2, 0, data2.Length);
+                var dataOut = decryptor.TransformFinalBlock(data, dataOffset + 1, data.Length - (dataOffset + 1));
+                outS.Write(dataOut, 0, dataOut.Length);
+            }
+            else
+            {
+                // ARC4 ?
+                throw new Exception("enc type A not yet done");
+            }
         }
 
         private static void Decompress(byte[] data, Stream outS)
