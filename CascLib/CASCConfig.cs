@@ -33,7 +33,7 @@ namespace CASCExplorer
 
             while ((line = reader.ReadLine()) != null)
             {
-                if (String.IsNullOrWhiteSpace(line) || line.StartsWith("#")) // skip empty lines and comments
+                if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#")) // skip empty lines and comments
                     continue;
 
                 string[] tokens = line.Split(new char[] { '|' });
@@ -86,7 +86,7 @@ namespace CASCExplorer
 
             while ((line = reader.ReadLine()) != null)
             {
-                if (String.IsNullOrWhiteSpace(line) || line.StartsWith("#")) // skip empty lines and comments
+                if (string.IsNullOrWhiteSpace(line) || line.StartsWith("#")) // skip empty lines and comments
                     continue;
 
                 string[] tokens = line.Split(new char[] { '=' }, StringSplitOptions.RemoveEmptyEntries);
@@ -122,12 +122,12 @@ namespace CASCExplorer
             config.Region = region;
             config.Product = product;
 
-            using (var cdnsStream = CDNIndexHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/cdns", product)))
+            using (var cdnsStream = CDNIndexHandler.OpenFileDirect(string.Format("http://us.patch.battle.net/{0}/cdns", product)))
             {
                 config._CDNData = VerBarConfig.ReadVerBarConfig(cdnsStream);
             }
 
-            using (var versionsStream = CDNIndexHandler.OpenFileDirect(String.Format("http://us.patch.battle.net/{0}/versions", product)))
+            using (var versionsStream = CDNIndexHandler.OpenFileDirect(string.Format("http://us.patch.battle.net/{0}/versions", product)))
             {
                 config._VersionsData = VerBarConfig.ReadVerBarConfig(versionsStream);
             }
@@ -171,12 +171,6 @@ namespace CASCExplorer
                 }
             }
 
-            //using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, "85f2a2c9a8e18462aed1769e883e13e5"))
-            //{
-            //    var cfg = KeyValueConfig.ReadKeyValueConfig(stream);
-            //    config._Builds.Add(cfg);
-            //}
-
             return config;
         }
 
@@ -217,14 +211,14 @@ namespace CASCExplorer
             config._Builds = new List<KeyValueConfig>();
 
             string buildKey = bi["BuildKey"];
-            string buildCfgPath = Path.Combine(basePath, String.Format("{0}\\config\\", dataFolder), buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
+            string buildCfgPath = Path.Combine(basePath, string.Format("{0}\\config\\", dataFolder), buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
             using (Stream stream = new FileStream(buildCfgPath, FileMode.Open))
             {
                 config._Builds.Add(KeyValueConfig.ReadKeyValueConfig(stream));
             }
 
             string cdnKey = bi["CDNKey"];
-            string cdnCfgPath = Path.Combine(basePath, String.Format("{0}\\config\\", dataFolder), cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
+            string cdnCfgPath = Path.Combine(basePath, string.Format("{0}\\config\\", dataFolder), cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
             using (Stream stream = new FileStream(cdnCfgPath, FileMode.Open))
             {
                 config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
@@ -295,7 +289,6 @@ namespace CASCExplorer
                 if (OnlineMode)
                 {
                     return _CDNData[0]["Path"]; // use first
-                    //return "tpr/pro";
                 }
                 else
                 {
@@ -320,11 +313,10 @@ namespace CASCExplorer
                             break;
                         }
                     }
-                    return String.Format("http://{0}/{1}", _CDNData[index]["Hosts"].Split(' ')[0], _CDNData[index]["Path"]);
-                    //return "http://blzddist1-a.akamaihd.net/tpr/pro";
+                    return string.Format("http://{0}/{1}", _CDNData[index]["Hosts"].Split(' ')[0], _CDNData[index]["Path"]);
                 }
                 else
-                    return String.Format("http://{0}{1}", _BuildInfo[0]["CDNHosts"].Split(' ')[0], _BuildInfo[0]["CDNPath"]);
+                    return string.Format("http://{0}{1}", _BuildInfo[0]["CDNHosts"].Split(' ')[0], _BuildInfo[0]["CDNPath"]);
             }
         }
 

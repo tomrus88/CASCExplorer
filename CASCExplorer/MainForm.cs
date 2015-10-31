@@ -457,6 +457,9 @@ namespace CASCExplorer
 
         private async void analyseUnknownFilesToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (CASC == null)
+                return;
+
             try
             {
                 statusProgress.Value = 0;
@@ -473,30 +476,38 @@ namespace CASCExplorer
 
                     Dictionary<int, string> idToName = new Dictionary<int, string>();
 
-                    using (Stream stream = CASC.OpenFile("DBFilesClient\\SoundEntries.db2"))
+                    if (CASC.Config.BuildUID.StartsWith("wow"))
                     {
-                        DB2Reader se = new DB2Reader(stream);
-
-                        foreach (var row in se)
+                        using (Stream stream = CASC.OpenFile("DBFilesClient\\SoundEntries.db2"))
                         {
-                            string name = row.Value.GetField<string>(2);
+                            DB2Reader se = new DB2Reader(stream);
 
-                            int type = row.Value.GetField<int>(1);
+                            foreach (var row in se)
+                            {
+                                string name = row.Value.GetField<string>(2);
 
-                            bool many = row.Value.GetField<int>(4) > 0;
+                                int type = row.Value.GetField<int>(1);
 
-                            for (int i = 3; i < 23; i++)
-                                idToName[row.Value.GetField<int>(i)] = "unknown\\sound\\" + name + (many ? "_" + (i - 2).ToString("D2") : "") + (type == 28 ? ".mp3" : ".ogg");
+                                bool many = row.Value.GetField<int>(4) > 0;
+
+                                for (int i = 3; i < 23; i++)
+                                    idToName[row.Value.GetField<int>(i)] = "unknown\\sound\\" + name + (many ? "_" + (i - 2).ToString("D2") : "") + (type == 28 ? ".mp3" : ".ogg");
+                            }
                         }
                     }
 
                     CASCFolder unknownFolder = Root.GetEntry("unknown") as CASCFolder;
-                    int numTotal = unknownFolder.Entries.Count;
+
+                    if (unknownFolder == null)
+                        return;
+
+                    IEnumerable<CASCFile> files = unknownFolder.GetFiles(null, true);
+                    int numTotal = files.Count();
                     int numDone = 0;
 
-                    foreach (var unknownEntry in unknownFolder.Entries)
+                    foreach (var unknownEntry in files)
                     {
-                        CASCFile unknownFile = unknownEntry.Value as CASCFile;
+                        CASCFile unknownFile = unknownEntry as CASCFile;
 
                         string name;
                         if (idToName.TryGetValue(CASC.Root.GetEntries(unknownFile.Hash).First().FileDataId, out name))
@@ -508,7 +519,6 @@ namespace CASCExplorer
                         }
 
                         progress.Report((int)(++numDone / (float)numTotal * 100.0f));
-
                     }
 
                     CASC.Root.Dump();

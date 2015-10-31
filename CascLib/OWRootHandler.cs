@@ -81,7 +81,7 @@ namespace CASCExplorer
 
                 if (dl != null)
                 {
-                    string fakeName = "other" + "/" + entry.Key[0].ToString("X2") + "/" + entry.Key.ToHexString();
+                    string fakeName = "unknown" + "/" + entry.Key[0].ToString("X2") + "/" + entry.Key.ToHexString();
 
                     var locales = dl.Tags.Where(tag => tag.Value.Type == 4).Select(tag => (LocaleFlags)Enum.Parse(typeof(LocaleFlags), tag.Key));
 
