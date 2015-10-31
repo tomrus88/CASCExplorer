@@ -96,5 +96,10 @@ namespace CASCExplorer
             DownloadData.TryGetValue(key, out entry);
             return entry;
         }
+
+        public void Clear()
+        {
+            DownloadData.Clear();
+        }
     }
 }

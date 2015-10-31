@@ -407,6 +407,9 @@ namespace CASCExplorer
             CDNIndex.Clear();
             CDNIndex = null;
 
+            foreach (var stream in DataStreams)
+                stream.Value.Close();
+
             DataStreams.Clear();
 
             EncodingHandler.Clear();
@@ -423,6 +426,9 @@ namespace CASCExplorer
 
             RootHandler.Clear();
             RootHandler = null;
+
+            DownloadHandler.Clear();
+            DownloadHandler = null;
         }
     }
 }

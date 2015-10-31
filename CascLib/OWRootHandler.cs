@@ -152,6 +152,7 @@ namespace CASCExplorer
 
         public override void Clear()
         {
+            RootData.Clear();
             Root.Entries.Clear();
             CASCFile.FileNames.Clear();
         }
