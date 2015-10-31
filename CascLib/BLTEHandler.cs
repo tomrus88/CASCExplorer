@@ -17,17 +17,21 @@ namespace CASCExplorer
 
     class BLTEHandler : IDisposable
     {
-        BinaryReader _reader;
-        MD5 _md5 = MD5.Create();
-        int _size;
-        MemoryStream _ms;
-        bool _keepOpen;
+        private BinaryReader _reader;
+        private MD5 _md5 = MD5.Create();
+        private int _size;
+        private MemoryStream _ms;
+        private bool _leaveOpen;
 
-        public BLTEHandler(Stream stream, int size, bool keepOpen = false)
+        private const byte ENCRYPTION_SALSA20 = 0x53;
+        private const byte ENCRYPTION_ARC4 = 0x41;
+        private const int BLTE_MAGIC = 0x45544c42;
+
+        public BLTEHandler(Stream stream, int size, bool leaveOpen = false)
         {
             _reader = new BinaryReader(stream, Encoding.ASCII, true);
             _size = size;
-            _keepOpen = keepOpen;
+            _leaveOpen = leaveOpen;
             Parse();
         }
 
@@ -52,9 +56,9 @@ namespace CASCExplorer
 
         private void Parse()
         {
-            int magic = _reader.ReadInt32(); // BLTE (raw)
+            int magic = _reader.ReadInt32();
 
-            if (magic != 0x45544c42)
+            if (magic != BLTE_MAGIC)
                 throw new InvalidDataException("BLTEHandler: invalid magic");
 
             int frameHeaderSize = _reader.ReadInt32BE();
@@ -118,28 +122,28 @@ namespace CASCExplorer
                         throw new InvalidDataException("MD5 missmatch!");
                 }
 
-                HandleChunk(chunk.Data, i, _ms);
+                HandleChunk(chunk.Data, i);
             }
 
             _ms.Position = 0;
         }
 
-        private void HandleChunk(byte[] data, long index, Stream outStream)
+        private void HandleChunk(byte[] data, long index)
         {
             // I really hope they don't put encrypted chunk into encrypted chunk
             switch (data[0])
             {
                 case 0x45: // E (encrypted)
                     byte[] decrypted = Decrypt(data, index);
-                    HandleChunk(decrypted, index, outStream);
+                    HandleChunk(decrypted, index);
                     break;
                 case 0x46: // F (frame, recursive)
                     throw new Exception("DecoderFrame: implement me!");
                 case 0x4E: // N (not compressed)
-                    outStream.Write(data, 1, data.Length - 1);
+                    _ms.Write(data, 1, data.Length - 1);
                     break;
                 case 0x5A: // Z (zlib compressed)
-                    Decompress(data, outStream);
+                    Decompress(data, _ms);
                     break;
                 default:
                     throw new InvalidDataException(string.Format("Unknown BLTE chunk type {0} (0x{0:X2})!", (char)data[0], data[0]));
@@ -171,7 +175,7 @@ namespace CASCExplorer
 
             byte encType = data[dataOffset];
 
-            if (encType != 0x53 && encType != 0x41) // 'S' or 'A'
+            if (encType != ENCRYPTION_SALSA20 && encType != ENCRYPTION_ARC4) // 'S' or 'A'
                 throw new Exception("encType != 0x53 && encType != 0x41");
 
             dataOffset++;
@@ -196,7 +200,7 @@ namespace CASCExplorer
                 throw new Exception(msg);
             }
 
-            if (encType == 0x53)
+            if (encType == ENCRYPTION_SALSA20)
             {
                 Salsa20 salsa = new Salsa20();
 
@@ -217,9 +221,9 @@ namespace CASCExplorer
         {
             // skip first 3 bytes (zlib)
             using (var ms = new MemoryStream(data, 3, data.Length - 3))
-            using (var dStream = new DeflateStream(ms, CompressionMode.Decompress))
+            using (var dfltStream = new DeflateStream(ms, CompressionMode.Decompress))
             {
-                dStream.CopyTo(outStream);
+                dfltStream.CopyTo(outStream);
             }
         }
 
@@ -227,7 +231,7 @@ namespace CASCExplorer
         {
             _reader.Close();
 
-            if(!_keepOpen)
+            if (!_leaveOpen)
                 _ms.Close();
         }
     }
