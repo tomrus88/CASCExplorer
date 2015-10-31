@@ -35,10 +35,24 @@ namespace CASCExplorer
             if (!Directory.Exists(dir))
                 Directory.CreateDirectory(dir);
 
+            bool extractOk = true;
+
             using (var fileStream = File.Open(fullPath, FileMode.Create))
             {
-                CopyTo(fileStream);
+                try
+                {
+                    CopyTo(fileStream);
+                }
+                catch (Exception exc)
+                {
+                    extractOk = false;
+
+                    Logger.WriteLine("Unable to extract file {0}: {1}", name, exc.Message);
+                }
             }
+
+            if (!extractOk)
+                File.Delete(fullPath);
         }
 
         public MemoryStream OpenFile()
@@ -101,8 +115,10 @@ namespace CASCExplorer
                 chunks[i] = chunk;
             }
 
-            foreach (var chunk in chunks)
+            for (int i = 0; i < chunks.Length; i++)
             {
+                BLTEChunk chunk = chunks[i];
+
                 chunk.Data = reader.ReadBytes(chunk.CompSize);
 
                 if (chunk.Data.Length != chunk.CompSize)
@@ -116,28 +132,33 @@ namespace CASCExplorer
                         throw new InvalidDataException("MD5 missmatch!");
                 }
 
-                switch (chunk.Data[0])
-                {
-                    case 0x45: // E (encrypted)
-                        Decrypt(chunk.Data, stream);
-                        break;
-                    case 0x46: // F (frame, recursive)
-                        throw new Exception("DecoderFrame: implement me!");
-                    case 0x4E: // N (not compressed)
-                        if (chunk.Data.Length - 1 != chunk.DecompSize)
-                            throw new InvalidDataException("Possible error (1) !");
-                        stream.Write(chunk.Data, 1, chunk.DecompSize);
-                        break;
-                    case 0x5A: // Z (zlib compressed)
-                        Decompress(chunk.Data, stream);
-                        break;
-                    default:
-                        throw new InvalidDataException("Unknown BLTE chunk type!");
-                }
+                HandleChunk(chunk.Data, i, stream);
             }
         }
 
-        private static void Decrypt(byte[] data, Stream outS)
+        private void HandleChunk(byte[] data, long index, Stream outS)
+        {
+            // I really hope they don't put encrypted chunk into encrypted chunk
+            switch (data[0])
+            {
+                case 0x45: // E (encrypted)
+                    byte[] decrypted = Decrypt(data, index);
+                    HandleChunk(decrypted, index, outS);
+                    break;
+                case 0x46: // F (frame, recursive)
+                    throw new Exception("DecoderFrame: implement me!");
+                case 0x4E: // N (not compressed)
+                    outS.Write(data, 1, data.Length - 1);
+                    break;
+                case 0x5A: // Z (zlib compressed)
+                    Decompress(data, outS);
+                    break;
+                default:
+                    throw new InvalidDataException("Unknown BLTE chunk type!");
+            }
+        }
+
+        private static byte[] Decrypt(byte[] data, long index)
         {
             byte keyNameSize = data[1];
 
@@ -172,13 +193,11 @@ namespace CASCExplorer
 
             Array.Copy(IVpart, IV, IVpart.Length);
 
-            // some magic
-            //int someValue = 0; // unknown value (ulong on x64)
-
-            //for (int i = 0, j = 0; i < 32; i += 8, j++) // that loop is 32 bit on x86 and 64 bit on x64 - wtf Blizzard?
-            //{
-            //    IV[j] ^= (byte)(someValue >> i);
-            //}
+            // magic
+            for (int bits = 0, i = 0; bits < 64; bits += 8, i++) // that loop is 32 on x86 and 64 on x64 - wtf Blizzard?
+            {
+                IV[i] ^= (byte)((index >> bits) & 0xFF);
+            }
 
             byte[] key = KeyService.GetKey(keyName);
 
@@ -192,10 +211,12 @@ namespace CASCExplorer
             if (encType == 0x53)
             {
                 Salsa20 salsa = new Salsa20();
+
                 ICryptoTransform decryptor = salsa.CreateDecryptor(key, IV);
 
                 byte[] dataOut = decryptor.TransformFinalBlock(data, dataOffset, data.Length - dataOffset);
-                outS.Write(dataOut, 0, dataOut.Length);
+
+                return dataOut;
             }
             else
             {
