@@ -649,6 +649,8 @@ namespace CASCExplorer
             useLWToolStripMenuItem.Enabled = false;
             statusLabel.Text = "Ready.";
             statusProgress.Visible = false;
+
+            GC.Collect();
         }
 
         private void findToolStripMenuItem_Click(object sender, EventArgs e)
