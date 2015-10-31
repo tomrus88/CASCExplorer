@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace CASCExplorer
@@ -30,7 +31,7 @@ namespace CASCExplorer
             get { return InstallData.Count; }
         }
 
-        public InstallHandler(MMStream stream, BackgroundWorkerEx worker)
+        public InstallHandler(BinaryReader stream, BackgroundWorkerEx worker)
         {
             worker?.ReportProgress(0, "Loading \"install\"...");
 

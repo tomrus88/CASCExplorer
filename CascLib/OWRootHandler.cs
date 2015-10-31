@@ -2,6 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Linq;
+using System.Text;
 
 namespace CASCExplorer
 {
@@ -9,11 +10,11 @@ namespace CASCExplorer
     {
         private readonly Dictionary<ulong, RootEntry> RootData = new Dictionary<ulong, RootEntry>();
 
-        public OWRootHandler(MMStream stream, BackgroundWorkerEx worker, CASCHandler casc)
+        public OWRootHandler(BinaryReader stream, BackgroundWorkerEx worker, CASCHandler casc)
         {
             worker?.ReportProgress(0, "Loading \"root\"...");
 
-            string str = stream.ReadCString();
+            string str = Encoding.ASCII.GetString(stream.ReadBytes((int)stream.BaseStream.Length));
 
             string[] array = str.Split(new[] { '\r', '\n' }, System.StringSplitOptions.RemoveEmptyEntries);
 
@@ -36,24 +37,24 @@ namespace CASCExplorer
 
                     EncodingEntry enc = casc.Encoding.GetEntry(md5);
 
-                    using (MMStream s = new MMStream(casc.OpenFile(enc.Key)))
+                    using (BinaryReader s = new BinaryReader(casc.OpenFile(enc.Key)))
                     {
                         if (s != null)
                         {
                             // still need to figure out complete apm structure
                             // at start of file there's a lot of data that is same in all apm files
-                            s.Position = 0xC;
+                            s.BaseStream.Position = 0xC;
 
                             uint count = s.ReadUInt32();
 
-                            s.Position = 0x894;
+                            s.BaseStream.Position = 0x894;
 
                             // size of each entry seems to be 0x48 bytes (0x2C bytes unk data; int size; ulong unk; byte[16] md5)
                             for (int j = 0; j < count; j++)
                             {
-                                s.Position += 0x2C; // skip unknown
+                                s.BaseStream.Position += 0x2C; // skip unknown
                                 int size = s.ReadInt32(); // size (matches size in encoding file)
-                                s.Position += 8; // skip unknown
+                                s.BaseStream.Position += 8; // skip unknown
                                 byte[] md5_2 = s.ReadBytes(16);
 
                                 EncodingEntry enc2 = casc.Encoding.GetEntry(md5_2);

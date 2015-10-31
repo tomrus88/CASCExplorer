@@ -68,11 +68,11 @@ namespace CASCExplorer
         public override int Count { get { return RootData.Count; } }
         public override int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
 
-        public WowRootHandler(MMStream stream, BackgroundWorkerEx worker)
+        public WowRootHandler(BinaryReader stream, BackgroundWorkerEx worker)
         {
             worker?.ReportProgress(0, "Loading \"root\"...");
 
-            while (stream.Position < stream.Length)
+            while (stream.BaseStream.Position < stream.BaseStream.Length)
             {
                 int count = stream.ReadInt32();
 
@@ -128,7 +128,7 @@ namespace CASCExplorer
                     FileDataStore.Add(entries[i].FileDataId, hash);
                 }
 
-                worker?.ReportProgress((int)(stream.Position / (float)stream.Length * 100));
+                worker?.ReportProgress((int)(stream.BaseStream.Position / (float)stream.BaseStream.Length * 100));
             }
         }
 

@@ -1,5 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
+using System.IO;
 using System.Text;
 
 namespace CASCExplorer
@@ -22,7 +23,7 @@ namespace CASCExplorer
             get { return EncodingData.Count; }
         }
 
-        public EncodingHandler(MMStream stream, BackgroundWorkerEx worker)
+        public EncodingHandler(BinaryReader stream, BackgroundWorkerEx worker)
         {
             worker?.ReportProgress(0, "Loading \"encoding\"...");
 
@@ -45,7 +46,7 @@ namespace CASCExplorer
                 byte[] blockHash = stream.ReadBytes(16);
             }
 
-            long chunkStart = stream.Position;
+            long chunkStart = stream.BaseStream.Position;
 
             for (int i = 0; i < numEntriesA; ++i)
             {
@@ -76,10 +77,10 @@ namespace CASCExplorer
                 }
 
                 // each chunk is 4096 bytes, and zero padding at the end
-                long remaining = CHUNK_SIZE - ((stream.Position - chunkStart) % CHUNK_SIZE);
+                long remaining = CHUNK_SIZE - ((stream.BaseStream.Position - chunkStart) % CHUNK_SIZE);
 
                 if (remaining > 0)
-                    stream.Position += remaining;
+                    stream.BaseStream.Position += remaining;
 
                 worker?.ReportProgress((int)(i / (float)numEntriesA * 100));
             }
@@ -90,7 +91,7 @@ namespace CASCExplorer
                 byte[] blockHash = stream.ReadBytes(16);
             }
 
-            long chunkStart2 = stream.Position;
+            long chunkStart2 = stream.BaseStream.Position;
 
             for (int i = 0; i < numEntriesB; ++i)
             {
@@ -100,10 +101,10 @@ namespace CASCExplorer
                 int fileSize = stream.ReadInt32BE();
 
                 // each chunk is 4096 bytes, and zero padding at the end
-                long remaining = CHUNK_SIZE - ((stream.Position - chunkStart2) % CHUNK_SIZE);
+                long remaining = CHUNK_SIZE - ((stream.BaseStream.Position - chunkStart2) % CHUNK_SIZE);
 
                 if (remaining > 0)
-                    stream.Position += remaining;
+                    stream.BaseStream.Position += remaining;
             }
 
             // string block till the end of file

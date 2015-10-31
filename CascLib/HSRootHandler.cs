@@ -1,10 +1,11 @@
 ﻿using System.Collections.Generic;
+using System.IO;
 
 namespace CASCExplorer
 {
     public class HSRootHandler : RootHandlerBase
     {
-        public HSRootHandler(MMStream stream, BackgroundWorkerEx worker)
+        public HSRootHandler(BinaryReader stream, BackgroundWorkerEx worker)
         {
             worker?.ReportProgress(0, "Loading \"root\"...");
 

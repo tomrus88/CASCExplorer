@@ -35,7 +35,7 @@ namespace CASCExplorer
 
         private CASCHandler(CASCConfig config, BackgroundWorkerEx worker)
         {
-            this.Config = config;
+            Config = config;
 
             Logger.WriteLine("CASCHandler: loading CDN indices...");
 
@@ -87,7 +87,7 @@ namespace CASCExplorer
                 using (var fs = OpenRootFile())
                 {
                     byte[] magic = fs.ReadBytes(4);
-                    fs.Position = 0;
+                    fs.BaseStream.Position = 0;
 
                     if (magic[0] == 0x4D && magic[1] == 0x4E && magic[2] == 0x44 && magic[3] == 0x58) // MNDX
                     {
@@ -133,7 +133,7 @@ namespace CASCExplorer
             Logger.WriteLine("CASCHandler: loaded {0} install data", InstallHandler.Count);
         }
 
-        private MMStream OpenInstallFile()
+        private BinaryReader OpenInstallFile()
         {
             var encInfo = EncodingHandler.GetEntry(Config.InstallMD5);
 
@@ -142,10 +142,10 @@ namespace CASCExplorer
 
             //ExtractFile(encInfo.Key, ".", "install");
 
-            return new MMStream(OpenFile(encInfo.Key));
+            return new BinaryReader(OpenFile(encInfo.Key));
         }
 
-        private MMStream OpenDownloadFile()
+        private BinaryReader OpenDownloadFile()
         {
             var encInfo = EncodingHandler.GetEntry(Config.DownloadMD5);
 
@@ -154,10 +154,10 @@ namespace CASCExplorer
 
             //ExtractFile(encInfo.Key, ".", "download");
 
-            return new MMStream(OpenFile(encInfo.Key));
+            return new BinaryReader(OpenFile(encInfo.Key));
         }
 
-        private MMStream OpenRootFile()
+        private BinaryReader OpenRootFile()
         {
             var encInfo = EncodingHandler.GetEntry(Config.RootMD5);
 
@@ -166,14 +166,14 @@ namespace CASCExplorer
 
             //ExtractFile(encInfo.Key, ".", "root");
 
-            return new MMStream(OpenFile(encInfo.Key));
+            return new BinaryReader(OpenFile(encInfo.Key));
         }
 
-        private MMStream OpenEncodingFile()
+        private BinaryReader OpenEncodingFile()
         {
             //ExtractFile(Config.EncodingKey, ".", "encoding");
 
-            return new MMStream(OpenFile(Config.EncodingKey));
+            return new BinaryReader(OpenFile(Config.EncodingKey));
         }
 
         public Stream OpenFile(byte[] key)
@@ -198,9 +198,9 @@ namespace CASCExplorer
                 //byte[] unkData1 = reader.ReadBytes(2);
                 //byte[] unkData2 = reader.ReadBytes(8);
 
-                using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30, true))
+                using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30))
                 {
-                    return blte.OpenFile();
+                    return blte.OpenFile(true);
                 }
             }
             catch
@@ -210,9 +210,9 @@ namespace CASCExplorer
                 if (idxInfo != null)
                 {
                     using (Stream s = CDNIndex.OpenDataFile(idxInfo))
-                    using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size, true))
+                    using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
                     {
-                        return blte.OpenFile();
+                        return blte.OpenFile(true);
                     }
                 }
                 else
@@ -220,9 +220,9 @@ namespace CASCExplorer
                     try
                     {
                         using (Stream s = CDNIndex.OpenDataFileDirect(key))
-                        using (BLTEHandler blte = new BLTEHandler(s, (int)s.Length, true))
+                        using (BLTEHandler blte = new BLTEHandler(s, (int)s.Length))
                         {
-                            return blte.OpenFile();
+                            return blte.OpenFile(true);
                         }
                     }
                     catch

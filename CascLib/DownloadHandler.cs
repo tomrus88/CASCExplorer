@@ -1,5 +1,6 @@
 ﻿using System.Collections;
 using System.Collections.Generic;
+using System.IO;
 using System.Linq;
 
 namespace CASCExplorer
@@ -27,7 +28,7 @@ namespace CASCExplorer
             get { return DownloadData.Count; }
         }
 
-        public DownloadHandler(MMStream stream, BackgroundWorkerEx worker)
+        public DownloadHandler(BinaryReader stream, BackgroundWorkerEx worker)
         {
             worker?.ReportProgress(0, "Loading \"download\"...");
 
@@ -45,9 +46,9 @@ namespace CASCExplorer
 
             List<DownloadEntry> entries = new List<DownloadEntry>();
 
-            long filesPos = stream.Position;
+            long filesPos = stream.BaseStream.Position;
 
-            stream.Position += numFiles * 0x1A; // skip to tags
+            stream.BaseStream.Position += numFiles * 0x1A; // skip to tags
 
             Dictionary<string, DownloadTag> tags = new Dictionary<string, DownloadTag>();
 
@@ -67,7 +68,7 @@ namespace CASCExplorer
                 tags.Add(name, tag);
             }
 
-            stream.Position = filesPos; // go back to files
+            stream.BaseStream.Position = filesPos; // go back to files
 
             for (int i = 0; i < numFiles; i++)
             {

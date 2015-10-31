@@ -27,11 +27,10 @@ namespace CASCExplorer
         private const byte ENCRYPTION_ARC4 = 0x41;
         private const int BLTE_MAGIC = 0x45544c42;
 
-        public BLTEHandler(Stream stream, int size, bool leaveOpen = false)
+        public BLTEHandler(Stream stream, int size)
         {
             _reader = new BinaryReader(stream, Encoding.ASCII, true);
             _size = size;
-            _leaveOpen = leaveOpen;
             Parse();
         }
 
@@ -49,8 +48,9 @@ namespace CASCExplorer
             }
         }
 
-        public MemoryStream OpenFile()
+        public MemoryStream OpenFile(bool leaveOpen = false)
         {
+            _leaveOpen = leaveOpen;
             return _ms;
         }
 

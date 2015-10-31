@@ -66,7 +66,6 @@
     <Compile Include="Jenkins96Old.cs" />
     <Compile Include="LocalIndexHandler.cs" />
     <Compile Include="Logger.cs" />
-    <Compile Include="MMStream.cs" />
     <Compile Include="MNDXRootHandler.cs" />
     <Compile Include="MultiDictionary.cs" />
     <Compile Include="PerfCounter.cs" />

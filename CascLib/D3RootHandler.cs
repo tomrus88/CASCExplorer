@@ -14,7 +14,7 @@ namespace CASCExplorer
         public int FileIndex;
         public string Name;
 
-        public static D3RootEntry Read(int type, MMStream s)
+        public static D3RootEntry Read(int type, BinaryReader s)
         {
             D3RootEntry e = new D3RootEntry();
 
@@ -48,7 +48,7 @@ namespace CASCExplorer
         public override int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
         public override ContentFlags Content { get { return ContentFlags.None; } }
 
-        public D3RootHandler(MMStream stream, BackgroundWorkerEx worker, CASCHandler casc)
+        public D3RootHandler(BinaryReader stream, BackgroundWorkerEx worker, CASCHandler casc)
         {
             worker?.ReportProgress(0, "Loading \"root\"...");
 
@@ -69,7 +69,7 @@ namespace CASCExplorer
 
                 EncodingEntry enc = casc.Encoding.GetEntry(md5);
 
-                using (MMStream s = new MMStream(casc.OpenFile(enc.Key)))
+                using (BinaryReader s = new BinaryReader(casc.OpenFile(enc.Key)))
                 {
                     if (s != null)
                     {

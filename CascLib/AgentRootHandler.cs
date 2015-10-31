@@ -1,14 +1,16 @@
 ﻿using System.Collections.Generic;
+using System.IO;
+using System.Text;
 
 namespace CASCExplorer
 {
     public class AgentRootHandler : RootHandlerBase
     {
-        public AgentRootHandler(MMStream stream, BackgroundWorkerEx worker)
+        public AgentRootHandler(BinaryReader stream, BackgroundWorkerEx worker)
         {
             worker?.ReportProgress(0, "Loading \"root\"...");
 
-            var hash = stream.ReadCString(); // what is this for?
+            string hash = Encoding.ASCII.GetString(stream.ReadBytes((int)stream.BaseStream.Length)); // what is this for?
 
             worker?.ReportProgress(100);
         }

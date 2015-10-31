@@ -15,6 +15,11 @@ namespace CASCExplorer
             return BitConverter.ToInt32(reader.ReadBytes(4).Reverse().ToArray(), 0);
         }
 
+        public static void Skip(this BinaryReader reader, int bytes)
+        {
+            reader.BaseStream.Position += bytes;
+        }
+
         public static uint ReadUInt32BE(this BinaryReader reader)
         {
             return BitConverter.ToUInt32(reader.ReadBytes(4).Reverse().ToArray(), 0);
@@ -29,16 +34,16 @@ namespace CASCExplorer
             return returnObject;
         }
 
-        public static List<T> Read<T>(this BinaryReader reader, bool fake) where T : struct
+        public static T[] ReadArray<T>(this BinaryReader reader) where T : struct
         {
             long numBytes = reader.ReadInt64();
 
             int itemCount = (int)numBytes / Marshal.SizeOf(typeof(T));
 
-            List<T> data = new List<T>(itemCount);
+            T[] data = new T[itemCount];
 
             for (int i = 0; i < itemCount; ++i)
-                data.Add(reader.Read<T>());
+                data[i] = reader.Read<T>();
 
             reader.BaseStream.Position += (0 - (int)numBytes) & 0x07;
 
@@ -91,10 +96,10 @@ namespace CASCExplorer
 
         public static string ToBinaryString(this BitArray bits)
         {
-            if (bits.Count == 0)
-                return String.Empty;
+            string result = string.Empty;
 
-            string result = String.Empty;
+            if (bits.Count == 0)
+                return result;
 
             for (int i = 0; i < bits.Count; ++i)
             {
@@ -132,7 +137,7 @@ namespace CASCExplorer
             }
             catch (EndOfStreamException)
             {
-                return String.Empty;
+                return string.Empty;
             }
         }
 
@@ -145,13 +150,12 @@ namespace CASCExplorer
 
         public static byte[] ToByteArray(this string str)
         {
-            str = str.Replace(" ", String.Empty);
+            str = str.Replace(" ", string.Empty);
 
             var res = new byte[str.Length / 2];
             for (int i = 0; i < res.Length; ++i)
             {
-                string temp = String.Concat(str[i * 2], str[i * 2 + 1]);
-                res[i] = Convert.ToByte(temp, 16);
+                res[i] = Convert.ToByte(str.Substring(i * 2, 2), 16);
             }
             return res;
         }

@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.Diagnostics;
+using System.IO;
 using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
@@ -97,7 +98,7 @@ namespace CASCExplorer
         public override ContentFlags Content { get { return ContentFlags.None; } }
         public int PackagesCount { get { return MarFiles[0].NumFiles; } }
 
-        public MNDXRootHandler(MMStream stream, BackgroundWorkerEx worker)
+        public MNDXRootHandler(BinaryReader stream, BackgroundWorkerEx worker)
         {
             worker?.ReportProgress(0, "Loading \"root\"...");
 
@@ -125,22 +126,22 @@ namespace CASCExplorer
 
             for (int i = 0; i < MarInfoCount; i++)
             {
-                stream.Position = MarInfoOffset + (MarInfoSize * i);
+                stream.BaseStream.Position = MarInfoOffset + (MarInfoSize * i);
 
                 MARInfo marInfo = stream.Read<MARInfo>();
 
-                stream.Position = marInfo.MarDataOffset;
+                stream.BaseStream.Position = marInfo.MarDataOffset;
 
                 MarFiles[i] = new MARFileNameDB(stream);
 
-                if (stream.Position != marInfo.MarDataOffset + marInfo.MarDataSize)
+                if (stream.BaseStream.Position != marInfo.MarDataOffset + marInfo.MarDataSize)
                     throw new Exception("MAR parsing error!");
             }
 
             //if (MndxEntrySize != Marshal.SizeOf(typeof(CASC_ROOT_ENTRY_MNDX)))
             //    throw new Exception("invalid root file (2)");
 
-            stream.Position = MndxEntriesOffset;
+            stream.BaseStream.Position = MndxEntriesOffset;
 
             CASC_ROOT_ENTRY_MNDX prevEntry = null;
 
@@ -584,7 +585,7 @@ namespace CASCExplorer
             0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07, 0x07
         };
 
-        public MARFileNameDB(MMStream reader, bool next = false)
+        public MARFileNameDB(BinaryReader reader, bool next = false)
         {
             if (!next && reader.ReadInt32() != CASC_MAR_SIGNATURE)
                 throw new Exception("invalid MAR file");
@@ -1714,7 +1715,7 @@ namespace CASCExplorer
             }
         }
 
-        public TBitEntryArray(MMStream reader) : base(reader.ReadArray<int>())
+        public TBitEntryArray(BinaryReader reader) : base(reader.ReadArray<int>())
         {
             BitsPerEntry = reader.ReadInt32();
             EntryBitMask = reader.ReadInt32();
@@ -1732,7 +1733,7 @@ namespace CASCExplorer
         public int TotalItemCount { get; private set; } // Total number of items in the array
         public int ValidItemCount { get; private set; } // Number of present items in the array
 
-        public TSparseArray(MMStream reader)
+        public TSparseArray(BinaryReader reader)
         {
             ItemBits = reader.ReadArray<int>();
             TotalItemCount = reader.ReadInt32();
@@ -1872,7 +1873,7 @@ namespace CASCExplorer
             get { return NameFragments.Length; }
         }
 
-        public TNameIndexStruct(MMStream reader)
+        public TNameIndexStruct(BinaryReader reader)
         {
             NameFragments = reader.ReadArray<byte>();
             FragmentEnds = new TSparseArray(reader);

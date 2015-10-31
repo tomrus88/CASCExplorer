@@ -16,7 +16,7 @@ namespace CASCExplorer
             cachePath = path;
         }
 
-        public MMStream OpenFile(string name, string url, bool isData)
+        public Stream OpenFile(string name, string url, bool isData)
         {
             if (!Enabled)
                 return null;
@@ -35,7 +35,7 @@ namespace CASCExplorer
                 downloader.DownloadFile(url, file);
             }
 
-            return new MMStream(file);
+            return new FileStream(file, FileMode.Open);
         }
 
         public bool HasFile(string name)
