@@ -50,11 +50,12 @@ namespace CASCExplorer
 
             bool isWoW = Settings.Default.Product.IndexOf("wow") >= 0;
             bool isD3 = Settings.Default.Product.IndexOf("d3") >= 0;
+            bool isPro = Settings.Default.Product.IndexOf("pro") >= 0;
 
             onlineModeToolStripMenuItem.Checked = Settings.Default.OnlineMode;
             scanFilesToolStripMenuItem.Enabled = isWoW;
-            analyseUnknownFilesToolStripMenuItem.Enabled = isWoW;
-            localeFlagsToolStripMenuItem.Enabled = isWoW || isD3;
+            analyseUnknownFilesToolStripMenuItem.Enabled = isWoW || isPro;
+            localeFlagsToolStripMenuItem.Enabled = isWoW || isD3 || isPro;
             useLWToolStripMenuItem.Enabled = isWoW;
 
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
@@ -98,6 +99,18 @@ namespace CASCExplorer
 
         private void OnStorageChanged()
         {
+            CASCConfig cfg = CASC.Config;
+
+            bool isWoW = cfg.BuildUID.IndexOf("wow") >= 0;
+            bool isD3 = cfg.BuildUID.IndexOf("d3") >= 0;
+            bool isPro = cfg.BuildUID.IndexOf("pro") >= 0;
+
+            onlineModeToolStripMenuItem.Checked = cfg.OnlineMode;
+            scanFilesToolStripMenuItem.Enabled = isWoW;
+            analyseUnknownFilesToolStripMenuItem.Enabled = isWoW || isPro;
+            localeFlagsToolStripMenuItem.Enabled = isWoW || isD3 || isPro;
+            useLWToolStripMenuItem.Enabled = isWoW;
+
             folderTree.Nodes.Clear();
 
             TreeNode node = new TreeNode() { Name = Root.Name, Tag = Root, Text = "Root [Read only]" };
@@ -110,9 +123,9 @@ namespace CASCExplorer
 
             if (Settings.Default.OnlineMode)
             {
-                foreach (var cfg in CASC.Config.Builds)
+                foreach (var bld in cfg.Builds)
                 {
-                    cDNToolStripMenuItem.DropDownItems.Add(cfg["build-name"][0]);
+                    cDNToolStripMenuItem.DropDownItems.Add(bld["build-name"][0]);
                 }
             }
 
