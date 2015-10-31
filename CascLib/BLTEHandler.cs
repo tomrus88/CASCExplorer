@@ -68,7 +68,7 @@ namespace CASCExplorer
             int magic = reader.ReadInt32(); // BLTE (raw)
 
             if (magic != 0x45544c42)
-                throw new InvalidDataException("BLTEHandler: magic");
+                throw new InvalidDataException("BLTEHandler: invalid magic");
 
             int frameHeaderSize = reader.ReadInt32BE();
             int chunkCount = 0;
@@ -91,7 +91,7 @@ namespace CASCExplorer
             }
 
             if (chunkCount < 0)
-                throw new InvalidDataException(String.Format("Possible error ({0}) at offset: 0x" + reader.BaseStream.Position.ToString("X"), chunkCount));
+                throw new InvalidDataException(string.Format("Possible error ({0}) at offset: 0x" + reader.BaseStream.Position.ToString("X"), chunkCount));
 
             BLTEChunk[] chunks = new BLTEChunk[chunkCount];
 
@@ -121,9 +121,6 @@ namespace CASCExplorer
 
                 chunk.Data = reader.ReadBytes(chunk.CompSize);
 
-                if (chunk.Data.Length != chunk.CompSize)
-                    throw new Exception("chunks[i].data.Length != chunks[i].compSize");
-
                 if (chunk.Hash != null)
                 {
                     byte[] hh = md5.ComputeHash(chunk.Data);
@@ -136,25 +133,25 @@ namespace CASCExplorer
             }
         }
 
-        private void HandleChunk(byte[] data, long index, Stream outS)
+        private void HandleChunk(byte[] data, long index, Stream outStream)
         {
             // I really hope they don't put encrypted chunk into encrypted chunk
             switch (data[0])
             {
                 case 0x45: // E (encrypted)
                     byte[] decrypted = Decrypt(data, index);
-                    HandleChunk(decrypted, index, outS);
+                    HandleChunk(decrypted, index, outStream);
                     break;
                 case 0x46: // F (frame, recursive)
                     throw new Exception("DecoderFrame: implement me!");
                 case 0x4E: // N (not compressed)
-                    outS.Write(data, 1, data.Length - 1);
+                    outStream.Write(data, 1, data.Length - 1);
                     break;
                 case 0x5A: // Z (zlib compressed)
-                    Decompress(data, outS);
+                    Decompress(data, outStream);
                     break;
                 default:
-                    throw new InvalidDataException("Unknown BLTE chunk type!");
+                    throw new InvalidDataException(string.Format("Unknown BLTE chunk type {0} (0x{0:X2})!", (char)data[0], data[0]));
             }
         }
 
@@ -225,13 +222,13 @@ namespace CASCExplorer
             }
         }
 
-        private static void Decompress(byte[] data, Stream outS)
+        private static void Decompress(byte[] data, Stream outStream)
         {
             // skip first 3 bytes (zlib)
             using (var ms = new MemoryStream(data, 3, data.Length - 3))
             using (var dStream = new DeflateStream(ms, CompressionMode.Decompress))
             {
-                dStream.CopyTo(outS);
+                dStream.CopyTo(outStream);
             }
         }
 
