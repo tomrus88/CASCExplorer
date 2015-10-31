@@ -96,17 +96,14 @@ namespace CASCExplorer
 
         public static string ToBinaryString(this BitArray bits)
         {
-            string result = string.Empty;
-
-            if (bits.Count == 0)
-                return result;
+            StringBuilder sb = new StringBuilder(bits.Length);
 
             for (int i = 0; i < bits.Count; ++i)
             {
-                result += bits[i] ? "1" : "0";
+                sb.Append(bits[i] ? "1" : "0");
             }
 
-            return result;
+            return sb.ToString();
         }
     }
 
@@ -127,18 +124,11 @@ namespace CASCExplorer
         /// </summary>
         public static string ReadCString(this BinaryReader reader, Encoding encoding)
         {
-            try
-            {
-                var bytes = new List<byte>();
-                byte b;
-                while ((b = reader.ReadByte()) != 0)
-                    bytes.Add(b);
-                return encoding.GetString(bytes.ToArray());
-            }
-            catch (EndOfStreamException)
-            {
-                return string.Empty;
-            }
+            var bytes = new List<byte>();
+            byte b;
+            while ((b = reader.ReadByte()) != 0)
+                bytes.Add(b);
+            return encoding.GetString(bytes.ToArray());
         }
 
         public static void WriteCString(this BinaryWriter writer, string str)
