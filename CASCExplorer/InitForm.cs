@@ -10,6 +10,8 @@ namespace CASCExplorer
         public CASCHandler CASC { get; set; }
         public CASCFolder Root { get; set; }
 
+        private bool _onlineMode;
+
         public InitForm()
         {
             InitializeComponent();
@@ -17,17 +19,17 @@ namespace CASCExplorer
 
         private void InitForm_FormClosing(object sender, FormClosingEventArgs e)
         {
-            if(e.CloseReason != CloseReason.None)
+            if (e.CloseReason != CloseReason.None)
                 backgroundWorker1.CancelAsync();
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            CASCConfig config = Settings.Default.OnlineMode
+            CASCConfig config = _onlineMode
                 ? CASCConfig.LoadOnlineStorageConfig((string)e.Argument, "us")
                 : CASCConfig.LoadLocalStorageConfig((string)e.Argument);
 
-            if (Settings.Default.OnlineMode)
+            if (_onlineMode)
             {
                 using (SelectBuildForm sb = new SelectBuildForm(config))
                 {
@@ -93,13 +95,13 @@ namespace CASCExplorer
 
         public void LoadLocalStorage(string path)
         {
-            Settings.Default.OnlineMode = false;
+            _onlineMode = false;
             backgroundWorker1.RunWorkerAsync(path);
         }
 
         public void LoadOnlineStorage(string product)
         {
-            Settings.Default.OnlineMode = true;
+            _onlineMode = true;
             backgroundWorker1.RunWorkerAsync(product);
         }
     }

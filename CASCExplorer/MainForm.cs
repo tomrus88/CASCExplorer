@@ -48,15 +48,10 @@ namespace CASCExplorer
 
             folderTree.SelectedImageIndex = 1;
 
-            bool isWoW = Settings.Default.Product.IndexOf("wow") >= 0;
-            bool isD3 = Settings.Default.Product.IndexOf("d3") >= 0;
-            bool isPro = Settings.Default.Product.IndexOf("pro") >= 0;
-
-            onlineModeToolStripMenuItem.Checked = Settings.Default.OnlineMode;
-            scanFilesToolStripMenuItem.Enabled = isWoW;
-            analyseUnknownFilesToolStripMenuItem.Enabled = isWoW || isPro;
-            localeFlagsToolStripMenuItem.Enabled = isWoW || isD3 || isPro;
-            useLWToolStripMenuItem.Enabled = isWoW;
+            scanFilesToolStripMenuItem.Enabled = false;
+            analyseUnknownFilesToolStripMenuItem.Enabled = false;
+            localeFlagsToolStripMenuItem.Enabled = false;
+            useLWToolStripMenuItem.Enabled = false;
 
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
@@ -105,7 +100,6 @@ namespace CASCExplorer
             bool isD3 = cfg.BuildUID.IndexOf("d3") >= 0;
             bool isPro = cfg.BuildUID.IndexOf("pro") >= 0;
 
-            onlineModeToolStripMenuItem.Checked = cfg.OnlineMode;
             scanFilesToolStripMenuItem.Enabled = isWoW;
             analyseUnknownFilesToolStripMenuItem.Enabled = isWoW || isPro;
             localeFlagsToolStripMenuItem.Enabled = isWoW || isD3 || isPro;
@@ -121,7 +115,7 @@ namespace CASCExplorer
 
             cDNToolStripMenuItem.DropDownItems.Clear();
 
-            if (Settings.Default.OnlineMode)
+            if (cfg.OnlineMode)
             {
                 foreach (var bld in cfg.Builds)
                 {
@@ -446,14 +440,6 @@ namespace CASCExplorer
             Clipboard.SetText(temp);
         }
 
-        private void onlineModeToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            Settings.Default.OnlineMode = onlineModeToolStripMenuItem.Checked = !onlineModeToolStripMenuItem.Checked;
-            Settings.Default.Save();
-
-            MessageBox.Show("Please restart CASCExplorer to apply changes", "Restart required", MessageBoxButtons.OK, MessageBoxIcon.Warning);
-        }
-
         private void scanFilesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (CASC == null || Root == null)
@@ -627,10 +613,6 @@ namespace CASCExplorer
                 return;
             }
 
-            Settings.Default.OnlineMode = false;
-            Settings.Default.StoragePath = storageFolderBrowserDialog.SelectedPath;
-            Settings.Default.Save();
-
             Cleanup();
 
             using (var initForm = new InitForm())
@@ -718,6 +700,9 @@ namespace CASCExplorer
 
         private async void dumpInstallToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            if (CASC == null)
+                return;
+
             try
             {
                 statusProgress.Value = 0;

@@ -2,20 +2,11 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="CASCExplorer.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="OnlineMode" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">True</Value>
-    </Setting>
-    <Setting Name="Product" Type="System.String" Scope="User">
-      <Value Profile="(Default)">wow</Value>
-    </Setting>
     <Setting Name="LocaleFlags" Type="CASCExplorer.LocaleFlags" Scope="User">
       <Value Profile="(Default)">enUS</Value>
     </Setting>
     <Setting Name="ContentFlags" Type="CASCExplorer.ContentFlags" Scope="User">
       <Value Profile="(Default)">None</Value>
-    </Setting>
-    <Setting Name="StoragePath" Type="System.String" Scope="User">
-      <Value Profile="(Default)">d:\Games\World of Warcraft Public Test\</Value>
     </Setting>
   </Settings>
 </SettingsFile>

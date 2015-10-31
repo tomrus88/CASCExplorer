@@ -58,7 +58,6 @@
             this.localeFlagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.useLWToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.onlineModeToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.scanFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.analyseUnknownFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.dumpInstallToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -343,7 +342,6 @@
             // toolsToolStripMenuItem
             // 
             this.toolsToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
-            this.onlineModeToolStripMenuItem,
             this.scanFilesToolStripMenuItem,
             this.analyseUnknownFilesToolStripMenuItem,
             this.dumpInstallToolStripMenuItem,
@@ -353,13 +351,6 @@
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
-            // 
-            // onlineModeToolStripMenuItem
-            // 
-            this.onlineModeToolStripMenuItem.Name = "onlineModeToolStripMenuItem";
-            this.onlineModeToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
-            this.onlineModeToolStripMenuItem.Text = "Online Mode";
-            this.onlineModeToolStripMenuItem.Click += new System.EventHandler(this.onlineModeToolStripMenuItem_Click);
             // 
             // scanFilesToolStripMenuItem
             // 
@@ -397,6 +388,7 @@
             // 
             // bruteforceNamesToolStripMenuItem
             // 
+            this.bruteforceNamesToolStripMenuItem.Enabled = false;
             this.bruteforceNamesToolStripMenuItem.Name = "bruteforceNamesToolStripMenuItem";
             this.bruteforceNamesToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.bruteforceNamesToolStripMenuItem.Text = "Bruteforce names";
@@ -469,7 +461,6 @@
         private System.Windows.Forms.ColumnHeader columnHeader3;
         private System.Windows.Forms.ToolStripMenuItem copyNameToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem toolsToolStripMenuItem;
-        private System.Windows.Forms.ToolStripMenuItem onlineModeToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem scanFilesToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem analyseUnknownFilesToolStripMenuItem;
         private System.Windows.Forms.ColumnHeader columnHeader4;

@@ -25,30 +25,6 @@ namespace CASCExplorer.Properties {
         
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("True")]
-        public bool OnlineMode {
-            get {
-                return ((bool)(this["OnlineMode"]));
-            }
-            set {
-                this["OnlineMode"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("wow")]
-        public string Product {
-            get {
-                return ((string)(this["Product"]));
-            }
-            set {
-                this["Product"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("enUS")]
         public global::CASCExplorer.LocaleFlags LocaleFlags {
             get {
@@ -68,18 +44,6 @@ namespace CASCExplorer.Properties {
             }
             set {
                 this["ContentFlags"] = value;
-            }
-        }
-        
-        [global::System.Configuration.UserScopedSettingAttribute()]
-        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
-        [global::System.Configuration.DefaultSettingValueAttribute("d:\\Games\\World of Warcraft Public Test\\")]
-        public string StoragePath {
-            get {
-                return ((string)(this["StoragePath"]));
-            }
-            set {
-                this["StoragePath"] = value;
             }
         }
     }
