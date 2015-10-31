@@ -290,12 +290,6 @@ namespace CASCExplorer
             }
         }
 
-        ~CASCHandler()
-        {
-            foreach (var stream in DataStreams)
-                stream.Value.Close();
-        }
-
         private Stream GetDataStream(int index)
         {
             Stream stream;

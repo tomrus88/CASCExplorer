@@ -16,7 +16,7 @@ namespace CASCExplorer
 
             string str = Encoding.ASCII.GetString(stream.ReadBytes((int)stream.BaseStream.Length));
 
-            string[] array = str.Split(new[] { '\r', '\n' }, System.StringSplitOptions.RemoveEmptyEntries);
+            string[] array = str.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             // need to figure out what to do with those apm files
 

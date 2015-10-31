@@ -128,6 +128,7 @@ namespace CASCExplorer
             D3RootData.Clear();
             tocParser = null;
             pkgParser = null;
+            CASCFile.FileNames.Clear();
         }
 
         public override void Dump()

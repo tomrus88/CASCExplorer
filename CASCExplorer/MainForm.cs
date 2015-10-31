@@ -22,7 +22,7 @@ namespace CASCExplorer
         private ExtractProgress extractProgress;
         private CASCHandler CASC;
         private CASCFolder Root;
-        private CASCEntrySorter Sorter;
+        private CASCEntrySorter Sorter = new CASCEntrySorter();
         private NumberFormatInfo sizeNumberFmt = new NumberFormatInfo()
         {
             NumberGroupSizes = new int[] { 3, 3, 3, 3, 3 },
@@ -47,11 +47,6 @@ namespace CASCExplorer
             iconsList.Images.Add(SystemIcons.WinLogo);
 
             folderTree.SelectedImageIndex = 1;
-
-            scanFilesToolStripMenuItem.Enabled = false;
-            analyseUnknownFilesToolStripMenuItem.Enabled = false;
-            localeFlagsToolStripMenuItem.Enabled = false;
-            useLWToolStripMenuItem.Enabled = false;
 
             AppDomain.CurrentDomain.UnhandledException += CurrentDomain_UnhandledException;
 
@@ -83,8 +78,6 @@ namespace CASCExplorer
             }
 
             useLWToolStripMenuItem.Checked = Settings.Default.ContentFlags == ContentFlags.LowViolence;
-
-            Sorter = new CASCEntrySorter();
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -105,15 +98,11 @@ namespace CASCExplorer
             localeFlagsToolStripMenuItem.Enabled = isWoW || isD3 || isPro;
             useLWToolStripMenuItem.Enabled = isWoW;
 
-            folderTree.Nodes.Clear();
-
             TreeNode node = new TreeNode() { Name = Root.Name, Tag = Root, Text = "Root [Read only]" };
             folderTree.Nodes.Add(node);
             node.Nodes.Add(new TreeNode() { Name = "tempnode" }); // add dummy node
             node.Expand();
             folderTree.SelectedNode = node;
-
-            cDNToolStripMenuItem.DropDownItems.Clear();
 
             if (cfg.OnlineMode)
             {
@@ -640,16 +629,26 @@ namespace CASCExplorer
 
         private void Cleanup()
         {
+            Sorter.CASC = null;
+
             if (CASC != null)
             {
                 CASC.Clear();
                 CASC = null;
-                Sorter.CASC = null;
             }
 
             Root = null;
 
             fileList.VirtualListSize = 0;
+            folderTree.Nodes.Clear();
+            cDNToolStripMenuItem.DropDownItems.Clear();
+
+            scanFilesToolStripMenuItem.Enabled = false;
+            analyseUnknownFilesToolStripMenuItem.Enabled = false;
+            localeFlagsToolStripMenuItem.Enabled = false;
+            useLWToolStripMenuItem.Enabled = false;
+            statusLabel.Text = "Ready.";
+            statusProgress.Visible = false;
         }
 
         private void findToolStripMenuItem_Click(object sender, EventArgs e)
@@ -789,6 +788,11 @@ namespace CASCExplorer
             Sorter.CASC = CASC;
 
             OnStorageChanged();
+        }
+
+        private void closeStorageToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            Cleanup();
         }
     }
 }
