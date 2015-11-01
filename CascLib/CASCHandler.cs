@@ -300,7 +300,7 @@ namespace CASCExplorer
 
             string dataFile = Path.Combine(Config.BasePath, String.Format("{0}\\data\\data.{1:D3}", dataFolder, index));
 
-            stream = new FileStream(dataFile, FileMode.Open);
+            stream = new FileStream(dataFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 
             DataStreams[index] = stream;
 

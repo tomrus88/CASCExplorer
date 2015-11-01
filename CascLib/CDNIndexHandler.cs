@@ -113,7 +113,7 @@ namespace CASCExplorer
 
                 string path = Path.Combine(CASCConfig.BasePath, indexPath, archive + ".index");
 
-                using (FileStream fs = new FileStream(path, FileMode.Open))
+                using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     ParseIndex(fs, i);
             }
             catch

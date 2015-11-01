@@ -93,6 +93,8 @@ namespace CASCExplorer
             bool isD3 = cfg.BuildUID.IndexOf("d3") >= 0;
             bool isPro = cfg.BuildUID.IndexOf("pro") >= 0;
 
+            dumpInstallToolStripMenuItem.Enabled = true;
+            extractRootFileToolStripMenuItem.Enabled = true;
             scanFilesToolStripMenuItem.Enabled = isWoW;
             analyseUnknownFilesToolStripMenuItem.Enabled = isWoW || isPro;
             localeFlagsToolStripMenuItem.Enabled = isWoW || isD3 || isPro;
@@ -645,6 +647,8 @@ namespace CASCExplorer
             cDNToolStripMenuItem.Enabled = false;
             cDNToolStripMenuItem.DropDownItems.Clear();
 
+            dumpInstallToolStripMenuItem.Enabled = false;
+            extractRootFileToolStripMenuItem.Enabled = false;
             scanFilesToolStripMenuItem.Enabled = false;
             analyseUnknownFilesToolStripMenuItem.Enabled = false;
             localeFlagsToolStripMenuItem.Enabled = false;
