@@ -181,55 +181,65 @@ namespace CASCExplorer
             try
             {
                 if (Config.OnlineMode)
-                    throw new Exception("OnlineMode=true");
+                    return OpenFileOnline(key);
+                else
+                    return OpenFileLocal(key);
+            }
+            catch
+            {
+                return OpenFileOnline(key);
+            }
+        }
 
-                var idxInfo = LocalIndex.GetIndexInfo(key);
+        private Stream OpenFileOnline(byte[] key)
+        {
+            IndexEntry idxInfo = CDNIndex.GetIndexInfo(key);
 
-                if (idxInfo == null)
-                    throw new Exception("local index missing");
-
-                var stream = GetDataStream(idxInfo.Index);
-
-                stream.Position = idxInfo.Offset;
-
-                stream.Position += 30;
-                //byte[] compressedMD5 = reader.ReadBytes(16);
-                //int size = reader.ReadInt32();
-                //byte[] unkData1 = reader.ReadBytes(2);
-                //byte[] unkData2 = reader.ReadBytes(8);
-
-                using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30))
+            if (idxInfo != null)
+            {
+                using (Stream s = CDNIndex.OpenDataFile(idxInfo))
+                using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
                 {
                     return blte.OpenFile(true);
                 }
             }
-            catch
+            else
             {
-                var idxInfo = CDNIndex.GetIndexInfo(key);
-
-                if (idxInfo != null)
+                try
                 {
-                    using (Stream s = CDNIndex.OpenDataFile(idxInfo))
-                    using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
+                    using (Stream s = CDNIndex.OpenDataFileDirect(key))
+                    using (BLTEHandler blte = new BLTEHandler(s, (int)s.Length))
                     {
                         return blte.OpenFile(true);
                     }
                 }
-                else
+                catch
                 {
-                    try
-                    {
-                        using (Stream s = CDNIndex.OpenDataFileDirect(key))
-                        using (BLTEHandler blte = new BLTEHandler(s, (int)s.Length))
-                        {
-                            return blte.OpenFile(true);
-                        }
-                    }
-                    catch
-                    {
-                        throw new Exception("CDN index missing");
-                    }
+                    throw new Exception("CDN index missing");
                 }
+            }
+        }
+
+        private Stream OpenFileLocal(byte[] key)
+        {
+            IndexEntry idxInfo = LocalIndex.GetIndexInfo(key);
+
+            if (idxInfo == null)
+                throw new Exception("local index missing");
+
+            Stream stream = GetDataStream(idxInfo.Index);
+
+            stream.Position = idxInfo.Offset;
+
+            stream.Position += 30;
+            //byte[] compressedMD5 = reader.ReadBytes(16);
+            //int size = reader.ReadInt32();
+            //byte[] unkData1 = reader.ReadBytes(2);
+            //byte[] unkData2 = reader.ReadBytes(8);
+
+            using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30))
+            {
+                return blte.OpenFile(true);
             }
         }
 
@@ -238,61 +248,72 @@ namespace CASCExplorer
             try
             {
                 if (Config.OnlineMode)
-                    throw new Exception("OnlineMode=true");
+                    ExtractFileOnline(key, path, name);
+                else
+                    ExtractFileLocal(key, path, name);
+            }
+            catch
+            {
+                ExtractFileOnline(key, path, name);
+            }
+        }
 
-                var idxInfo = LocalIndex.GetIndexInfo(key);
+        private void ExtractFileOnline(byte[] key, string path, string name)
+        {
+            IndexEntry idxInfo = CDNIndex.GetIndexInfo(key);
 
-                if (idxInfo == null)
-                    throw new Exception("local index missing");
-
-                var stream = GetDataStream(idxInfo.Index);
-
-                stream.Position = idxInfo.Offset;
-
-                stream.Position += 30;
-                //byte[] compressedMD5 = reader.ReadBytes(16);
-                //int size = reader.ReadInt32();
-                //byte[] unkData1 = reader.ReadBytes(2);
-                //byte[] unkData2 = reader.ReadBytes(8);
-
-                using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30))
+            if (idxInfo != null)
+            {
+                using (Stream s = CDNIndex.OpenDataFile(idxInfo))
+                using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
                 {
                     blte.ExtractToFile(path, name);
                 }
             }
-            catch
+            else
             {
-                var idxInfo = CDNIndex.GetIndexInfo(key);
-
-                if (idxInfo != null)
+                try
                 {
-                    using (Stream s = CDNIndex.OpenDataFile(idxInfo))
-                    using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
+                    using (Stream s = CDNIndex.OpenDataFileDirect(key))
+                    using (BLTEHandler blte = new BLTEHandler(s, (int)s.Length))
                     {
                         blte.ExtractToFile(path, name);
                     }
                 }
-                else
+                catch
                 {
-                    try
-                    {
-                        using (Stream s = CDNIndex.OpenDataFileDirect(key))
-                        using (BLTEHandler blte = new BLTEHandler(s, (int)s.Length))
-                        {
-                            blte.ExtractToFile(path, name);
-                        }
-                    }
-                    catch
-                    {
-                        throw new Exception("CDN index missing");
-                    }
+                    throw new Exception("CDN index missing");
                 }
+            }
+        }
+
+        private void ExtractFileLocal(byte[] key, string path, string name)
+        {
+            IndexEntry idxInfo = LocalIndex.GetIndexInfo(key);
+
+            if (idxInfo == null)
+                throw new Exception("local index missing");
+
+            Stream stream = GetDataStream(idxInfo.Index);
+
+            stream.Position = idxInfo.Offset;
+
+            stream.Position += 30;
+            //byte[] compressedMD5 = reader.ReadBytes(16);
+            //int size = reader.ReadInt32();
+            //byte[] unkData1 = reader.ReadBytes(2);
+            //byte[] unkData2 = reader.ReadBytes(8);
+
+            using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30))
+            {
+                blte.ExtractToFile(path, name);
             }
         }
 
         private Stream GetDataStream(int index)
         {
             Stream stream;
+
             if (DataStreams.TryGetValue(index, out stream))
                 return stream;
 

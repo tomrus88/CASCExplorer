@@ -22,6 +22,7 @@ namespace CASCExplorer
             using (Stream stream = resp.GetResponseStream())
             using (Stream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
             {
+                CacheMetaData.AddToCache(resp, path);
                 CopyToStream(stream, fs, resp.ContentLength);
             }
         }
@@ -42,7 +43,7 @@ namespace CASCExplorer
             }
         }
 
-        public long GetFileSize(string url)
+        public CacheMetaData GetMetaData(string url, string file)
         {
             try
             {
@@ -50,23 +51,9 @@ namespace CASCExplorer
                 request.Method = "HEAD";
 
                 using (HttpWebResponse resp = (HttpWebResponse)request.GetResponse())
-                    return resp.ContentLength;
-            }
-            catch
-            {
-                return -1;
-            }
-        }
-
-        public byte[] GetMD5(string url)
-        {
-            try
-            {
-                HttpWebRequest request = WebRequest.CreateHttp(url);
-                request.Method = "HEAD";
-
-                using (HttpWebResponse resp = (HttpWebResponse)request.GetResponse())
-                    return resp.Headers[HttpResponseHeader.ETag].Split(':')[0].ToByteArray();
+                {
+                    return CacheMetaData.AddToCache(resp, file);
+                }
             }
             catch
             {
