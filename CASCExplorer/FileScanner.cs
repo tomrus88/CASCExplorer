@@ -143,7 +143,7 @@ namespace CASCExplorer
             }
             catch
             { }
-            return "";
+            return string.Empty;
         }
     }
 }

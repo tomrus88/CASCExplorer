@@ -65,6 +65,8 @@ namespace CASCExplorer
 
             if (onlineStorageList != null)
             {
+                openOnlineStorageToolStripMenuItem.Enabled = true;
+
                 foreach (string game in onlineStorageList)
                 {
                     var item = new ToolStripMenuItem(onlineStorageList[game]);
@@ -75,6 +77,16 @@ namespace CASCExplorer
             else
             {
                 openOnlineStorageToolStripMenuItem.Enabled = false;
+            }
+
+            if (Settings.Default.RecentStorages != null)
+            {
+                openRecentStorageToolStripMenuItem.Enabled = true;
+
+                foreach (string recentStorage in Settings.Default.RecentStorages)
+                {
+                    openRecentStorageToolStripMenuItem.DropDownItems.Add(recentStorage);
+                }
             }
 
             useLWToolStripMenuItem.Checked = Settings.Default.ContentFlags == ContentFlags.LowViolence;
@@ -616,6 +628,14 @@ namespace CASCExplorer
                 if (res != DialogResult.OK)
                     return;
 
+                if (Settings.Default.RecentStorages == null)
+                    Settings.Default.RecentStorages = new StringCollection();
+
+                openRecentStorageToolStripMenuItem.Enabled = true;
+                openRecentStorageToolStripMenuItem.DropDownItems.Add(storageFolderBrowserDialog.SelectedPath);
+                Settings.Default.RecentStorages.Add(storageFolderBrowserDialog.SelectedPath);
+                Settings.Default.Save();
+
                 CASC = initForm.CASC;
                 Root = initForm.Root;
             }
@@ -623,11 +643,6 @@ namespace CASCExplorer
             Sorter.CASC = CASC;
 
             OnStorageChanged();
-        }
-
-        private void openLastStorageToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            MessageBox.Show("Not implemented!");
         }
 
         private void Cleanup()
@@ -801,6 +816,28 @@ namespace CASCExplorer
         private void closeStorageToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Cleanup();
+        }
+
+        private void openRecentStorageToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+            Cleanup();
+
+            using (var initForm = new InitForm())
+            {
+                initForm.LoadLocalStorage(e.ClickedItem.Text);
+
+                DialogResult res = initForm.ShowDialog();
+
+                if (res != DialogResult.OK)
+                    return;
+
+                CASC = initForm.CASC;
+                Root = initForm.Root;
+            }
+
+            Sorter.CASC = CASC;
+
+            OnStorageChanged();
         }
     }
 }

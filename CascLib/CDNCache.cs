@@ -72,15 +72,14 @@ namespace CASCExplorer
             FileInfo fi = new FileInfo(file);
 
             if (!fi.Exists)
-            {
                 downloader.DownloadFile(url, file);
-            }
-            else if (Validate)
+
+            if (Validate)
             {
                 CacheMetaData meta = CacheMetaData.Load(file) ?? downloader.GetMetaData(url, file);
 
                 if (meta == null)
-                    throw new Exception(string.Format("unable to validata file {0}", file));
+                    throw new Exception(string.Format("unable to validate file {0}", file));
 
                 bool sizeOk, md5Ok;
 
@@ -94,7 +93,7 @@ namespace CASCExplorer
                     downloader.DownloadFile(url, file);
             }
 
-            return new FileStream(file, FileMode.Open);
+            return new FileStream(file, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
         }
 
         public bool HasFile(string name)

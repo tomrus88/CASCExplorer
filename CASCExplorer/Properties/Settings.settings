@@ -8,5 +8,8 @@
     <Setting Name="ContentFlags" Type="CASCExplorer.ContentFlags" Scope="User">
       <Value Profile="(Default)">None</Value>
     </Setting>
+    <Setting Name="RecentStorages" Type="System.Collections.Specialized.StringCollection" Scope="User">
+      <Value Profile="(Default)" />
+    </Setting>
   </Settings>
 </SettingsFile>

@@ -46,5 +46,16 @@ namespace CASCExplorer.Properties {
                 this["ContentFlags"] = value;
             }
         }
+        
+        [global::System.Configuration.UserScopedSettingAttribute()]
+        [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
+        public global::System.Collections.Specialized.StringCollection RecentStorages {
+            get {
+                return ((global::System.Collections.Specialized.StringCollection)(this["RecentStorages"]));
+            }
+            set {
+                this["RecentStorages"] = value;
+            }
+        }
     }
 }
