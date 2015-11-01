@@ -82,6 +82,8 @@ namespace CASCExplorer
 
                 DownloadData.Add(key, entry);
                 entries.Add(entry);
+
+                worker?.ReportProgress((int)(i / (float)numFiles * 100));
             }
 
             //foreach (var entry in DownloadData)

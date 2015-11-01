@@ -76,6 +76,8 @@ namespace CASCExplorer
                 }
             }
 
+            int current = 0;
+
             foreach (var entry in casc.Encoding.Entries)
             {
                 DownloadEntry dl = casc.Download.GetEntry(entry.Value.Key);
@@ -96,9 +98,9 @@ namespace CASCExplorer
 
                     CASCFile.FileNames[fileHash] = fakeName;
                 }
-            }
 
-            worker?.ReportProgress(100);
+                worker?.ReportProgress((int)(++current / (float)casc.Encoding.Count * 100));
+            }
         }
 
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)

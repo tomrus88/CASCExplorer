@@ -147,7 +147,7 @@ namespace CASCExplorer
 
             //Dictionary<int, int> p = new Dictionary<int, int>();
 
-            for (int i = 0; i < MndxEntriesTotal; ++i)
+            for (int i = 0; i < MndxEntriesTotal; i++)
             {
                 CASC_ROOT_ENTRY_MNDX entry = new CASC_ROOT_ENTRY_MNDX();
 
@@ -167,6 +167,8 @@ namespace CASCExplorer
                 //    else
                 //        p[entry.Flags & 0x00FFFFFF]++;
                 //}
+
+                worker?.ReportProgress((int)(i / (float)MndxEntriesTotal * 100));
             }
 
             //for (int i = 0; i < MndxEntriesTotal; ++i)
@@ -215,8 +217,6 @@ namespace CASCExplorer
             //        mndxRootEntriesValid[j] = mndxRootEntries[i];
             //    }
             //}
-
-            worker?.ReportProgress(100);
         }
 
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
