@@ -4,7 +4,7 @@ namespace CASCExplorer
 {
     class KeyService
     {
-        static Dictionary<ulong, byte[]> keys = new Dictionary<ulong, byte[]>()
+        private static Dictionary<ulong, byte[]> keys = new Dictionary<ulong, byte[]>()
         {
             // hardcoded Overwatch keys
             [0x402CD9D8D6BFED98] = "AEB0EADEA47612FE6C041A03958DF241".ToByteArray(),
@@ -18,6 +18,13 @@ namespace CASCExplorer
             [0x8C9106108AA84F07] = "53D859DDA2635A38DC32E72B11B32F29".ToByteArray(),
             //[0x49166D358A34D815] = "00000000000000000000000000000000".ToByteArray(),
         };
+
+        private static Salsa20 salsa = new Salsa20();
+
+        public static Salsa20 SalsaInstance
+        {
+            get { return salsa; }
+        }
 
         public static byte[] GetKey(ulong keyName)
         {

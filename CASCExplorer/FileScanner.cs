@@ -24,6 +24,7 @@ namespace CASCExplorer
             { new byte[] { 0x52, 0x49, 0x46, 0x46 }, ".wav" },
             { new byte[] { 0x44, 0x55, 0x54, 0x53 }, ".duts" },
             { new byte[] { 0x42, 0x4B, 0x48, 0x44 }, ".bkhd" },
+            { new byte[] { 0x45, 0x45, 0x44, 0x43 }, ".eedc" },
             { new byte[] { 0x49, 0x44, 0x33 }, ".mp3" },
             { new byte[] { 0xff, 0xfb }, ".mp3" },
         };
