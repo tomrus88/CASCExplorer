@@ -7,6 +7,7 @@ namespace CASCExplorer
 {
     public class DownloadEntry
     {
+        public int Index;
         public byte[] Unk;
 
         public Dictionary<string, DownloadTag> Tags;
@@ -22,6 +23,7 @@ namespace CASCExplorer
     {
         private static readonly ByteArrayComparer comparer = new ByteArrayComparer();
         private readonly Dictionary<byte[], DownloadEntry> DownloadData = new Dictionary<byte[], DownloadEntry>(comparer);
+        Dictionary<string, DownloadTag> Tags = new Dictionary<string, DownloadTag>();
 
         public int Count
         {
@@ -44,13 +46,18 @@ namespace CASCExplorer
 
             int numMaskBytes = numFiles / 8 + (numFiles % 8 > 0 ? 1 : 0);
 
-            List<DownloadEntry> entries = new List<DownloadEntry>();
+            for (int i = 0; i < numFiles; i++)
+            {
+                byte[] key = stream.ReadBytes(0x10);
 
-            long filesPos = stream.BaseStream.Position;
+                byte[] unk = stream.ReadBytes(0xA);
 
-            stream.BaseStream.Position += numFiles * 0x1A; // skip to tags
+                var entry = new DownloadEntry() { Index = i, Unk = unk };
 
-            Dictionary<string, DownloadTag> tags = new Dictionary<string, DownloadTag>();
+                DownloadData.Add(key, entry);
+
+                worker?.ReportProgress((int)(i / (float)numFiles * 100));
+            }
 
             for (int i = 0; i < numTags; i++)
             {
@@ -65,37 +72,29 @@ namespace CASCExplorer
 
                 tag.Bits = new BitArray(bits);
 
-                tags.Add(name, tag);
+                Tags.Add(name, tag);
             }
+        }
 
-            stream.BaseStream.Position = filesPos; // go back to files
-
-            for (int i = 0; i < numFiles; i++)
+        public void Dump()
+        {
+            foreach (var entry in DownloadData)
             {
-                byte[] key = stream.ReadBytes(0x10);
+                if (entry.Value.Tags == null)
+                    entry.Value.Tags = Tags.Where(kv => kv.Value.Bits[entry.Value.Index]).ToDictionary(kv => kv.Key, kv => kv.Value);
 
-                byte[] unk = stream.ReadBytes(0xA);
-
-                var entry = new DownloadEntry() { Unk = unk };
-
-                entry.Tags = tags.Where(kv => kv.Value.Bits[i]).ToDictionary(kv => kv.Key, kv => kv.Value);
-
-                DownloadData.Add(key, entry);
-                entries.Add(entry);
-
-                worker?.ReportProgress((int)(i / (float)numFiles * 100));
+                Logger.WriteLine("{0} {1} {2}", entry.Key.ToHexString(), entry.Value.Unk.ToHexString(), string.Join(",", entry.Value.Tags.Select(tag => tag.Key)));
             }
-
-            //foreach (var entry in DownloadData)
-            //{
-            //    Logger.WriteLine("{0} {1} {2}", entry.Key.ToHexString(), entry.Value.Unk.ToHexString(), string.Join(",", entry.Value.Tags.Select(tag => tag.Key)));
-            //}
         }
 
         public DownloadEntry GetEntry(byte[] key)
         {
             DownloadEntry entry;
             DownloadData.TryGetValue(key, out entry);
+
+            if (entry != null && entry.Tags == null)
+                entry.Tags = Tags.Where(kv => kv.Value.Bits[entry.Index]).ToDictionary(kv => kv.Key, kv => kv.Value);
+
             return entry;
         }
 

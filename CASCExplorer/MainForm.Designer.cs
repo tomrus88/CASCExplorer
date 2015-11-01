@@ -32,6 +32,12 @@
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.folderTree = new System.Windows.Forms.TreeView();
             this.iconsList = new System.Windows.Forms.ImageList(this.components);
+            this.fileList = new CASCExplorer.NoFlickerListView();
+            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.extractToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyNameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -45,6 +51,7 @@
             this.openStorageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openOnlineStorageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.openLastStorageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.closeStorageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.exitToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.editToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.findToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -61,13 +68,6 @@
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.storageFolderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
-            this.closeStorageToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.fileList = new CASCExplorer.NoFlickerListView();
-            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -119,6 +119,59 @@
             this.iconsList.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
             this.iconsList.ImageSize = new System.Drawing.Size(15, 15);
             this.iconsList.TransparentColor = System.Drawing.Color.Transparent;
+            // 
+            // fileList
+            // 
+            this.fileList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeader1,
+            this.columnHeader2,
+            this.columnHeader3,
+            this.columnHeader5,
+            this.columnHeader4});
+            this.fileList.ContextMenuStrip = this.contextMenuStrip1;
+            this.fileList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.fileList.FullRowSelect = true;
+            this.fileList.HideSelection = false;
+            this.fileList.Location = new System.Drawing.Point(0, 0);
+            this.fileList.Name = "fileList";
+            this.fileList.SelectedIndex = -1;
+            this.fileList.Size = new System.Drawing.Size(622, 491);
+            this.fileList.SmallImageList = this.iconsList;
+            this.fileList.Sorting = System.Windows.Forms.SortOrder.Ascending;
+            this.fileList.TabIndex = 0;
+            this.fileList.UseCompatibleStateImageBehavior = false;
+            this.fileList.View = System.Windows.Forms.View.Details;
+            this.fileList.VirtualMode = true;
+            this.fileList.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.listView1_ColumnClick);
+            this.fileList.RetrieveVirtualItem += new System.Windows.Forms.RetrieveVirtualItemEventHandler(this.listView1_RetrieveVirtualItem);
+            this.fileList.SearchForVirtualItem += new System.Windows.Forms.SearchForVirtualItemEventHandler(this.fileList_SearchForVirtualItem);
+            this.fileList.KeyDown += new System.Windows.Forms.KeyEventHandler(this.listView1_KeyDown);
+            this.fileList.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.listView1_MouseDoubleClick);
+            // 
+            // columnHeader1
+            // 
+            this.columnHeader1.Text = "File Name";
+            this.columnHeader1.Width = 250;
+            // 
+            // columnHeader2
+            // 
+            this.columnHeader2.Text = "Type";
+            // 
+            // columnHeader3
+            // 
+            this.columnHeader3.Text = "Locale Flags";
+            this.columnHeader3.Width = 100;
+            // 
+            // columnHeader5
+            // 
+            this.columnHeader5.Text = "Content Flags";
+            this.columnHeader5.Width = 100;
+            // 
+            // columnHeader4
+            // 
+            this.columnHeader4.Text = "Size";
+            this.columnHeader4.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.columnHeader4.Width = 80;
             // 
             // contextMenuStrip1
             // 
@@ -244,6 +297,13 @@
             this.openLastStorageToolStripMenuItem.Text = "Open Last Storage";
             this.openLastStorageToolStripMenuItem.Click += new System.EventHandler(this.openLastStorageToolStripMenuItem_Click);
             // 
+            // closeStorageToolStripMenuItem
+            // 
+            this.closeStorageToolStripMenuItem.Name = "closeStorageToolStripMenuItem";
+            this.closeStorageToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
+            this.closeStorageToolStripMenuItem.Text = "Close Storage";
+            this.closeStorageToolStripMenuItem.Click += new System.EventHandler(this.closeStorageToolStripMenuItem_Click);
+            // 
             // exitToolStripMenuItem
             // 
             this.exitToolStripMenuItem.Name = "exitToolStripMenuItem";
@@ -329,6 +389,7 @@
             // 
             // cDNToolStripMenuItem
             // 
+            this.cDNToolStripMenuItem.Enabled = false;
             this.cDNToolStripMenuItem.Name = "cDNToolStripMenuItem";
             this.cDNToolStripMenuItem.Size = new System.Drawing.Size(195, 22);
             this.cDNToolStripMenuItem.Text = "CDN";
@@ -362,66 +423,6 @@
             this.aboutToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.aboutToolStripMenuItem.Text = "About...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
-            // 
-            // closeStorageToolStripMenuItem
-            // 
-            this.closeStorageToolStripMenuItem.Name = "closeStorageToolStripMenuItem";
-            this.closeStorageToolStripMenuItem.Size = new System.Drawing.Size(184, 22);
-            this.closeStorageToolStripMenuItem.Text = "Close Storage";
-            this.closeStorageToolStripMenuItem.Click += new System.EventHandler(this.closeStorageToolStripMenuItem_Click);
-            // 
-            // fileList
-            // 
-            this.fileList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader1,
-            this.columnHeader2,
-            this.columnHeader3,
-            this.columnHeader5,
-            this.columnHeader4});
-            this.fileList.ContextMenuStrip = this.contextMenuStrip1;
-            this.fileList.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.fileList.FullRowSelect = true;
-            this.fileList.HideSelection = false;
-            this.fileList.Location = new System.Drawing.Point(0, 0);
-            this.fileList.Name = "fileList";
-            this.fileList.SelectedIndex = -1;
-            this.fileList.Size = new System.Drawing.Size(622, 491);
-            this.fileList.SmallImageList = this.iconsList;
-            this.fileList.Sorting = System.Windows.Forms.SortOrder.Ascending;
-            this.fileList.TabIndex = 0;
-            this.fileList.UseCompatibleStateImageBehavior = false;
-            this.fileList.View = System.Windows.Forms.View.Details;
-            this.fileList.VirtualMode = true;
-            this.fileList.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.listView1_ColumnClick);
-            this.fileList.RetrieveVirtualItem += new System.Windows.Forms.RetrieveVirtualItemEventHandler(this.listView1_RetrieveVirtualItem);
-            this.fileList.SearchForVirtualItem += new System.Windows.Forms.SearchForVirtualItemEventHandler(this.fileList_SearchForVirtualItem);
-            this.fileList.KeyDown += new System.Windows.Forms.KeyEventHandler(this.listView1_KeyDown);
-            this.fileList.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.listView1_MouseDoubleClick);
-            // 
-            // columnHeader1
-            // 
-            this.columnHeader1.Text = "File Name";
-            this.columnHeader1.Width = 250;
-            // 
-            // columnHeader2
-            // 
-            this.columnHeader2.Text = "Type";
-            // 
-            // columnHeader3
-            // 
-            this.columnHeader3.Text = "Locale Flags";
-            this.columnHeader3.Width = 100;
-            // 
-            // columnHeader5
-            // 
-            this.columnHeader5.Text = "Content Flags";
-            this.columnHeader5.Width = 100;
-            // 
-            // columnHeader4
-            // 
-            this.columnHeader4.Text = "Size";
-            this.columnHeader4.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.columnHeader4.Width = 80;
             // 
             // MainForm
             // 

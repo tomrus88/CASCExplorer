@@ -106,6 +106,7 @@ namespace CASCExplorer
 
             if (cfg.OnlineMode)
             {
+                cDNToolStripMenuItem.Enabled = true;
                 foreach (var bld in cfg.Builds)
                 {
                     cDNToolStripMenuItem.DropDownItems.Add(bld["build-name"][0]);
@@ -641,6 +642,7 @@ namespace CASCExplorer
 
             fileList.VirtualListSize = 0;
             folderTree.Nodes.Clear();
+            cDNToolStripMenuItem.Enabled = false;
             cDNToolStripMenuItem.DropDownItems.Clear();
 
             scanFilesToolStripMenuItem.Enabled = false;
