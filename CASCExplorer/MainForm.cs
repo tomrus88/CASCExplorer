@@ -454,6 +454,7 @@ namespace CASCExplorer
                 scanForm = new ScanForm();
                 scanForm.Initialize(CASC, Root);
             }
+
             scanForm.Reset();
             scanForm.ShowDialog();
         }
@@ -603,48 +604,6 @@ namespace CASCExplorer
             OnStorageChanged();
         }
 
-        private void openStorageToolStripMenuItem_Click(object sender, EventArgs e)
-        {
-            if (storageFolderBrowserDialog.ShowDialog() != DialogResult.OK)
-            {
-                MessageBox.Show("Please select storage folder!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            if (!File.Exists(Path.Combine(storageFolderBrowserDialog.SelectedPath, ".build.info")))
-            {
-                MessageBox.Show("Invalid storage folder selected!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
-                return;
-            }
-
-            Cleanup();
-
-            using (var initForm = new InitForm())
-            {
-                initForm.LoadLocalStorage(storageFolderBrowserDialog.SelectedPath);
-
-                DialogResult res = initForm.ShowDialog();
-
-                if (res != DialogResult.OK)
-                    return;
-
-                if (Settings.Default.RecentStorages == null)
-                    Settings.Default.RecentStorages = new StringCollection();
-
-                openRecentStorageToolStripMenuItem.Enabled = true;
-                openRecentStorageToolStripMenuItem.DropDownItems.Add(storageFolderBrowserDialog.SelectedPath);
-                Settings.Default.RecentStorages.Add(storageFolderBrowserDialog.SelectedPath);
-                Settings.Default.Save();
-
-                CASC = initForm.CASC;
-                Root = initForm.Root;
-            }
-
-            Sorter.CASC = CASC;
-
-            OnStorageChanged();
-        }
-
         private void Cleanup()
         {
             Sorter.CASC = null;
@@ -791,13 +750,16 @@ namespace CASCExplorer
                 bf.ShowDialog();
         }
 
-        private void openOnlineStorageToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        private void OpenStorage(string arg, bool online)
         {
             Cleanup();
 
             using (var initForm = new InitForm())
             {
-                initForm.LoadOnlineStorage((string)e.ClickedItem.Tag);
+                if (online)
+                    initForm.LoadOnlineStorage(arg);
+                else
+                    initForm.LoadLocalStorage(arg);
 
                 DialogResult res = initForm.ShowDialog();
 
@@ -811,33 +773,48 @@ namespace CASCExplorer
             Sorter.CASC = CASC;
 
             OnStorageChanged();
+        }
+
+        private void openStorageToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            if (storageFolderBrowserDialog.ShowDialog() != DialogResult.OK)
+            {
+                MessageBox.Show("Please select storage folder!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            string path = storageFolderBrowserDialog.SelectedPath;
+
+            if (!File.Exists(Path.Combine(path, ".build.info")))
+            {
+                MessageBox.Show("Invalid storage folder selected!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
+                return;
+            }
+
+            OpenStorage(path, false);
+
+            if (Settings.Default.RecentStorages == null)
+                Settings.Default.RecentStorages = new StringCollection();
+
+            openRecentStorageToolStripMenuItem.Enabled = true;
+            openRecentStorageToolStripMenuItem.DropDownItems.Add(path);
+            Settings.Default.RecentStorages.Add(path);
+            Settings.Default.Save();
+        }
+
+        private void openOnlineStorageToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+            OpenStorage((string)e.ClickedItem.Tag, true);
+        }
+
+        private void openRecentStorageToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
+        {
+            OpenStorage(e.ClickedItem.Text, false);
         }
 
         private void closeStorageToolStripMenuItem_Click(object sender, EventArgs e)
         {
             Cleanup();
-        }
-
-        private void openRecentStorageToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
-        {
-            Cleanup();
-
-            using (var initForm = new InitForm())
-            {
-                initForm.LoadLocalStorage(e.ClickedItem.Text);
-
-                DialogResult res = initForm.ShowDialog();
-
-                if (res != DialogResult.OK)
-                    return;
-
-                CASC = initForm.CASC;
-                Root = initForm.Root;
-            }
-
-            Sorter.CASC = CASC;
-
-            OnStorageChanged();
         }
     }
 }

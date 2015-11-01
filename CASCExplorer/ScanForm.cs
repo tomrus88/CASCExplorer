@@ -76,7 +76,7 @@ namespace CASCExplorer
             scanProgressBar.Value = 0;
             scanLabel.Text = "Ready";
             progressLabel.Text = "";
-            filenameTextBox.Text = "";
+            filenameTextBox.Clear();
             uniqueFileNames.Clear();
         }
 
@@ -138,7 +138,10 @@ namespace CASCExplorer
                 filenameTextBox.AppendText(uniqueFileName.NewFile + Environment.NewLine);
 
             if (e.Cancelled)
+            {
+                Reset();
                 scanLabel.Text = "Scan cancelled.";
+            }
         }
 
         private void Scan()
@@ -181,7 +184,7 @@ namespace CASCExplorer
             if (fileNames != null)
             {
                 // only report progress when not skipping a file, it's faster that way
-                int progress = (int)((float)NumScanned / (float)NumFiles * 100);
+                int progress = (int)(NumScanned / (float)NumFiles * 100);
                 ScanProgressState state = new ScanProgressState();
                 state.NumFilesScanned = NumScanned;
                 state.NumFilesTotal = NumFiles;
@@ -194,7 +197,7 @@ namespace CASCExplorer
 
                     if ((CASC.Root as WowRootHandler).IsUnknownFile(hash))
                     {
-                        this.BeginInvoke((MethodInvoker)(() => UpdateFileNames(fileName, file.FullName)));
+                        BeginInvoke((MethodInvoker)(() => UpdateFileNames(fileName, file.FullName)));
                     }
                 }
             }
