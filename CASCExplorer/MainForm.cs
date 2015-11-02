@@ -42,6 +42,8 @@ namespace CASCExplorer
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            Settings.Default.PropertyChanged += Settings_PropertyChanged;
+
             iconsList.Images.Add(Resources.folder);
             iconsList.Images.Add(Resources.openFolder);
             iconsList.Images.Add(SystemIcons.WinLogo);
@@ -65,7 +67,7 @@ namespace CASCExplorer
 
             if (onlineStorageList != null)
             {
-                openOnlineStorageToolStripMenuItem.Enabled = true;
+                openOnlineStorageToolStripMenuItem.Enabled = onlineStorageList.Count > 0;
 
                 foreach (string game in onlineStorageList)
                 {
@@ -74,22 +76,20 @@ namespace CASCExplorer
                     openOnlineStorageToolStripMenuItem.DropDownItems.Add(item);
                 }
             }
-            else
+
+            openRecentStorageToolStripMenuItem.Enabled = Settings.Default.RecentStorages.Count > 0;
+
+            foreach (string recentStorage in Settings.Default.RecentStorages)
             {
-                openOnlineStorageToolStripMenuItem.Enabled = false;
+                openRecentStorageToolStripMenuItem.DropDownItems.Add(recentStorage);
             }
 
-            if (Settings.Default.RecentStorages != null)
-            {
-                openRecentStorageToolStripMenuItem.Enabled = true;
+            useLWToolStripMenuItem.Checked = (Settings.Default.ContentFlags & ContentFlags.LowViolence) != 0;
+        }
 
-                foreach (string recentStorage in Settings.Default.RecentStorages)
-                {
-                    openRecentStorageToolStripMenuItem.DropDownItems.Add(recentStorage);
-                }
-            }
-
-            useLWToolStripMenuItem.Checked = Settings.Default.ContentFlags == ContentFlags.LowViolence;
+        private void Settings_PropertyChanged(object sender, PropertyChangedEventArgs e)
+        {
+            Settings.Default.Save();
         }
 
         private void CurrentDomain_UnhandledException(object sender, UnhandledExceptionEventArgs e)
@@ -561,7 +561,6 @@ namespace CASCExplorer
             }
 
             Settings.Default.LocaleFlags = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), item.Text);
-            Settings.Default.Save();
 
             Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
             CASC.Install.MergeData(Root);
@@ -593,11 +592,9 @@ namespace CASCExplorer
             useLWToolStripMenuItem.Checked = !useLWToolStripMenuItem.Checked;
 
             if (useLWToolStripMenuItem.Checked)
-                Settings.Default.ContentFlags = ContentFlags.LowViolence;
+                Settings.Default.ContentFlags |= ContentFlags.LowViolence;
             else
-                Settings.Default.ContentFlags = ContentFlags.None;
-
-            Settings.Default.Save();
+                Settings.Default.ContentFlags &= ~ContentFlags.LowViolence;
 
             Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
             CASC.Install.MergeData(Root);
@@ -606,6 +603,9 @@ namespace CASCExplorer
 
         private void Cleanup()
         {
+            fileList.VirtualListSize = 0;
+            folderTree.Nodes.Clear();
+
             Sorter.CASC = null;
 
             if (CASC != null)
@@ -616,8 +616,6 @@ namespace CASCExplorer
 
             Root = null;
 
-            fileList.VirtualListSize = 0;
-            folderTree.Nodes.Clear();
             cDNToolStripMenuItem.Enabled = false;
             cDNToolStripMenuItem.DropDownItems.Clear();
 
@@ -793,13 +791,13 @@ namespace CASCExplorer
 
             OpenStorage(path, false);
 
-            if (Settings.Default.RecentStorages == null)
-                Settings.Default.RecentStorages = new StringCollection();
-
             openRecentStorageToolStripMenuItem.Enabled = true;
             openRecentStorageToolStripMenuItem.DropDownItems.Add(path);
-            Settings.Default.RecentStorages.Add(path);
-            Settings.Default.Save();
+
+            StringCollection recentStorages = Settings.Default.RecentStorages;
+            if (!recentStorages.Contains(path))
+                recentStorages.Add(path);
+            Settings.Default.RecentStorages = recentStorages;
         }
 
         private void openOnlineStorageToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
