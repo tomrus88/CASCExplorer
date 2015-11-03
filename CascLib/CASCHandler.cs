@@ -198,7 +198,7 @@ namespace CASCExplorer
             if (idxInfo != null)
             {
                 using (Stream s = CDNIndex.OpenDataFile(idxInfo))
-                using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
+                using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size, key))
                 {
                     return blte.OpenFile(true);
                 }
@@ -208,7 +208,7 @@ namespace CASCExplorer
                 try
                 {
                     using (Stream s = CDNIndex.OpenDataFileDirect(key))
-                    using (BLTEHandler blte = new BLTEHandler(s, (int)s.Length))
+                    using (BLTEHandler blte = new BLTEHandler(s, (int)s.Length, key))
                     {
                         return blte.OpenFile(true);
                     }
@@ -222,24 +222,46 @@ namespace CASCExplorer
 
         private Stream OpenFileLocal(byte[] key)
         {
-            IndexEntry idxInfo = LocalIndex.GetIndexInfo(key);
+            IndexEntry idxInfo;
+            Stream stream;
+            GetLocalIndexData(key, out idxInfo, out stream);
+
+            using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30, key))
+            {
+                return blte.OpenFile(true);
+            }
+        }
+
+        private void GetLocalIndexData(byte[] key, out IndexEntry idxInfo, out Stream stream)
+        {
+            idxInfo = LocalIndex.GetIndexInfo(key);
 
             if (idxInfo == null)
                 throw new Exception("local index missing");
 
-            Stream stream = GetDataStream(idxInfo.Index);
+            Stream dataStream = GetDataStream(idxInfo.Index);
+            dataStream.Position = idxInfo.Offset;
 
-            stream.Position = idxInfo.Offset;
-
-            stream.Position += 30;
-            //byte[] compressedMD5 = reader.ReadBytes(16);
-            //int size = reader.ReadInt32();
-            //byte[] unkData1 = reader.ReadBytes(2);
-            //byte[] unkData2 = reader.ReadBytes(8);
-
-            using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30))
+            using (BinaryReader reader = new BinaryReader(dataStream, System.Text.Encoding.ASCII, true))
             {
-                return blte.OpenFile(true);
+                byte[] md5 = reader.ReadBytes(16);
+                Array.Reverse(md5);
+
+                if (!md5.EqualsTo(key))
+                    throw new Exception("local data corrupted");
+
+                int size = reader.ReadInt32();
+
+                if (size != idxInfo.Size)
+                    throw new Exception("local data corrupted");
+
+                //byte[] unkData1 = reader.ReadBytes(2);
+                //byte[] unkData2 = reader.ReadBytes(8);
+                dataStream.Position += 10;
+
+                byte[] data = reader.ReadBytes(idxInfo.Size - 30);
+
+                stream = new MemoryStream(data);
             }
         }
 
@@ -265,7 +287,7 @@ namespace CASCExplorer
             if (idxInfo != null)
             {
                 using (Stream s = CDNIndex.OpenDataFile(idxInfo))
-                using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size))
+                using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size, key))
                 {
                     blte.ExtractToFile(path, name);
                 }
@@ -275,7 +297,7 @@ namespace CASCExplorer
                 try
                 {
                     using (Stream s = CDNIndex.OpenDataFileDirect(key))
-                    using (BLTEHandler blte = new BLTEHandler(s, (int)s.Length))
+                    using (BLTEHandler blte = new BLTEHandler(s, (int)s.Length, key))
                     {
                         blte.ExtractToFile(path, name);
                     }
@@ -289,22 +311,11 @@ namespace CASCExplorer
 
         private void ExtractFileLocal(byte[] key, string path, string name)
         {
-            IndexEntry idxInfo = LocalIndex.GetIndexInfo(key);
+            IndexEntry idxInfo;
+            Stream stream;
+            GetLocalIndexData(key, out idxInfo, out stream);
 
-            if (idxInfo == null)
-                throw new Exception("local index missing");
-
-            Stream stream = GetDataStream(idxInfo.Index);
-
-            stream.Position = idxInfo.Offset;
-
-            stream.Position += 30;
-            //byte[] compressedMD5 = reader.ReadBytes(16);
-            //int size = reader.ReadInt32();
-            //byte[] unkData1 = reader.ReadBytes(2);
-            //byte[] unkData2 = reader.ReadBytes(8);
-
-            using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30))
+            using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30, key))
             {
                 blte.ExtractToFile(path, name);
             }

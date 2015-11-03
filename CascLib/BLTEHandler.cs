@@ -37,10 +37,10 @@ namespace CASCExplorer
         private const byte ENCRYPTION_ARC4 = 0x41;
         private const int BLTE_MAGIC = 0x45544c42;
 
-        public BLTEHandler(Stream stream, int size)
+        public BLTEHandler(Stream stream, int size, byte[] md5)
         {
             _reader = new BinaryReader(stream, Encoding.ASCII, true);
-            Parse(size);
+            Parse(size, md5);
         }
 
         public void ExtractToFile(string path, string name)
@@ -65,7 +65,7 @@ namespace CASCExplorer
             return _memStream;
         }
 
-        private void Parse(int size)
+        private void Parse(int size, byte[] md5)
         {
             if (size < 8)
                 throw new BLTEDecoderException("not enough data: {0}", 8);
@@ -76,6 +76,18 @@ namespace CASCExplorer
                 throw new BLTEDecoderException("frame header mismatch (bad BLTE file)");
 
             int headerSize = _reader.ReadInt32BE();
+
+            long oldPos = _reader.BaseStream.Position;
+
+            _reader.BaseStream.Position = 0;
+
+            byte[] newHash = _md5.ComputeHash(_reader.ReadBytes(headerSize > 0 ? headerSize : size));
+
+            if (!newHash.EqualsTo(md5))
+                throw new Exception("data corrupted");
+
+            _reader.BaseStream.Position = oldPos;
+
             int numBlocks = 1;
 
             if (headerSize > 0)
@@ -141,7 +153,7 @@ namespace CASCExplorer
             }
         }
 
-        private void HandleDataBlock(byte[] data, long index)
+        private void HandleDataBlock(byte[] data, int index)
         {
             switch (data[0])
             {
@@ -162,7 +174,7 @@ namespace CASCExplorer
             }
         }
 
-        private static byte[] Decrypt(byte[] data, long index)
+        private static byte[] Decrypt(byte[] data, int index)
         {
             byte keyNameSize = data[1];
 
@@ -199,9 +211,9 @@ namespace CASCExplorer
             Array.Copy(IVpart, IV, IVpart.Length);
 
             // magic
-            for (int bits = 0, i = 0; bits < 64; bits += 8, i++) // that loop is 32 on x86 and 64 on x64 - wtf Blizzard?
+            for (int shift = 0, i = 0; shift < sizeof(int); shift += 8, i++)
             {
-                IV[i] ^= (byte)((index >> bits) & 0xFF);
+                IV[i] ^= (byte)((index >> shift) & 0xFF);
             }
 
             byte[] key = KeyService.GetKey(keyName);
@@ -213,9 +225,7 @@ namespace CASCExplorer
             {
                 ICryptoTransform decryptor = KeyService.SalsaInstance.CreateDecryptor(key, IV);
 
-                byte[] dataOut = decryptor.TransformFinalBlock(data, dataOffset, data.Length - dataOffset);
-
-                return dataOut;
+                return decryptor.TransformFinalBlock(data, dataOffset, data.Length - dataOffset);
             }
             else
             {

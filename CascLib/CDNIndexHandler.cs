@@ -139,8 +139,13 @@ namespace CASCExplorer
 
             HttpWebRequest req = WebRequest.CreateHttp(url);
             req.AddRange(entry.Offset, entry.Offset + entry.Size - 1);
-            HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
-            return resp.GetResponseStream();
+            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+            {
+                MemoryStream ms = new MemoryStream();
+                resp.GetResponseStream().CopyTo(ms);
+                ms.Position = 0;
+                return ms;
+            }
         }
 
         public Stream OpenDataFileDirect(byte[] key)
@@ -176,8 +181,13 @@ namespace CASCExplorer
         public static Stream OpenFileDirect(string url)
         {
             HttpWebRequest req = WebRequest.CreateHttp(url);
-            HttpWebResponse resp = (HttpWebResponse)req.GetResponse();
-            return resp.GetResponseStream();
+            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+            {
+                MemoryStream ms = new MemoryStream();
+                resp.GetResponseStream().CopyTo(ms);
+                ms.Position = 0;
+                return ms;
+            }
         }
 
         public IndexEntry GetIndexInfo(byte[] key)
