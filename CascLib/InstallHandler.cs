@@ -114,48 +114,6 @@ namespace CASCExplorer
             }
         }
 
-        public void MergeData(CASCFolder folder)
-        {
-            foreach (var entry in InstallData)
-            {
-                CreateSubTree(folder, Hasher.ComputeHash(entry.Name), entry.Name);
-            }
-        }
-
-        private static void CreateSubTree(CASCFolder root, ulong filehash, string file)
-        {
-            file = file.Replace('/', '\\');
-            string[] parts = file.Split('\\');
-
-            CASCFolder folder = root;
-
-            for (int i = 0; i < parts.Length; ++i)
-            {
-                bool isFile = (i == parts.Length - 1);
-
-                string entryName = parts[i];
-
-                ICASCEntry entry = folder.GetEntry(entryName);
-
-                if (entry == null)
-                {
-                    if (isFile)
-                    {
-                        entry = new CASCFile(filehash);
-                        CASCFile.FileNames[filehash] = file;
-                    }
-                    else
-                    {
-                        entry = new CASCFolder(entryName);
-                    }
-
-                    folder.Entries[entryName] = entry;
-                }
-
-                folder = entry as CASCFolder;
-            }
-        }
-
         public void Clear()
         {
             InstallData.Clear();

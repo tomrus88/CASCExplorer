@@ -45,14 +45,13 @@ namespace CASCExplorer
                 }
             }
 
-            CASC = CASCHandler.OpenStorage(config, backgroundWorker1);
+            var casc = CASCHandler.OpenStorage(config, backgroundWorker1);
 
-            CASC.Root.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), backgroundWorker1);
-            Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
+            casc.Root.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), backgroundWorker1);
+            casc.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
+            casc.Root.MergeInstall(casc.Install);
 
-            CASC.Install.MergeData(Root);
-
-            e.Result = CASC;
+            e.Result = casc;
         }
 
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -89,6 +88,9 @@ namespace CASCExplorer
                 //Application.Exit();
                 return;
             }
+
+            CASC = (CASCHandler)e.Result;
+            Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
 
             DialogResult = DialogResult.OK;
         }

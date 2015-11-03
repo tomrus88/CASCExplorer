@@ -352,7 +352,7 @@ namespace CASCExplorer
                     UnknownFiles.Add(rootEntry.Key);
                 }
 
-                CreateSubTree(root, rootEntry.Key, file, '\\');
+                CreateSubTree(root, rootEntry.Key, file);
                 CountSelect++;
             }
 

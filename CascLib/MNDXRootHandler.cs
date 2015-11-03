@@ -412,7 +412,7 @@ namespace CASCExplorer
 
             foreach (var entry in mndxData)
             {
-                CreateSubTree(root, entry.Key, CASCFile.FileNames[entry.Key], '/');
+                CreateSubTree(root, entry.Key, CASCFile.FileNames[entry.Key]);
                 CountSelect++;
             }
 

@@ -143,7 +143,7 @@ namespace CASCExplorer
                 if ((rootEntry.Value.Block.LocaleFlags & Locale) == 0)
                     continue;
 
-                CreateSubTree(root, rootEntry.Key, CASCFile.FileNames[rootEntry.Key], '/');
+                CreateSubTree(root, rootEntry.Key, CASCFile.FileNames[rootEntry.Key]);
                 CountSelect++;
             }
 

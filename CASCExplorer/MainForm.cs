@@ -258,7 +258,7 @@ namespace CASCExplorer
                 }
             }
 
-            var item = new ListViewItem(new string[]
+            e.Item = new ListViewItem(new string[]
             {
                 entry.Name,
                 entry is CASCFolder ? "Folder" : Path.GetExtension(entry.Name),
@@ -267,8 +267,6 @@ namespace CASCExplorer
                 size
             })
             { ImageIndex = entry is CASCFolder ? 0 : 2 };
-
-            e.Item = item;
         }
 
         private void listView1_MouseDoubleClick(object sender, MouseEventArgs e)
@@ -563,7 +561,7 @@ namespace CASCExplorer
             Settings.Default.LocaleFlags = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), item.Text);
 
             Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
-            CASC.Install.MergeData(Root);
+            CASC.Root.MergeInstall(CASC.Install);
             OnStorageChanged();
         }
 
@@ -597,7 +595,7 @@ namespace CASCExplorer
                 Settings.Default.ContentFlags &= ~ContentFlags.LowViolence;
 
             Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
-            CASC.Install.MergeData(Root);
+            CASC.Root.MergeInstall(CASC.Install);
             OnStorageChanged();
         }
 
@@ -608,13 +606,13 @@ namespace CASCExplorer
 
             Sorter.CASC = null;
 
+            Root = null;
+
             if (CASC != null)
             {
                 CASC.Clear();
                 CASC = null;
             }
-
-            Root = null;
 
             cDNToolStripMenuItem.Enabled = false;
             cDNToolStripMenuItem.DropDownItems.Clear();

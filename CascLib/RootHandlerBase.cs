@@ -26,9 +26,11 @@ namespace CASCExplorer
 
         protected abstract CASCFolder CreateStorageTree();
 
-        protected void CreateSubTree(CASCFolder root, ulong filehash, string file, char separator)
+        private static readonly char[] PathDelimiters = new char[] { '/', '\\' };
+
+        protected void CreateSubTree(CASCFolder root, ulong filehash, string file)
         {
-            string[] parts = file.Split(separator);
+            string[] parts = file.Split(PathDelimiters);
 
             CASCFolder folder = root;
 
@@ -56,6 +58,14 @@ namespace CASCExplorer
                 }
 
                 folder = entry as CASCFolder;
+            }
+        }
+
+        public void MergeInstall(InstallHandler install)
+        {
+            foreach (var entry in install.GetEntries())
+            {
+                CreateSubTree(Root, Hasher.ComputeHash(entry.Name), entry.Name);
             }
         }
 
