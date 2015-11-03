@@ -105,8 +105,8 @@ namespace CASCExplorer
             bool isD3 = cfg.BuildUID.IndexOf("d3") >= 0;
             bool isPro = cfg.BuildUID.IndexOf("pro") >= 0;
 
-            dumpInstallToolStripMenuItem.Enabled = true;
-            extractRootFileToolStripMenuItem.Enabled = true;
+            extractInstallFilesToolStripMenuItem.Enabled = true;
+            extractCASCSystemFilesToolStripMenuItem.Enabled = true;
             scanFilesToolStripMenuItem.Enabled = isWoW;
             analyseUnknownFilesToolStripMenuItem.Enabled = isWoW || isPro;
             localeFlagsToolStripMenuItem.Enabled = isWoW || isD3 || isPro;
@@ -120,10 +120,10 @@ namespace CASCExplorer
 
             if (cfg.OnlineMode)
             {
-                cDNToolStripMenuItem.Enabled = true;
+                CDNBuildsToolStripMenuItem.Enabled = true;
                 foreach (var bld in cfg.Builds)
                 {
-                    cDNToolStripMenuItem.DropDownItems.Add(bld["build-name"][0]);
+                    CDNBuildsToolStripMenuItem.DropDownItems.Add(bld["build-name"][0]);
                 }
             }
 
@@ -614,11 +614,11 @@ namespace CASCExplorer
                 CASC = null;
             }
 
-            cDNToolStripMenuItem.Enabled = false;
-            cDNToolStripMenuItem.DropDownItems.Clear();
+            CDNBuildsToolStripMenuItem.Enabled = false;
+            CDNBuildsToolStripMenuItem.DropDownItems.Clear();
 
-            dumpInstallToolStripMenuItem.Enabled = false;
-            extractRootFileToolStripMenuItem.Enabled = false;
+            extractInstallFilesToolStripMenuItem.Enabled = false;
+            extractCASCSystemFilesToolStripMenuItem.Enabled = false;
             scanFilesToolStripMenuItem.Enabled = false;
             analyseUnknownFilesToolStripMenuItem.Enabled = false;
             localeFlagsToolStripMenuItem.Enabled = false;
@@ -675,7 +675,7 @@ namespace CASCExplorer
             }
         }
 
-        private async void dumpInstallToolStripMenuItem_Click(object sender, EventArgs e)
+        private async void extractInstallFilesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (CASC == null)
                 return;
@@ -684,7 +684,7 @@ namespace CASCExplorer
             {
                 statusProgress.Value = 0;
                 statusProgress.Visible = true;
-                dumpInstallToolStripMenuItem.Enabled = false;
+                extractInstallFilesToolStripMenuItem.Enabled = false;
 
                 statusLabel.Text = "Extracting...";
 
@@ -717,11 +717,11 @@ namespace CASCExplorer
             {
                 statusProgress.Value = 0;
                 statusProgress.Visible = false;
-                dumpInstallToolStripMenuItem.Enabled = true;
+                extractInstallFilesToolStripMenuItem.Enabled = true;
             }
         }
 
-        private void extractRootFileToolStripMenuItem_Click(object sender, EventArgs e)
+        private void extractCASCSystemFilesToolStripMenuItem_Click(object sender, EventArgs e)
         {
             if (CASC == null)
                 return;
