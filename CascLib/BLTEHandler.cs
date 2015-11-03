@@ -30,8 +30,7 @@ namespace CASCExplorer
     {
         private BinaryReader _reader;
         private MD5 _md5 = MD5.Create();
-        private int _size;
-        private MemoryStream _ms;
+        private MemoryStream _memStream;
         private bool _leaveOpen;
 
         private const byte ENCRYPTION_SALSA20 = 0x53;
@@ -41,8 +40,7 @@ namespace CASCExplorer
         public BLTEHandler(Stream stream, int size)
         {
             _reader = new BinaryReader(stream, Encoding.ASCII, true);
-            _size = size;
-            Parse();
+            Parse(size);
         }
 
         public void ExtractToFile(string path, string name)
@@ -55,19 +53,21 @@ namespace CASCExplorer
 
             using (var fileStream = File.Open(fullPath, FileMode.Create))
             {
-                _ms.CopyTo(fileStream);
+                _memStream.Position = 0;
+                _memStream.CopyTo(fileStream);
             }
         }
 
         public MemoryStream OpenFile(bool leaveOpen = false)
         {
             _leaveOpen = leaveOpen;
-            return _ms;
+            _memStream.Position = 0;
+            return _memStream;
         }
 
-        private void Parse()
+        private void Parse(int size)
         {
-            if (_size < 8)
+            if (size < 8)
                 throw new BLTEDecoderException("not enough data: {0}", 8);
 
             int magic = _reader.ReadInt32();
@@ -80,7 +80,7 @@ namespace CASCExplorer
 
             if (headerSize > 0)
             {
-                if (_size < 12)
+                if (size < 12)
                     throw new BLTEDecoderException("not enough data: {0}", 12);
 
                 byte[] fcbytes = _reader.ReadBytes(4);
@@ -95,7 +95,7 @@ namespace CASCExplorer
                 if (headerSize != frameHeaderSize)
                     throw new BLTEDecoderException("header size mismatch");
 
-                if (_size < frameHeaderSize)
+                if (size < frameHeaderSize)
                     throw new BLTEDecoderException("not enough data: {0}", frameHeaderSize);
             }
 
@@ -113,15 +113,15 @@ namespace CASCExplorer
                 }
                 else
                 {
-                    block.CompSize = _size - 8;
-                    block.DecompSize = _size - 8 - 1;
+                    block.CompSize = size - 8;
+                    block.DecompSize = size - 8 - 1;
                     block.Hash = null;
                 }
 
                 blocks[i] = block;
             }
 
-            _ms = new MemoryStream(blocks.Sum(b => b.DecompSize));
+            _memStream = new MemoryStream(blocks.Sum(b => b.DecompSize));
 
             for (int i = 0; i < blocks.Length; i++)
             {
@@ -139,8 +139,6 @@ namespace CASCExplorer
 
                 HandleDataBlock(block.Data, i);
             }
-
-            _ms.Position = 0;
         }
 
         private void HandleDataBlock(byte[] data, long index)
@@ -154,10 +152,10 @@ namespace CASCExplorer
                 case 0x46: // F (frame, recursive)
                     throw new BLTEDecoderException("DecoderFrame not implemented");
                 case 0x4E: // N (not compressed)
-                    _ms.Write(data, 1, data.Length - 1);
+                    _memStream.Write(data, 1, data.Length - 1);
                     break;
                 case 0x5A: // Z (zlib compressed)
-                    Decompress(data, _ms);
+                    Decompress(data, _memStream);
                     break;
                 default:
                     throw new BLTEDecoderException("unknown BLTE block type {0} (0x{0:X2})!", (char)data[0], data[0]);
@@ -241,7 +239,7 @@ namespace CASCExplorer
             _reader.Close();
 
             if (!_leaveOpen)
-                _ms.Close();
+                _memStream.Close();
         }
     }
 }
