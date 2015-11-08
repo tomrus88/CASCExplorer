@@ -198,7 +198,7 @@ namespace CASCExplorer
             if (idxInfo != null)
             {
                 using (Stream s = CDNIndex.OpenDataFile(idxInfo))
-                using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size, key))
+                using (BLTEHandler blte = new BLTEHandler(s, key))
                 {
                     return blte.OpenFile(true);
                 }
@@ -208,7 +208,7 @@ namespace CASCExplorer
                 try
                 {
                     using (Stream s = CDNIndex.OpenDataFileDirect(key))
-                    using (BLTEHandler blte = new BLTEHandler(s, (int)s.Length, key))
+                    using (BLTEHandler blte = new BLTEHandler(s, key))
                     {
                         return blte.OpenFile(true);
                     }
@@ -222,19 +222,17 @@ namespace CASCExplorer
 
         private Stream OpenFileLocal(byte[] key)
         {
-            IndexEntry idxInfo;
-            Stream stream;
-            GetLocalIndexData(key, out idxInfo, out stream);
+            Stream stream = GetLocalIndexData(key);
 
-            using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30, key))
+            using (BLTEHandler blte = new BLTEHandler(stream, key))
             {
                 return blte.OpenFile(true);
             }
         }
 
-        private void GetLocalIndexData(byte[] key, out IndexEntry idxInfo, out Stream stream)
+        private Stream GetLocalIndexData(byte[] key)
         {
-            idxInfo = LocalIndex.GetIndexInfo(key);
+            IndexEntry idxInfo = LocalIndex.GetIndexInfo(key);
 
             if (idxInfo == null)
                 throw new Exception("local index missing");
@@ -261,7 +259,7 @@ namespace CASCExplorer
 
                 byte[] data = reader.ReadBytes(idxInfo.Size - 30);
 
-                stream = new MemoryStream(data);
+                return new MemoryStream(data);
             }
         }
 
@@ -287,7 +285,7 @@ namespace CASCExplorer
             if (idxInfo != null)
             {
                 using (Stream s = CDNIndex.OpenDataFile(idxInfo))
-                using (BLTEHandler blte = new BLTEHandler(s, idxInfo.Size, key))
+                using (BLTEHandler blte = new BLTEHandler(s, key))
                 {
                     blte.ExtractToFile(path, name);
                 }
@@ -297,7 +295,7 @@ namespace CASCExplorer
                 try
                 {
                     using (Stream s = CDNIndex.OpenDataFileDirect(key))
-                    using (BLTEHandler blte = new BLTEHandler(s, (int)s.Length, key))
+                    using (BLTEHandler blte = new BLTEHandler(s, key))
                     {
                         blte.ExtractToFile(path, name);
                     }
@@ -311,11 +309,9 @@ namespace CASCExplorer
 
         private void ExtractFileLocal(byte[] key, string path, string name)
         {
-            IndexEntry idxInfo;
-            Stream stream;
-            GetLocalIndexData(key, out idxInfo, out stream);
+            Stream stream = GetLocalIndexData(key);
 
-            using (BLTEHandler blte = new BLTEHandler(stream, idxInfo.Size - 30, key))
+            using (BLTEHandler blte = new BLTEHandler(stream, key))
             {
                 blte.ExtractToFile(path, name);
             }

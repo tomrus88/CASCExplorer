@@ -447,7 +447,6 @@ namespace CASCExplorer
         private NAME_FRAG[] NameFragTable;
         private int NameFragIndexMask;
         private int field_214;
-        //private TStruct10 Struct10;
 
         public int NumFiles { get { return FileNameIndexes.ValidItemCount; } }
 
@@ -2013,115 +2012,6 @@ namespace CASCExplorer
             }
         }
     }
-
-    //public class TStruct10
-    //{
-    //    private int field_0;
-    //    private int field_4;
-    //    private int field_8;
-    //    private int field_C;
-
-    //    public TStruct10()
-    //    {
-    //        field_0 = 0x03;
-    //        field_4 = 0x200;
-    //        field_8 = 0x1000;
-    //        field_C = 0x20000;
-    //    }
-
-    //    void CopyFrom(TStruct10 Target)
-    //    {
-    //        field_0 = Target.field_0;
-    //        field_4 = Target.field_4;
-    //        field_8 = Target.field_8;
-    //        field_C = Target.field_C;
-    //    }
-
-    //    void sub_1956FD0(int dwBitMask)
-    //    {
-    //        switch (dwBitMask & 0xF80)
-    //        {
-    //            case 0x00:
-    //                field_4 = 0x200;
-    //                return;
-    //            case 0x80:
-    //                field_4 = 0x80;
-    //                return;
-    //            case 0x100:
-    //                field_4 = 0x100;
-    //                return;
-    //            case 0x200:
-    //                field_4 = 0x200;
-    //                return;
-    //            case 0x400:
-    //                field_4 = 0x400;
-    //                return;
-    //            case 0x800:
-    //                field_4 = 0x800;
-    //                return;
-    //        }
-
-    //        throw new ArgumentOutOfRangeException("dwBitMask");
-    //    }
-
-    //    void sub_1957050(int dwBitMask)
-    //    {
-    //        switch (dwBitMask & 0xF0000)
-    //        {
-    //            case 0x00:
-    //                field_C = 0x20000;
-    //                return;
-    //            case 0x10000:
-    //                field_C = 0x10000;
-    //                return;
-    //            case 0x20000:
-    //                field_C = 0x20000;
-    //                return;
-    //        }
-
-    //        throw new ArgumentOutOfRangeException("dwBitMask");
-    //    }
-
-    //    public void sub_19572E0(int dwBitMask)
-    //    {
-    //        int dwSubMask;
-
-    //        if ((dwBitMask & 0xFFF00000) != 0)
-    //            throw new ArgumentOutOfRangeException("dwBitMask");
-
-    //        dwSubMask = dwBitMask & 0x7F;
-    //        if (dwSubMask != 0)
-    //            field_0 = dwSubMask;
-
-    //        sub_1956FD0(dwBitMask);
-
-    //        dwSubMask = dwBitMask & 0xF000;
-    //        if (dwSubMask == 0 || dwSubMask == 0x1000)
-    //        {
-    //            field_8 = 0x1000;
-    //            sub_1957050(dwBitMask);
-    //            return;
-    //        }
-
-    //        if (dwSubMask == 0x2000)
-    //        {
-    //            field_8 = 0x2000;
-    //            sub_1957050(dwBitMask);
-    //            return;
-    //        }
-
-    //        throw new ArgumentOutOfRangeException("dwBitMask");
-    //    }
-
-    //    public void sub_1957800(int dwBitMask)
-    //    {
-    //        TStruct10 TempStruct = new TStruct10();
-
-    //        TempStruct.sub_19572E0(dwBitMask);
-
-    //        CopyFrom(TempStruct);
-    //    }
-    //}
 
     public enum CASCSearchPhase
     {

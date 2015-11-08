@@ -134,17 +134,18 @@ namespace CASCExplorer
             if (stream != null)
             {
                 stream.Position = entry.Offset;
-                return stream;
+                byte[] buffer = new byte[entry.Size];
+                stream.Read(buffer, 0, buffer.Length);
+                return new MemoryStream(buffer);
             }
 
             HttpWebRequest req = WebRequest.CreateHttp(url);
             req.AddRange(entry.Offset, entry.Offset + entry.Size - 1);
             using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
             {
-                MemoryStream ms = new MemoryStream();
-                resp.GetResponseStream().CopyTo(ms);
-                ms.Position = 0;
-                return ms;
+                byte[] buffer = new byte[entry.Size];
+                resp.GetResponseStream().Read(buffer, 0, buffer.Length);
+                return new MemoryStream(buffer);
             }
         }
 

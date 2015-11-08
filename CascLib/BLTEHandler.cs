@@ -37,10 +37,10 @@ namespace CASCExplorer
         private const byte ENCRYPTION_ARC4 = 0x41;
         private const int BLTE_MAGIC = 0x45544c42;
 
-        public BLTEHandler(Stream stream, int size, byte[] md5)
+        public BLTEHandler(Stream stream, byte[] md5)
         {
             _reader = new BinaryReader(stream, Encoding.ASCII, true);
-            Parse(size, md5);
+            Parse(md5);
         }
 
         public void ExtractToFile(string path, string name)
@@ -65,8 +65,10 @@ namespace CASCExplorer
             return _memStream;
         }
 
-        private void Parse(int size, byte[] md5)
+        private void Parse(byte[] md5)
         {
+            int size = (int)_reader.BaseStream.Length;
+
             if (size < 8)
                 throw new BLTEDecoderException("not enough data: {0}", 8);
 
