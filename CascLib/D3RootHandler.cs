@@ -46,7 +46,6 @@ namespace CASCExplorer
 
         public override int Count { get { return RootData.Count; } }
         public override int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
-        public override ContentFlags Content { get { return ContentFlags.None; } }
 
         public D3RootHandler(BinaryReader stream, BackgroundWorkerEx worker, CASCHandler casc)
         {
@@ -168,11 +167,11 @@ namespace CASCExplorer
             {
                 case 0:
                     SNOInfo sno1 = tocParser.GetSNO(e.SNO);
-                    name = String.Format("{0}\\{1}{2}", sno1.GroupId, sno1.Name, sno1.Ext);
+                    name = string.Format("{0}\\{1}{2}", sno1.GroupId, sno1.Name, sno1.Ext);
                     break;
                 case 1:
                     SNOInfo sno2 = tocParser.GetSNO(e.SNO);
-                    name = String.Format("{0}\\{1}\\{2:D4}", sno2.GroupId, sno2.Name, e.FileIndex);
+                    name = string.Format("{0}\\{1}\\{2:D4}", sno2.GroupId, sno2.Name, e.FileIndex);
 
                     string ext = pkgParser.GetExtension(name);
 

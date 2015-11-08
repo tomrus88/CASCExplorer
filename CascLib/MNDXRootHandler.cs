@@ -94,9 +94,6 @@ namespace CASCExplorer
 
         public override int Count { get { return MarFiles[2].NumFiles; } }
         public override int CountTotal { get { return MarFiles[2].NumFiles; } }
-        public override LocaleFlags Locale { get { return LocaleFlags.None; } }
-        public override ContentFlags Content { get { return ContentFlags.None; } }
-        public int PackagesCount { get { return MarFiles[0].NumFiles; } }
 
         public MNDXRootHandler(BinaryReader stream, BackgroundWorkerEx worker)
         {
@@ -172,7 +169,7 @@ namespace CASCExplorer
             }
 
             //for (int i = 0; i < MndxEntriesTotal; ++i)
-            //    Console.WriteLine("{0:X8} - {1:X8} - {2}", i, mndxRootEntries[i].Flags, mndxRootEntries[i].EncodingKey.ToHexString());
+            //    Logger.WriteLine("{0:X8} - {1:X8} - {2}", i, mndxRootEntries[i].Flags, mndxRootEntries[i].MD5.ToHexString());
 
             mndxRootEntriesValid = new Dictionary<int, CASC_ROOT_ENTRY_MNDX>();// mndxRootEntries.Where(e => (e.Flags & 0x80000000) != 0).ToList();
 
@@ -250,10 +247,8 @@ namespace CASCExplorer
             {
                 if (package.Value.Length < fileName.Length && package.Value.Length > nMaxLength)
                 {
-                    var pkgName = fileName.Substring(0, package.Value.Length);
-
                     // Compare the package name
-                    if (pkgName == package.Value)
+                    if (string.Compare(fileName, 0, package.Value, 0, package.Value.Length) == 0)
                     {
                         pMatching = package.Key;
                         nMaxLength = package.Value.Length;
@@ -267,7 +262,7 @@ namespace CASCExplorer
         private CASC_ROOT_ENTRY_MNDX FindMNDXInfo(string path, int dwPackage)
         {
             MNDXSearchResult result = new MNDXSearchResult();
-            result.SetSearchPath(path.Remove(0, Packages[dwPackage].Length + 1).ToLower());
+            result.SearchMask = path.Substring(Packages[dwPackage].Length + 1).ToLower();
 
             MARFileNameDB marFile1 = MarFiles[1];
 
@@ -294,7 +289,7 @@ namespace CASCExplorer
         private CASC_ROOT_ENTRY_MNDX FindMNDXInfo2(string path, int dwPackage)
         {
             MNDXSearchResult result = new MNDXSearchResult();
-            result.SetSearchPath(path);
+            result.SearchMask = path;
 
             MARFileNameDB marFile2 = MarFiles[2];
 
@@ -328,16 +323,15 @@ namespace CASCExplorer
 
             //MARFileNameDB marFile0 = MarFiles[0];
 
-            foreach (var result in MarFiles[0].EnumerateFiles())
-                Packages.Add(result.FileNameIndex, result.szFoundPath);
-
-            Regex regex1 = new Regex("\\w{4}(?=\\.stormdata)", RegexOptions.Compiled);
-            Regex regex2 = new Regex("\\w{4}(?=\\.stormassets)", RegexOptions.Compiled);
+            Regex regex1 = new Regex("\\w{4}(?=\\.(storm|sc2)data)", RegexOptions.Compiled);
+            Regex regex2 = new Regex("\\w{4}(?=\\.(storm|sc2)assets)", RegexOptions.Compiled);
 
             foreach (var result in MarFiles[0].EnumerateFiles())
             {
-                Match match1 = regex1.Match(result.szFoundPath);
-                Match match2 = regex2.Match(result.szFoundPath);
+                Packages.Add(result.FileNameIndex, result.FoundPath);
+
+                Match match1 = regex1.Match(result.FoundPath);
+                Match match2 = regex2.Match(result.FoundPath);
 
                 if (match1.Success || match2.Success)
                 {
@@ -375,7 +369,7 @@ namespace CASCExplorer
 
             foreach (var result in MarFiles[2].EnumerateFiles())
             {
-                string file = result.szFoundPath;
+                string file = result.FoundPath;
 
                 ulong fileHash = Hasher.ComputeHash(file);
 
@@ -412,6 +406,9 @@ namespace CASCExplorer
 
             foreach (var entry in mndxData)
             {
+                if ((entry.Value.Block.LocaleFlags & Locale) == 0)
+                    continue;
+
                 CreateSubTree(root, entry.Key, CASCFile.FileNames[entry.Key]);
                 CountSelect++;
             }
@@ -425,6 +422,7 @@ namespace CASCExplorer
             mndxRootEntries.Clear();
             mndxRootEntriesValid.Clear();
             Packages.Clear();
+            PackagesLocale.Clear();
             Root.Entries.Clear();
             CASCFile.FileNames.Clear();
         }
@@ -1010,7 +1008,7 @@ namespace CASCExplorer
         bool CheckNextPathFragment(MNDXSearchResult pStruct1C)
         {
             SearchBuffer pStruct40 = pStruct1C.Buffer;
-            byte[] pbPathName = Encoding.ASCII.GetBytes(pStruct1C.szSearchMask);
+            byte[] pbPathName = Encoding.ASCII.GetBytes(pStruct1C.SearchMask);
             int CollisionIndex;
             int NameFragIndex;
             int SaveCharIndex;
@@ -1106,7 +1104,7 @@ namespace CASCExplorer
                 else
                 {
                     // HOTS: 1957B1C
-                    if (FrgmDist_LoBits[pStruct40.ItemIndex] == pStruct1C.szSearchMask[pStruct40.CharIndex])
+                    if (FrgmDist_LoBits[pStruct40.ItemIndex] == pStruct1C.SearchMask[pStruct40.CharIndex])
                     {
                         pStruct40.CharIndex++;
                         return true;
@@ -1131,7 +1129,7 @@ namespace CASCExplorer
             edi = dwKey;
 
             // HOTS: 1957B95
-            for (; ;)
+            for (;;)
             {
                 pNameEntry = NameFragTable[(edi & NameFragIndexMask)];
                 if (edi == pNameEntry.NextIndex)
@@ -1156,7 +1154,7 @@ namespace CASCExplorer
                     else
                     {
                         // HOTS: 1957BEE
-                        if (pStruct1C.szSearchMask[pStruct40.CharIndex] != (byte)pNameEntry.FragOffs)
+                        if (pStruct1C.SearchMask[pStruct40.CharIndex] != (byte)pNameEntry.FragOffs)
                             return false;
                         pStruct40.CharIndex++;
                     }
@@ -1166,7 +1164,7 @@ namespace CASCExplorer
                     if (edi == 0)
                         return true;
 
-                    if (pStruct40.CharIndex >= pStruct1C.cchSearchMask)
+                    if (pStruct40.CharIndex >= pStruct1C.SearchMask.Length)
                         return false;
                 }
                 else
@@ -1193,7 +1191,7 @@ namespace CASCExplorer
                     else
                     {
                         // HOTS: 1957C8E
-                        if (FrgmDist_LoBits[edi] != pStruct1C.szSearchMask[pStruct40.CharIndex])
+                        if (FrgmDist_LoBits[edi] != pStruct1C.SearchMask[pStruct40.CharIndex])
                             return false;
 
                         pStruct40.CharIndex++;
@@ -1203,7 +1201,7 @@ namespace CASCExplorer
                     if (edi <= field_214)
                         return true;
 
-                    if (pStruct40.CharIndex >= pStruct1C.cchSearchMask)
+                    if (pStruct40.CharIndex >= pStruct1C.SearchMask.Length)
                         return false;
 
                     eax = sub_1959F50(edi);
@@ -1218,7 +1216,7 @@ namespace CASCExplorer
             NAME_FRAG pNameEntry;
 
             // HOTS: 1958D84
-            for (; ;)
+            for (;;)
             {
                 pNameEntry = NameFragTable[(arg_4 & NameFragIndexMask)];
                 if (arg_4 == pNameEntry.NextIndex)
@@ -1288,7 +1286,7 @@ namespace CASCExplorer
             NAME_FRAG pNameEntry;
 
             // HOTS: 1959024
-            for (; ;)
+            for (;;)
             {
                 pNameEntry = NameFragTable[(arg_4 & NameFragIndexMask)];
                 if (arg_4 == pNameEntry.NextIndex)
@@ -1311,7 +1309,7 @@ namespace CASCExplorer
                     else
                     {
                         // HOTS: 1959092
-                        if ((byte)(pNameEntry.FragOffs & 0xFF) != pStruct1C.szSearchMask[pStruct40.CharIndex])
+                        if ((byte)(pNameEntry.FragOffs & 0xFF) != pStruct1C.SearchMask[pStruct40.CharIndex])
                             return false;
 
                         // Insert the low 8 bits to the path being built
@@ -1347,7 +1345,7 @@ namespace CASCExplorer
                     else
                     {
                         // HOTS: 195920E
-                        if (FrgmDist_LoBits[arg_4] != pStruct1C.szSearchMask[pStruct40.CharIndex])
+                        if (FrgmDist_LoBits[arg_4] != pStruct1C.SearchMask[pStruct40.CharIndex])
                             return false;
 
                         // Insert one character to the path being built
@@ -1363,7 +1361,7 @@ namespace CASCExplorer
                 }
 
                 // HOTS: 19592D5
-                if (pStruct40.CharIndex >= pStruct1C.cchSearchMask)
+                if (pStruct40.CharIndex >= pStruct1C.SearchMask.Length)
                     break;
             }
 
@@ -1384,7 +1382,7 @@ namespace CASCExplorer
                 pStruct40.InitSearchBuffers();
 
                 // If the caller passed a part of the search path, we need to find that one
-                while (pStruct40.CharIndex < pStruct1C.cchSearchMask)
+                while (pStruct40.CharIndex < pStruct1C.SearchMask.Length)
                 {
                     if (!sub_1958B00(pStruct1C))
                     {
@@ -1411,7 +1409,7 @@ namespace CASCExplorer
             }
 
             // HOTS: 1959522
-            for (; ;)
+            for (;;)
             {
                 // HOTS: 1959530
                 if (pStruct40.ItemCount == pStruct40.NumPathStops)
@@ -1517,7 +1515,7 @@ namespace CASCExplorer
         private bool sub_1958B00(MNDXSearchResult pStruct1C)
         {
             SearchBuffer pStruct40 = pStruct1C.Buffer;
-            byte[] pbPathName = Encoding.ASCII.GetBytes(pStruct1C.szSearchMask);
+            byte[] pbPathName = Encoding.ASCII.GetBytes(pStruct1C.SearchMask);
             int CollisionIndex;
             int FragmentOffset;
             int SaveCharIndex;
@@ -1566,7 +1564,7 @@ namespace CASCExplorer
             var_4 = -1;
 
             // HOTS: 1958C20
-            for (; ;)
+            for (;;)
             {
                 if (Struct68_D0.Contains(pStruct40.ItemIndex))
                 {
@@ -1605,7 +1603,7 @@ namespace CASCExplorer
                 else
                 {
                     // HOTS: 1958CFB
-                    if (FrgmDist_LoBits[pStruct40.ItemIndex] == pStruct1C.szSearchMask[pStruct40.CharIndex])
+                    if (FrgmDist_LoBits[pStruct40.ItemIndex] == pStruct1C.SearchMask[pStruct40.CharIndex])
                     {
                         // HOTS: 1958D11
                         pStruct40.Add(FrgmDist_LoBits[pStruct40.ItemIndex]);
@@ -1633,9 +1631,9 @@ namespace CASCExplorer
             pStruct40.CharIndex = 0;
             pStruct40.Init();
 
-            if (pStruct1C.cchSearchMask > 0)
+            if (pStruct1C.SearchMask.Length > 0)
             {
-                while (pStruct40.CharIndex < pStruct1C.cchSearchMask)
+                while (pStruct40.CharIndex < pStruct1C.SearchMask.Length)
                 {
                     // HOTS: 01957F12
                     if (!CheckNextPathFragment(pStruct1C))
@@ -1647,7 +1645,7 @@ namespace CASCExplorer
             if (!FileNameIndexes.Contains(pStruct40.ItemIndex))
                 return false;
 
-            pStruct1C.SetFindResult(pStruct1C.szSearchMask, FileNameIndexes.GetItemValue(pStruct40.ItemIndex));
+            pStruct1C.SetFindResult(pStruct1C.SearchMask, FileNameIndexes.GetItemValue(pStruct40.ItemIndex));
             return true;
         }
 
@@ -1885,12 +1883,12 @@ namespace CASCExplorer
 
             if (FragmentEnds.TotalItemCount == 0)
             {
-                string szSearchMask = pStruct1C.szSearchMask;
+                string szSearchMask = pStruct1C.SearchMask;
 
                 int startPos = dwFragOffs - pStruct40.CharIndex;
 
                 // Keep copying as long as we don't reach the end of the search mask
-                while (pStruct40.CharIndex < pStruct1C.cchSearchMask)
+                while (pStruct40.CharIndex < pStruct1C.SearchMask.Length)
                 {
                     // HOTS: 195A5A0
                     if (NameFragments[startPos + pStruct40.CharIndex] != szSearchMask[pStruct40.CharIndex])
@@ -1916,10 +1914,10 @@ namespace CASCExplorer
             {
                 // Get the offset of the fragment to compare
                 // HOTS: 195A6B7
-                string szSearchMask = pStruct1C.szSearchMask;
+                string szSearchMask = pStruct1C.SearchMask;
 
                 // Keep copying as long as we don't reach the end of the search mask
-                while (dwFragOffs < pStruct1C.cchSearchMask)
+                while (dwFragOffs < pStruct1C.SearchMask.Length)
                 {
                     if (NameFragments[dwFragOffs] != szSearchMask[pStruct40.CharIndex])
                         return false;
@@ -1952,7 +1950,7 @@ namespace CASCExplorer
             {
                 // Get the offset of the fragment to compare. For convenience with pStruct40->CharIndex,
                 // subtract the CharIndex from the fragment offset
-                string szSearchMask = pStruct1C.szSearchMask;
+                string szSearchMask = pStruct1C.SearchMask;
 
                 int startPos = dwFragOffs - pStruct40.CharIndex;
 
@@ -1966,7 +1964,7 @@ namespace CASCExplorer
                     if (NameFragments[startPos + pStruct40.CharIndex] == 0)
                         return true;
 
-                    if (pStruct40.CharIndex >= pStruct1C.cchSearchMask)
+                    if (pStruct40.CharIndex >= pStruct1C.SearchMask.Length)
                         return false;
                 }
 
@@ -1975,7 +1973,7 @@ namespace CASCExplorer
             else
             {
                 // Get the offset of the fragment to compare.
-                string szSearchMask = pStruct1C.szSearchMask;
+                string szSearchMask = pStruct1C.SearchMask;
 
                 // Keep searching as long as the name matches with the fragment
                 while (NameFragments[dwFragOffs] == szSearchMask[pStruct40.CharIndex])
@@ -1987,7 +1985,7 @@ namespace CASCExplorer
                     if (FragmentEnds.Contains(dwFragOffs++))
                         return true;
 
-                    if (dwFragOffs >= pStruct1C.cchSearchMask)
+                    if (dwFragOffs >= pStruct1C.SearchMask.Length)
                         return false;
                 }
 
@@ -2134,13 +2132,13 @@ namespace CASCExplorer
 
     public class SearchBuffer
     {
-        private List<byte> SearchResult;
-        private List<PATH_STOP> PathStops;   // Array of path checkpoints
+        private List<byte> SearchResult = new List<byte>();
+        private List<PATH_STOP> PathStops = new List<PATH_STOP>();   // Array of path checkpoints
 
-        public int ItemIndex { get; set; }  // Current name fragment: Index to various tables
-        public int CharIndex { get; set; }
-        public int ItemCount { get; set; }
-        public CASCSearchPhase SearchPhase { get; private set; }    // 0 = initializing, 2 = searching, 4 = finished
+        public int ItemIndex { get; set; } = 0;// Current name fragment: Index to various tables
+        public int CharIndex { get; set; } = 0;
+        public int ItemCount { get; set; } = 0;
+        public CASCSearchPhase SearchPhase { get; private set; } = CASCSearchPhase.Initializing; // 0 = initializing, 2 = searching, 4 = finished
 
         public string Result
         {
@@ -2155,16 +2153,6 @@ namespace CASCExplorer
         public int NumPathStops
         {
             get { return PathStops.Count; }
-        }
-
-        public SearchBuffer()
-        {
-            SearchResult = new List<byte>();
-            PathStops = new List<PATH_STOP>();
-            ItemIndex = 0;
-            CharIndex = 0;
-            ItemCount = 0;
-            SearchPhase = CASCSearchPhase.Initializing;
         }
 
         public void Add(byte value)
@@ -2211,9 +2199,21 @@ namespace CASCExplorer
 
     public class MNDXSearchResult
     {
-        public string szSearchMask { get; private set; }    // Search mask without wildcards
-        public int cchSearchMask { get; private set; }      // Length of the search mask
-        public string szFoundPath { get; private set; }     // Found path name
+        private string szSearchMask;
+        public string SearchMask        // Search mask without wildcards
+        {
+            get { return szSearchMask; }
+            set
+            {
+                if (value == null)
+                    throw new ArgumentNullException(nameof(SearchMask));
+
+                Buffer.Init();
+
+                szSearchMask = value;
+            }
+        }
+        public string FoundPath { get; private set; }       // Found path name
         public int FileNameIndex { get; private set; }      // Index of the file name
         public SearchBuffer Buffer { get; private set; }
 
@@ -2221,24 +2221,13 @@ namespace CASCExplorer
         {
             Buffer = new SearchBuffer();
 
-            SetSearchPath(String.Empty);
+            SearchMask = string.Empty;
         }
 
-        public void SetFindResult(string szFoundPath, int FileNameIndex)
+        public void SetFindResult(string szFoundPath, int dwFileNameIndex)
         {
-            this.szFoundPath = szFoundPath;
-            this.FileNameIndex = FileNameIndex;
-        }
-
-        public void SetSearchPath(string szNewSearchMask)
-        {
-            if (szNewSearchMask == null)
-                throw new ArgumentNullException("szNewSearchMask");
-
-            Buffer.Init();
-
-            szSearchMask = szNewSearchMask;
-            cchSearchMask = szNewSearchMask.Length;
+            FoundPath = szFoundPath;
+            FileNameIndex = dwFileNameIndex;
         }
     }
 }

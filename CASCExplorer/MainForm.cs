@@ -91,12 +91,13 @@ namespace CASCExplorer
             bool isWoW = cfg.BuildUID.IndexOf("wow") >= 0;
             bool isD3 = cfg.BuildUID.IndexOf("d3") >= 0;
             bool isPro = cfg.BuildUID.IndexOf("pro") >= 0;
+            bool isHots = cfg.BuildUID.IndexOf("hero") >= 0;
 
             extractInstallFilesToolStripMenuItem.Enabled = true;
             extractCASCSystemFilesToolStripMenuItem.Enabled = true;
             scanFilesToolStripMenuItem.Enabled = isWoW;
             analyseUnknownFilesToolStripMenuItem.Enabled = isWoW || isPro;
-            localeFlagsToolStripMenuItem.Enabled = isWoW || isD3 || isPro;
+            localeFlagsToolStripMenuItem.Enabled = isWoW || isD3 || isPro || isHots;
             useLWToolStripMenuItem.Enabled = isWoW;
 
             CASCFolder root = viewHelper.Root;
@@ -269,6 +270,7 @@ namespace CASCExplorer
                     (dropdown as ToolStripMenuItem).Checked = true;
             }
 
+            Cleanup();
             viewHelper.ChangeLocale(item.Text);
             OnStorageChanged();
         }
@@ -282,6 +284,7 @@ namespace CASCExplorer
         {
             useLWToolStripMenuItem.Checked = !useLWToolStripMenuItem.Checked;
 
+            Cleanup();
             viewHelper.ChangeContentFlags(useLWToolStripMenuItem.Checked);
             OnStorageChanged();
         }
