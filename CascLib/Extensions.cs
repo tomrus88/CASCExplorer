@@ -55,6 +55,17 @@ namespace CASCExplorer
             return BitConverter.ToInt16(reader.ReadBytes(2).Reverse().ToArray(), 0);
         }
 
+        public static void CopyBytes(this Stream input, Stream output, int bytes)
+        {
+            byte[] buffer = new byte[32768];
+            int read;
+            while (bytes > 0 && (read = input.Read(buffer, 0, Math.Min(buffer.Length, bytes))) > 0)
+            {
+                output.Write(buffer, 0, read);
+                bytes -= read;
+            }
+        }
+
         public static string ToHexString(this byte[] data)
         {
             return BitConverter.ToString(data).Replace("-", string.Empty);
