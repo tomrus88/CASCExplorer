@@ -172,7 +172,7 @@ namespace CASCExplorer
                     Decompress(data, _memStream);
                     break;
                 default:
-                    throw new BLTEDecoderException("unknown BLTE block type {0} (0x{0:X2})!", (char)data[0], data[0]);
+                    throw new BLTEDecoderException("unknown BLTE block type {0} (0x{1:X2})!", (char)data[0], data[0]);
             }
         }
 
@@ -213,7 +213,7 @@ namespace CASCExplorer
             Array.Copy(IVpart, IV, IVpart.Length);
 
             // magic
-            for (int shift = 0, i = 0; shift < sizeof(int); shift += 8, i++)
+            for (int shift = 0, i = 0; i < sizeof(int); shift += 8, i++)
             {
                 IV[i] ^= (byte)((index >> shift) & 0xFF);
             }
