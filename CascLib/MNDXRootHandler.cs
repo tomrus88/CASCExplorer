@@ -243,15 +243,20 @@ namespace CASCExplorer
             int nMaxLength = 0;
             int pMatching = -1;
 
+            int fileNameLen = fileName.Length;
+
             foreach (var package in Packages)
             {
-                if (package.Value.Length < fileName.Length && package.Value.Length > nMaxLength)
+                string pkgName = package.Value;
+                int pkgNameLen = pkgName.Length;
+
+                if (pkgNameLen < fileNameLen && pkgNameLen > nMaxLength)
                 {
                     // Compare the package name
-                    if (string.Compare(fileName, 0, package.Value, 0, package.Value.Length) == 0)
+                    if (string.CompareOrdinal(fileName, 0, pkgName, 0, pkgNameLen) == 0)
                     {
                         pMatching = package.Key;
-                        nMaxLength = package.Value.Length;
+                        nMaxLength = pkgNameLen;
                     }
                 }
             }
@@ -606,8 +611,6 @@ namespace CASCExplorer
             field_214 = reader.ReadInt32();
 
             int dwBitMask = reader.ReadInt32();
-            //Struct10 = new TStruct10();
-            //Struct10.sub_1957800(dwBitMask);
         }
 
         private int sub_1959CB0(int dwItemIndex)
@@ -1007,7 +1010,6 @@ namespace CASCExplorer
         bool CheckNextPathFragment(MNDXSearchResult pStruct1C)
         {
             SearchBuffer pStruct40 = pStruct1C.Buffer;
-            byte[] pbPathName = Encoding.ASCII.GetBytes(pStruct1C.SearchMask);
             int CollisionIndex;
             int NameFragIndex;
             int SaveCharIndex;
@@ -1015,7 +1017,7 @@ namespace CASCExplorer
             int FragOffs;
 
             // Calculate index of the next name fragment in the name fragment table
-            NameFragIndex = ((pStruct40.ItemIndex << 0x05) ^ pStruct40.ItemIndex ^ pbPathName[pStruct40.CharIndex]) & NameFragIndexMask;
+            NameFragIndex = ((pStruct40.ItemIndex << 0x05) ^ pStruct40.ItemIndex ^ pStruct1C.SearchMask[pStruct40.CharIndex]) & NameFragIndexMask;
 
             // Does the hash value match?
             if (NameFragTable[NameFragIndex].ItemIndex == pStruct40.ItemIndex)

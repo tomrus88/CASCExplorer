@@ -10,6 +10,9 @@ using System.Windows.Forms;
 
 namespace CASCExplorer
 {
+    delegate void OnStorageChangedDelegate();
+    delegate void OnCleanupDelegate();
+
     class CASCViewHelper
     {
         private ExtractProgress extractProgress;
@@ -23,6 +26,9 @@ namespace CASCExplorer
             NumberDecimalDigits = 0,
             NumberGroupSeparator = " "
         };
+
+        public event OnStorageChangedDelegate OnStorageChanged;
+        public event OnCleanupDelegate OnCleanup;
 
         public CASCHandler CASC
         {
@@ -201,10 +207,8 @@ namespace CASCExplorer
             }
         }
 
-        public void OpenStorage(MainForm mainForm, string arg, bool online)
+        public void OpenStorage(string arg, bool online)
         {
-            mainForm.Cleanup();
-
             Cleanup();
 
             using (var initForm = new InitForm())
@@ -225,7 +229,7 @@ namespace CASCExplorer
 
             Sorter.CASC = _casc;
 
-            mainForm.OnStorageChanged();
+            OnStorageChanged?.Invoke();
         }
 
         public void ChangeLocale(string locale)
@@ -233,16 +237,22 @@ namespace CASCExplorer
             if (_casc == null)
                 return;
 
+            OnCleanup?.Invoke();
+
             Settings.Default.LocaleFlags = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), locale);
 
             _root = _casc.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
             _casc.Root.MergeInstall(_casc.Install);
+
+            OnStorageChanged?.Invoke();
         }
 
         public void ChangeContentFlags(bool set)
         {
             if (_casc == null)
                 return;
+
+            OnCleanup?.Invoke();
 
             if (set)
                 Settings.Default.ContentFlags |= ContentFlags.LowViolence;
@@ -251,6 +261,8 @@ namespace CASCExplorer
 
             _root = _casc.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
             _casc.Root.MergeInstall(_casc.Install);
+
+            OnStorageChanged?.Invoke();
         }
 
         public void SetSort(int column)
@@ -430,6 +442,8 @@ namespace CASCExplorer
 
         public void Cleanup()
         {
+            OnCleanup?.Invoke();
+
             Sorter.CASC = null;
 
             _root = null;

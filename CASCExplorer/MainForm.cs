@@ -28,6 +28,9 @@ namespace CASCExplorer
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            viewHelper.OnCleanup += ViewHelper_OnCleanup;
+            viewHelper.OnStorageChanged += ViewHelper_OnStorageChanged;
+
             Settings.Default.PropertyChanged += Settings_PropertyChanged;
 
             iconsList.Images.Add(Resources.folder);
@@ -73,6 +76,16 @@ namespace CASCExplorer
             useLWToolStripMenuItem.Checked = (Settings.Default.ContentFlags & ContentFlags.LowViolence) != 0;
         }
 
+        private void ViewHelper_OnStorageChanged()
+        {
+            OnStorageChanged();
+        }
+
+        private void ViewHelper_OnCleanup()
+        {
+            Cleanup();
+        }
+
         private void Settings_PropertyChanged(object sender, PropertyChangedEventArgs e)
         {
             Settings.Default.Save();
@@ -83,7 +96,7 @@ namespace CASCExplorer
             MessageBox.Show(e.ExceptionObject.ToString());
         }
 
-        public void OnStorageChanged()
+        private void OnStorageChanged()
         {
             CASCHandler casc = viewHelper.CASC;
             CASCConfig cfg = casc.Config;
@@ -91,13 +104,14 @@ namespace CASCExplorer
             bool isWoW = cfg.BuildUID.IndexOf("wow") >= 0;
             bool isD3 = cfg.BuildUID.IndexOf("d3") >= 0;
             bool isPro = cfg.BuildUID.IndexOf("pro") >= 0;
-            bool isHots = cfg.BuildUID.IndexOf("hero") >= 0;
+            bool isHero = cfg.BuildUID.IndexOf("hero") >= 0;
+            bool isSC2 = cfg.BuildUID.IndexOf("s2") >= 0;
 
             extractInstallFilesToolStripMenuItem.Enabled = true;
             extractCASCSystemFilesToolStripMenuItem.Enabled = true;
             scanFilesToolStripMenuItem.Enabled = isWoW;
             analyseUnknownFilesToolStripMenuItem.Enabled = isWoW || isPro;
-            localeFlagsToolStripMenuItem.Enabled = isWoW || isD3 || isPro || isHots;
+            localeFlagsToolStripMenuItem.Enabled = isWoW || isD3 || isPro || isHero || isSC2;
             useLWToolStripMenuItem.Enabled = isWoW;
 
             CASCFolder root = viewHelper.Root;
@@ -270,9 +284,7 @@ namespace CASCExplorer
                     (dropdown as ToolStripMenuItem).Checked = true;
             }
 
-            Cleanup();
             viewHelper.ChangeLocale(item.Text);
-            OnStorageChanged();
         }
 
         private void getSizeToolStripMenuItem_Click(object sender, EventArgs e)
@@ -284,12 +296,10 @@ namespace CASCExplorer
         {
             useLWToolStripMenuItem.Checked = !useLWToolStripMenuItem.Checked;
 
-            Cleanup();
             viewHelper.ChangeContentFlags(useLWToolStripMenuItem.Checked);
-            OnStorageChanged();
         }
 
-        public void Cleanup()
+        private void Cleanup()
         {
             fileList.VirtualListSize = 0;
             folderTree.Nodes.Clear();
@@ -376,7 +386,7 @@ namespace CASCExplorer
                 return;
             }
 
-            viewHelper.OpenStorage(this, path, false);
+            viewHelper.OpenStorage(path, false);
 
             openRecentStorageToolStripMenuItem.Enabled = true;
             openRecentStorageToolStripMenuItem.DropDownItems.Add(path);
@@ -389,17 +399,16 @@ namespace CASCExplorer
 
         private void openOnlineStorageToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
-            viewHelper.OpenStorage(this, (string)e.ClickedItem.Tag, true);
+            viewHelper.OpenStorage((string)e.ClickedItem.Tag, true);
         }
 
         private void openRecentStorageToolStripMenuItem_DropDownItemClicked(object sender, ToolStripItemClickedEventArgs e)
         {
-            viewHelper.OpenStorage(this, e.ClickedItem.Text, false);
+            viewHelper.OpenStorage(e.ClickedItem.Text, false);
         }
 
         private void closeStorageToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            Cleanup();
             viewHelper.Cleanup();
         }
     }
