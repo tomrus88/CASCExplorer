@@ -113,6 +113,7 @@ namespace CASCExplorer
             analyseUnknownFilesToolStripMenuItem.Enabled = isWoW || isPro;
             localeFlagsToolStripMenuItem.Enabled = isWoW || isD3 || isPro || isHero || isSC2;
             useLWToolStripMenuItem.Enabled = isWoW;
+            exportListfileToolStripMenuItem.Enabled = true;
 
             CASCFolder root = viewHelper.Root;
 
@@ -313,6 +314,7 @@ namespace CASCExplorer
             analyseUnknownFilesToolStripMenuItem.Enabled = false;
             localeFlagsToolStripMenuItem.Enabled = false;
             useLWToolStripMenuItem.Enabled = false;
+            exportListfileToolStripMenuItem.Enabled = false;
             statusLabel.Text = "Ready.";
             statusProgress.Visible = false;
 
@@ -410,6 +412,11 @@ namespace CASCExplorer
         private void closeStorageToolStripMenuItem_Click(object sender, EventArgs e)
         {
             viewHelper.Cleanup();
+        }
+
+        private void exportListfileToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            viewHelper.ExportListFile();
         }
     }
 }

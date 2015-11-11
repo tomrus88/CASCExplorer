@@ -68,6 +68,7 @@
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.storageFolderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
+            this.exportListfileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -324,7 +325,7 @@
             // findToolStripMenuItem
             // 
             this.findToolStripMenuItem.Name = "findToolStripMenuItem";
-            this.findToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.findToolStripMenuItem.Size = new System.Drawing.Size(106, 22);
             this.findToolStripMenuItem.Text = "Find...";
             this.findToolStripMenuItem.Click += new System.EventHandler(this.findToolStripMenuItem_Click);
             // 
@@ -341,7 +342,7 @@
             // 
             this.localeFlagsToolStripMenuItem.Enabled = false;
             this.localeFlagsToolStripMenuItem.Name = "localeFlagsToolStripMenuItem";
-            this.localeFlagsToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.localeFlagsToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
             this.localeFlagsToolStripMenuItem.Text = "Locale";
             this.localeFlagsToolStripMenuItem.DropDownItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.localeToolStripMenuItem_DropDownItemClicked);
             // 
@@ -349,7 +350,7 @@
             // 
             this.useLWToolStripMenuItem.Enabled = false;
             this.useLWToolStripMenuItem.Name = "useLWToolStripMenuItem";
-            this.useLWToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.useLWToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
             this.useLWToolStripMenuItem.Text = "Use LW";
             this.useLWToolStripMenuItem.Click += new System.EventHandler(this.contentFlagsToolStripMenuItem_Click);
             // 
@@ -361,7 +362,8 @@
             this.extractInstallFilesToolStripMenuItem,
             this.CDNBuildsToolStripMenuItem,
             this.extractCASCSystemFilesToolStripMenuItem,
-            this.bruteforceNamesToolStripMenuItem});
+            this.bruteforceNamesToolStripMenuItem,
+            this.exportListfileToolStripMenuItem});
             this.toolsToolStripMenuItem.Name = "toolsToolStripMenuItem";
             this.toolsToolStripMenuItem.Size = new System.Drawing.Size(47, 20);
             this.toolsToolStripMenuItem.Text = "Tools";
@@ -382,10 +384,10 @@
             this.analyseUnknownFilesToolStripMenuItem.Text = "Analyse Unknown Files";
             this.analyseUnknownFilesToolStripMenuItem.Click += new System.EventHandler(this.analyseUnknownFilesToolStripMenuItem_Click);
             // 
-            // extractInstallToolStripMenuItem
+            // extractInstallFilesToolStripMenuItem
             // 
             this.extractInstallFilesToolStripMenuItem.Enabled = false;
-            this.extractInstallFilesToolStripMenuItem.Name = "extractInstallToolStripMenuItem";
+            this.extractInstallFilesToolStripMenuItem.Name = "extractInstallFilesToolStripMenuItem";
             this.extractInstallFilesToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
             this.extractInstallFilesToolStripMenuItem.Text = "Extract Install Files";
             this.extractInstallFilesToolStripMenuItem.Click += new System.EventHandler(this.extractInstallFilesToolStripMenuItem_Click);
@@ -424,9 +426,17 @@
             // aboutToolStripMenuItem
             // 
             this.aboutToolStripMenuItem.Name = "aboutToolStripMenuItem";
-            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
+            this.aboutToolStripMenuItem.Size = new System.Drawing.Size(116, 22);
             this.aboutToolStripMenuItem.Text = "About...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
+            // 
+            // exportListfileToolStripMenuItem
+            // 
+            this.exportListfileToolStripMenuItem.Enabled = false;
+            this.exportListfileToolStripMenuItem.Name = "exportListfileToolStripMenuItem";
+            this.exportListfileToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
+            this.exportListfileToolStripMenuItem.Text = "Export listfile";
+            this.exportListfileToolStripMenuItem.Click += new System.EventHandler(this.exportListfileToolStripMenuItem_Click);
             // 
             // MainForm
             // 
@@ -499,6 +509,7 @@
         private System.Windows.Forms.ToolStripMenuItem openOnlineStorageToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem closeStorageToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openRecentStorageToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem exportListfileToolStripMenuItem;
     }
 }
 

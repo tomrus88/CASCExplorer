@@ -493,6 +493,15 @@ namespace CASCExplorer
             }
         }
 
+        public void ExportListFile()
+        {
+            using (StreamWriter sw = new StreamWriter("listfile_export.txt"))
+            {
+                foreach (var file in Root.GetFiles(null, true))
+                    sw.WriteLine(file.FullName);
+            }
+        }
+
         public void ExtractCASCSystemFiles()
         {
             if (_casc == null)
