@@ -100,18 +100,15 @@ namespace CASCExplorer
         {
             CASCHandler casc = viewHelper.CASC;
             CASCConfig cfg = casc.Config;
+            CASCGameType gameType = cfg.GameType;
 
-            bool isWoW = cfg.BuildUID.IndexOf("wow") >= 0;
-            bool isD3 = cfg.BuildUID.IndexOf("d3") >= 0;
-            bool isPro = cfg.BuildUID.IndexOf("pro") >= 0;
-            bool isHero = cfg.BuildUID.IndexOf("hero") >= 0;
-            bool isSC2 = cfg.BuildUID.IndexOf("s2") >= 0;
+            bool isWoW = gameType == CASCGameType.WoW;
 
             extractInstallFilesToolStripMenuItem.Enabled = true;
             extractCASCSystemFilesToolStripMenuItem.Enabled = true;
             scanFilesToolStripMenuItem.Enabled = isWoW;
-            analyseUnknownFilesToolStripMenuItem.Enabled = isWoW || isPro;
-            localeFlagsToolStripMenuItem.Enabled = isWoW || isD3 || isPro || isHero || isSC2;
+            analyseUnknownFilesToolStripMenuItem.Enabled = isWoW || gameType == CASCGameType.Overwatch;
+            localeFlagsToolStripMenuItem.Enabled = CASCGame.SupportsLocaleSelection(gameType);
             useLWToolStripMenuItem.Enabled = isWoW;
             exportListfileToolStripMenuItem.Enabled = true;
 

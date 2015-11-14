@@ -14,7 +14,7 @@ namespace CASCExplorer
         Overwatch
     }
 
-    class CASCGame
+    public class CASCGame
     {
         public static CASCGameType DetectLocalGame(string path)
         {
@@ -53,14 +53,14 @@ namespace CASCExplorer
 
         public static CASCGameType DetectOnlineGame(string uid)
         {
-            if (uid == "hero" || uid == "herot")
+            if (uid.StartsWith("hero"))
                 return CASCGameType.HotS;
 
-            if (uid == "sc2" || uid == "s2b" || uid == "s2t")
-                return CASCGameType.S2;
-
-            if (uid == "hsb")
+            if (uid.StartsWith("hs"))
                 return CASCGameType.Hearthstone;
+
+            if (uid.StartsWith("s2"))
+                return CASCGameType.S2;
 
             if (uid.StartsWith("wow"))
                 return CASCGameType.WoW;
@@ -72,7 +72,7 @@ namespace CASCExplorer
                 return CASCGameType.Agent;
 
             if (uid.StartsWith("pro"))
-                return CASCGameType.Agent;
+                return CASCGameType.Overwatch;
 
             return CASCGameType.Unknown;
         }
@@ -95,6 +95,15 @@ namespace CASCExplorer
                 return "data/casc";
 
             return null;
+        }
+
+        public static bool SupportsLocaleSelection(CASCGameType gameType)
+        {
+            return gameType == CASCGameType.D3 ||
+                gameType == CASCGameType.WoW ||
+                gameType == CASCGameType.HotS ||
+                gameType == CASCGameType.S2 ||
+                gameType == CASCGameType.Overwatch;
         }
     }
 }
