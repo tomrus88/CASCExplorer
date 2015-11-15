@@ -96,7 +96,7 @@ namespace CASCExplorer
                 }
                 catch
                 {
-                    Console.WriteLine("Skipped " + file.FullName + " because of both local and CDN indices are missing.");
+                    Logger.WriteLine("Skipped " + file.FullName + " because of both local and CDN indices are missing.");
                     return null;
                 }
                 return strings;

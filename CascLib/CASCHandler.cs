@@ -86,37 +86,20 @@ namespace CASCExplorer
             {
                 using (var fs = OpenRootFile())
                 {
-                    byte[] magic = fs.ReadBytes(4);
-                    fs.BaseStream.Position = 0;
-
-                    if (magic[0] == 0x4D && magic[1] == 0x4E && magic[2] == 0x44 && magic[3] == 0x58) // MNDX
-                    {
+                    if (config.GameType == CASCGameType.S2 || config.GameType == CASCGameType.HotS)
                         RootHandler = new MNDXRootHandler(fs, worker);
-                    }
-                    else if (config.BuildUID.StartsWith("d3", StringComparison.OrdinalIgnoreCase))
-                    {
+                    else if (config.GameType == CASCGameType.D3)
                         RootHandler = new D3RootHandler(fs, worker, this);
-                    }
-                    else if (config.BuildUID.StartsWith("wow", StringComparison.OrdinalIgnoreCase))
-                    {
+                    else if (config.GameType == CASCGameType.WoW)
                         RootHandler = new WowRootHandler(fs, worker);
-                    }
-                    else if (config.BuildUID.StartsWith("agent", StringComparison.OrdinalIgnoreCase))
-                    {
+                    else if (config.GameType == CASCGameType.Agent)
                         RootHandler = new AgentRootHandler(fs, worker);
-                    }
-                    else if (config.BuildUID.StartsWith("hsb", StringComparison.OrdinalIgnoreCase))
-                    {
+                    else if (config.GameType == CASCGameType.Hearthstone)
                         RootHandler = new HSRootHandler(fs, worker);
-                    }
-                    else if (config.BuildUID.StartsWith("pro", StringComparison.OrdinalIgnoreCase))
-                    {
+                    else if (config.GameType == CASCGameType.Overwatch)
                         RootHandler = new OWRootHandler(fs, worker, this);
-                    }
                     else
-                    {
                         throw new Exception("Unsupported game " + config.BuildUID);
-                    }
                 }
             }
 

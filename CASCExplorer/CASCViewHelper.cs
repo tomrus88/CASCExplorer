@@ -95,7 +95,7 @@ namespace CASCExplorer
 
                 Dictionary<int, string> idToName = new Dictionary<int, string>();
 
-                if (_casc.Config.BuildUID.StartsWith("wow"))
+                if (_casc.Config.GameType == CASCGameType.WoW)
                 {
                     using (Stream stream = _casc.OpenFile("DBFilesClient\\SoundEntries.db2"))
                     {
