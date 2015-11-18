@@ -79,16 +79,19 @@ namespace CASCExplorer
 
             int headerSize = _reader.ReadInt32BE();
 
-            long oldPos = _reader.BaseStream.Position;
+            if (CASCConfig.ValidateData)
+            {
+                long oldPos = _reader.BaseStream.Position;
 
-            _reader.BaseStream.Position = 0;
+                _reader.BaseStream.Position = 0;
 
-            byte[] newHash = _md5.ComputeHash(_reader.ReadBytes(headerSize > 0 ? headerSize : size));
+                byte[] newHash = _md5.ComputeHash(_reader.ReadBytes(headerSize > 0 ? headerSize : size));
 
-            if (!newHash.EqualsTo(md5))
-                throw new Exception("data corrupted");
+                if (!newHash.EqualsTo(md5))
+                    throw new Exception("data corrupted");
 
-            _reader.BaseStream.Position = oldPos;
+                _reader.BaseStream.Position = oldPos;
+            }
 
             int numBlocks = 1;
 
@@ -143,7 +146,7 @@ namespace CASCExplorer
 
                 block.Data = _reader.ReadBytes(block.CompSize);
 
-                if (block.Hash != null)
+                if (block.Hash != null && CASCConfig.ValidateData)
                 {
                     byte[] blockHash = _md5.ComputeHash(block.Data);
 

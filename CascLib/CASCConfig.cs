@@ -114,6 +114,8 @@ namespace CASCExplorer
 
         public string Region { get; private set; }
         public CASCGameType GameType { get; private set; }
+        public static bool ValidateData { get; set; } = true;
+        public static bool ThrowOnFileNotFound { get; set; } = true;
 
         public static CASCConfig LoadOnlineStorageConfig(string product, string region)
         {

@@ -384,7 +384,9 @@ namespace CASCExplorer
             if (encInfo != null)
                 return OpenFile(encInfo.Key);
 
-            throw new FileNotFoundException(fullName);
+            if (CASCConfig.ThrowOnFileNotFound)
+                throw new FileNotFoundException(fullName);
+            return null;
         }
 
         public void SaveFileTo(string fullName, string extractPath)
@@ -404,7 +406,8 @@ namespace CASCExplorer
                 return;
             }
 
-            throw new FileNotFoundException(fullName);
+            if (CASCConfig.ThrowOnFileNotFound)
+                throw new FileNotFoundException(fullName);
         }
 
         public void Clear()
