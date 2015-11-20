@@ -95,7 +95,7 @@ namespace CASCExplorer
 
                 Dictionary<int, string> idToName = new Dictionary<int, string>();
 
-                if (_casc.Config.GameType == CASCGameType.WoW)
+                if (_casc.Config.GameType == CASCGameType.WoW && _casc.FileExists("DBFilesClient\\SoundEntries.db2"))
                 {
                     using (Stream stream = _casc.OpenFile("DBFilesClient\\SoundEntries.db2"))
                     {
