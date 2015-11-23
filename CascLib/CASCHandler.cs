@@ -70,15 +70,18 @@ namespace CASCExplorer
 
             Logger.WriteLine("CASCHandler: loaded {0} encoding data", EncodingHandler.Count);
 
-            Logger.WriteLine("CASCHandler: loading download data...");
-
-            using (var _ = new PerfCounter("new DownloadHandler()"))
+            if ((CASCConfig.LoadFlags & LoadFlags.Download) != 0)
             {
-                using (var fs = OpenDownloadFile())
-                    DownloadHandler = new DownloadHandler(fs, worker);
-            }
+                Logger.WriteLine("CASCHandler: loading download data...");
 
-            Logger.WriteLine("CASCHandler: loaded {0} download data", EncodingHandler.Count);
+                using (var _ = new PerfCounter("new DownloadHandler()"))
+                {
+                    using (var fs = OpenDownloadFile())
+                        DownloadHandler = new DownloadHandler(fs, worker);
+                }
+
+                Logger.WriteLine("CASCHandler: loaded {0} download data", EncodingHandler.Count);
+            }
 
             Logger.WriteLine("CASCHandler: loading root data...");
 
@@ -105,15 +108,18 @@ namespace CASCExplorer
 
             Logger.WriteLine("CASCHandler: loaded {0} root data", RootHandler.Count);
 
-            Logger.WriteLine("CASCHandler: loading install data...");
-
-            using (var _ = new PerfCounter("new InstallHandler()"))
+            if ((CASCConfig.LoadFlags & LoadFlags.Install) != 0)
             {
-                using (var fs = OpenInstallFile())
-                    InstallHandler = new InstallHandler(fs, worker);
-            }
+                Logger.WriteLine("CASCHandler: loading install data...");
 
-            Logger.WriteLine("CASCHandler: loaded {0} install data", InstallHandler.Count);
+                using (var _ = new PerfCounter("new InstallHandler()"))
+                {
+                    using (var fs = OpenInstallFile())
+                        InstallHandler = new InstallHandler(fs, worker);
+                }
+
+                Logger.WriteLine("CASCHandler: loaded {0} install data", InstallHandler.Count);
+            }
         }
 
         private BinaryReader OpenInstallFile()
@@ -345,6 +351,20 @@ namespace CASCExplorer
             }
         }
 
+        public bool FileExists(int fileDataId)
+        {
+            WowRootHandler rh = Root as WowRootHandler;
+
+            if (rh != null)
+            {
+                var hash = rh.GetHashByFileDataId(fileDataId);
+
+                return FileExists(hash);
+            }
+
+            return false;
+        }
+
         public bool FileExists(string file)
         {
             var hash = Hasher.ComputeHash(file);
@@ -363,10 +383,29 @@ namespace CASCExplorer
             if (rootInfos.Any())
                 return EncodingHandler.GetEntry(rootInfos.First().MD5);
 
-            var installInfos = Install.GetEntries().Where(e => Hasher.ComputeHash(e.Name) == hash);
-            if (installInfos.Any())
-                return EncodingHandler.GetEntry(installInfos.First().MD5);
+            if ((CASCConfig.LoadFlags & LoadFlags.Install) != 0)
+            {
+                var installInfos = Install.GetEntries().Where(e => Hasher.ComputeHash(e.Name) == hash);
+                if (installInfos.Any())
+                    return EncodingHandler.GetEntry(installInfos.First().MD5);
+            }
 
+            return null;
+        }
+
+        public Stream OpenFile(int fileDataId)
+        {
+            WowRootHandler rh = Root as WowRootHandler;
+
+            if (rh != null)
+            {
+                var hash = rh.GetHashByFileDataId(fileDataId);
+
+                return OpenFile(hash, "FileData_" + fileDataId.ToString());
+            }
+
+            if (CASCConfig.ThrowOnFileNotFound)
+                throw new FileNotFoundException("FileData: " + fileDataId.ToString());
             return null;
         }
 
@@ -423,8 +462,11 @@ namespace CASCExplorer
             EncodingHandler.Clear();
             EncodingHandler = null;
 
-            InstallHandler.Clear();
-            InstallHandler = null;
+            if (InstallHandler != null)
+            {
+                InstallHandler.Clear();
+                InstallHandler = null;
+            }
 
             if (LocalIndex != null)
             {
@@ -435,8 +477,11 @@ namespace CASCExplorer
             RootHandler.Clear();
             RootHandler = null;
 
-            DownloadHandler.Clear();
-            DownloadHandler = null;
+            if (DownloadHandler != null)
+            {
+                DownloadHandler.Clear();
+                DownloadHandler = null;
+            }
         }
     }
 }

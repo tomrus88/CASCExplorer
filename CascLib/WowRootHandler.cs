@@ -63,6 +63,7 @@ namespace CASCExplorer
     {
         private readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
         private readonly Dictionary<int, ulong> FileDataStore = new Dictionary<int, ulong>();
+        private readonly Dictionary<ulong, int> FileDataStoreReverse = new Dictionary<ulong, int>();
         private readonly HashSet<ulong> UnknownFiles = new HashSet<ulong>();
 
         public override int Count { get { return RootData.Count; } }
@@ -126,6 +127,7 @@ namespace CASCExplorer
                     }
 
                     FileDataStore.Add(entries[i].FileDataId, hash);
+                    FileDataStoreReverse.Add(hash, entries[i].FileDataId);
                 }
 
                 worker?.ReportProgress((int)(stream.BaseStream.Position / (float)stream.BaseStream.Length * 100));
@@ -180,6 +182,27 @@ namespace CASCExplorer
                 yield return entry;
         }
 
+        public ulong GetHashByFileDataId(int fileDataId)
+        {
+            ulong hash;
+            FileDataStore.TryGetValue(fileDataId, out hash);
+            return hash;
+        }
+
+        public int GetFileDataIdByHash(ulong hash)
+        {
+            int fid;
+            FileDataStoreReverse.TryGetValue(hash, out fid);
+            return fid;
+        }
+
+        public int GetFileDataIdByName(string name)
+        {
+            int fid;
+            FileDataStoreReverse.TryGetValue(Hasher.ComputeHash(name), out fid);
+            return fid;
+        }
+
         private bool LoadPreHashedListFile(string pathbin, string pathtext, BackgroundWorkerEx worker = null)
         {
             using (var _ = new PerfCounter("WowRootHandler::LoadPreHashedListFile()"))
@@ -206,7 +229,7 @@ namespace CASCExplorer
                     {
                         string dirName = br.ReadString();
 
-                        //Logger.WriteLine(dirName);
+                        Logger.WriteLine(dirName);
 
                         int numFiles = br.ReadInt32();
 
@@ -298,7 +321,7 @@ namespace CASCExplorer
                     {
                         bw.Write(dir.Key); // dir name
 
-                        //Console.WriteLine(dir.Key);
+                        Logger.WriteLine(dir.Key);
 
                         bw.Write(dirData[dir.Key].Count); // count of files in dir
 
@@ -372,6 +395,7 @@ namespace CASCExplorer
         {
             RootData.Clear();
             FileDataStore.Clear();
+            FileDataStoreReverse.Clear();
             UnknownFiles.Clear();
             Root.Entries.Clear();
             CASCFile.FileNames.Clear();

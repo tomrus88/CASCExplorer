@@ -5,6 +5,14 @@ using System.Linq;
 
 namespace CASCExplorer
 {
+    [Flags]
+    public enum LoadFlags
+    {
+        All = -1,
+        Download = 1,
+        Install = 2,
+    }
+
     class VerBarConfig
     {
         private readonly List<Dictionary<string, string>> Data = new List<Dictionary<string, string>>();
@@ -116,6 +124,7 @@ namespace CASCExplorer
         public CASCGameType GameType { get; private set; }
         public static bool ValidateData { get; set; } = true;
         public static bool ThrowOnFileNotFound { get; set; } = true;
+        public static LoadFlags LoadFlags { get; set; } = LoadFlags.All;
 
         public static CASCConfig LoadOnlineStorageConfig(string product, string region)
         {
