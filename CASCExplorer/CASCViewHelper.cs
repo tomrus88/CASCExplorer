@@ -95,22 +95,69 @@ namespace CASCExplorer
 
                 Dictionary<int, string> idToName = new Dictionary<int, string>();
 
-                if (_casc.Config.GameType == CASCGameType.WoW && _casc.FileExists("DBFilesClient\\SoundEntries.db2"))
+                if (_casc.Config.GameType == CASCGameType.WoW)
                 {
-                    using (Stream stream = _casc.OpenFile("DBFilesClient\\SoundEntries.db2"))
+                    if(_casc.FileExists("DBFilesClient\\SoundEntries.db2"))
                     {
-                        DB2Reader se = new DB2Reader(stream);
-
-                        foreach (var row in se)
+                        using (Stream stream = _casc.OpenFile("DBFilesClient\\SoundEntries.db2"))
                         {
-                            string name = row.Value.GetField<string>(2);
+                            DB2Reader se = new DB2Reader(stream);
 
-                            int type = row.Value.GetField<int>(1);
+                            foreach (var row in se)
+                            {
+                                string name = row.Value.GetField<string>(2);
 
-                            bool many = row.Value.GetField<int>(4) > 0;
+                                int type = row.Value.GetField<int>(1);
 
-                            for (int i = 3; i < 23; i++)
-                                idToName[row.Value.GetField<int>(i)] = "unknown\\sound\\" + name + (many ? "_" + (i - 2).ToString("D2") : "") + (type == 28 ? ".mp3" : ".ogg");
+                                bool many = row.Value.GetField<int>(4) > 0;
+
+                                for (int i = 3; i < 23; i++)
+                                    idToName[row.Value.GetField<int>(i)] = "unknown\\sound\\" + name + (many ? "_" + (i - 2).ToString("D2") : "") + (type == 28 ? ".mp3" : ".ogg");
+                            }
+                        }
+                    }
+
+                    if (_casc.FileExists("DBFilesClient\\SoundKit.db2") && _casc.FileExists("DBFilesClient\\SoundKitEntry.db2"))
+                    {
+                        using (Stream skStream = _casc.OpenFile("DBFilesClient\\SoundKit.db2"))
+                        using (Stream skeStream = _casc.OpenFile("DBFilesClient\\SoundKitEntry.db2"))
+                        {
+                            DB3Reader sk = new DB3Reader(skStream);
+                            DB3Reader ske = new DB3Reader(skeStream);
+
+                            Dictionary<int, List<int>> lookup = new Dictionary<int, List<int>>();
+
+                            foreach (var row in ske)
+                            {
+                                int soundKitId = row.Value.GetField<ushort>(0xC);
+
+                                if (!lookup.ContainsKey(soundKitId))
+                                    lookup[soundKitId] = new List<int>();
+
+                                lookup[soundKitId].Add(row.Value.GetField<int>(0x4));
+                            }
+
+                            foreach (var row in sk)
+                            {
+                                string name = row.Value.GetField<string>(0x4);
+
+                                int type = row.Value.GetField<byte>(0x2C);
+
+                                List<int> ske_entries;
+
+                                if (!lookup.TryGetValue(row.Key, out ske_entries))
+                                    continue;
+
+                                bool many = ske_entries.Count > 1;
+
+                                int i = 0;
+
+                                foreach (var fid in ske_entries)
+                                {
+                                    idToName[fid] = "unknown\\sound\\" + name + (many ? "_" + (i + 1).ToString("D2") : "") + (type == 28 ? ".mp3" : ".ogg");
+                                    i++;
+                                }
+                            }
                         }
                     }
                 }
