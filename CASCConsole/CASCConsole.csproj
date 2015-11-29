@@ -49,7 +49,6 @@
       <DesignTimeSharedInput>True</DesignTimeSharedInput>
       <DependentUpon>Settings.settings</DependentUpon>
     </Compile>
-    <Compile Include="Wildcard.cs" />
   </ItemGroup>
   <ItemGroup>
     <None Include="App.config" />

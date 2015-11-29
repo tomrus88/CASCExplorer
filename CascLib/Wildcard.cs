@@ -1,6 +1,6 @@
 ﻿using System.Text.RegularExpressions;
 
-namespace CASCConsole
+namespace CASCExplorer
 {
     /// <summary>
     /// Represents a wildcard running on the
@@ -12,8 +12,8 @@ namespace CASCConsole
         /// Initializes a wildcard with the given search pattern.
         /// </summary>
         /// <param name="pattern">The wildcard pattern to match.</param>
-        public Wildcard(string pattern)
-         : base(WildcardToRegex(pattern))
+        public Wildcard(string pattern, bool matchStartEnd)
+         : base(WildcardToRegex(pattern, matchStartEnd))
         {
         }
 
@@ -23,8 +23,8 @@ namespace CASCConsole
         /// <param name="pattern">The wildcard pattern to match.</param>
         /// <param name="options">A combination of one or more
         /// <see cref="System.Text.RegexOptions"/>.</param>
-        public Wildcard(string pattern, RegexOptions options)
-         : base(WildcardToRegex(pattern), options)
+        public Wildcard(string pattern, bool matchStartEnd, RegexOptions options)
+         : base(WildcardToRegex(pattern, matchStartEnd), options)
         {
         }
 
@@ -33,11 +33,12 @@ namespace CASCConsole
         /// </summary>
         /// <param name="pattern">The wildcard pattern to convert.</param>
         /// <returns>A regex equivalent of the given wildcard.</returns>
-        public static string WildcardToRegex(string pattern)
+        public static string WildcardToRegex(string pattern, bool matchStartEnd)
         {
-            return "^" + Regex.Escape(pattern).
-             Replace("\\*", ".*").
-             Replace("\\?", ".") + "$";
+            if (matchStartEnd)
+                return "^" + Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".") + "$";
+            else
+                return Escape(pattern).Replace("\\*", ".*").Replace("\\?", ".");
         }
     }
 }

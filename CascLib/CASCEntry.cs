@@ -18,10 +18,12 @@ namespace CASCExplorer
         private ulong _hash;
 
         public Dictionary<string, ICASCEntry> Entries { get; set; }
+        public Dictionary<string, ICASCEntry> EntriesMirror { get; private set; }
 
         public CASCFolder(string name)
         {
             Entries = new Dictionary<string, ICASCEntry>(StringComparer.OrdinalIgnoreCase);
+            EntriesMirror = new Dictionary<string, ICASCEntry>(StringComparer.OrdinalIgnoreCase);
             _name = name;
             _hash = 0;
         }

@@ -73,6 +73,7 @@
     <Compile Include="Salsa20.cs" />
     <Compile Include="SyncDownloader.cs" />
     <Compile Include="AgentRootHandler.cs" />
+    <Compile Include="Wildcard.cs" />
     <Compile Include="WowRootHandler.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />

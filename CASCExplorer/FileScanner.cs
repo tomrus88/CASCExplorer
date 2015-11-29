@@ -1,5 +1,4 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
 using System.Text;
 
@@ -7,9 +6,15 @@ namespace CASCExplorer
 {
     class FileScanner
     {
-        static readonly HashSet<string> excludeFileTypes = new HashSet<string>()
+        static readonly List<string> excludeFileTypes = new List<string>()
         {
             ".ogg", ".mp3", ".wav", ".avi", ".ttf", ".blp", ".sig", ".toc", ".blob", ".anim", ".skin", ".phys"
+        };
+
+        static readonly List<string> extensions = new List<string>()
+        {
+            ".adt", ".anim", ".avi", ".blob", ".blp", ".bls", ".bone", ".db2", ".dbc", ".html", ".ini", ".lst", ".lua", ".m2", ".mp3", ".ogg",
+            ".phys", ".sbt", ".sig", ".skin", ".tex", ".toc", ".ttf", ".txt", ".wdl", ".wdt", ".wfx", ".wmo", ".wtf", ".xml", ".xsd", ".zmp"
         };
 
         static readonly Dictionary<byte[], string> MagicNumbers = new Dictionary<byte[], string>()
@@ -38,70 +43,87 @@ namespace CASCExplorer
             Root = root;
         }
 
-        public HashSet<string> ScanFile(CASCFile file)
+        public IEnumerable<string> ScanFile(CASCFile file)
         {
-            if (!excludeFileTypes.Contains(Path.GetExtension(file.FullName).ToLower()))
-            {
-                HashSet<string> strings = new HashSet<string>();
-                try
-                {
-                    using (Stream fileStream = CASC.OpenFile(file.Hash, file.FullName))
-                    {
-                        int b;
-                        int state = 1;
-                        StringBuilder sb = new StringBuilder();
+            if (excludeFileTypes.Contains(Path.GetExtension(file.FullName).ToLower()))
+                yield break;
 
-                        // look for regex a+(da+)*\.a+ where a = IsAlphaNum() and d = IsFileDelim()
-                        // using a simple state machine
-                        while ((b = fileStream.ReadByte()) > -1)
+            Stream fileStream = null;
+
+            try
+            {
+                fileStream = CASC.OpenFile(file.Hash, file.FullName);
+            }
+            catch
+            {
+                Logger.WriteLine("Skipped {0} because of both local and CDN indices are missing.", file.FullName);
+                yield break;
+            }
+
+            using (fileStream)
+            {
+                int b;
+                int state = 1;
+                StringBuilder sb = new StringBuilder();
+
+                // look for regex a+(da+)*\.a+ where a = IsAlphaNum() and d = IsFileDelim()
+                // using a simple state machine
+                while ((b = fileStream.ReadByte()) > -1)
+                {
+                    if (state == 1 && IsAlphaNum(b) || state == 2 && IsAlphaNum(b) || state == 3 && IsAlphaNum(b)) // alpha
+                    {
+                        state = 2;
+                        sb.Append((char)b);
+
+                        if (sb.Length > 10)
                         {
-                            if (state == 1 && IsAlphaNum(b) || state == 2 && IsAlphaNum(b) || state == 3 && IsAlphaNum(b)) // alpha
+                            int nextByte = fileStream.ReadByte();
+
+                            if (nextByte == 0)
                             {
-                                state = 2;
-                                sb.Append((char)b);
+                                string foundStr = sb.ToString();
+
+                                foreach (var ext in extensions)
+                                    yield return foundStr + ext;
                             }
-                            else if (state == 2 && IsFileDelim(b)) // delimiter
-                            {
-                                state = 3;
-                                sb.Append((char)b);
-                            }
-                            else if (state == 2 && b == 46) // dot
-                            {
-                                state = 4;
-                                sb.Append((char)b);
-                            }
-                            else if (state == 4 && IsAlphaNum(b)) // extension
-                            {
-                                state = 5;
-                                sb.Append((char)b);
-                            }
-                            else if (state == 5 && IsAlphaNum(b)) // extension
-                            {
-                                sb.Append((char)b);
-                            }
-                            else if (state == 5 && !IsFileChar(b)) // accept
-                            {
-                                state = 1;
-                                if (sb.Length >= 10)
-                                    strings.Add(sb.ToString());
-                                sb.Clear();
-                            }
-                            else
-                            {
-                                state = 1;
-                                sb.Clear();
-                            }
+
+                            if (nextByte > -1)
+                                fileStream.Position -= 1;
                         }
                     }
+                    else if (state == 2 && IsFileDelim(b)) // delimiter
+                    {
+                        state = 3;
+                        sb.Append((char)b);
+                    }
+                    else if (state == 2 && b == 46) // dot
+                    {
+                        state = 4;
+                        sb.Append((char)b);
+                    }
+                    else if (state == 4 && IsAlphaNum(b)) // extension
+                    {
+                        state = 5;
+                        sb.Append((char)b);
+                    }
+                    else if (state == 5 && IsAlphaNum(b)) // extension
+                    {
+                        sb.Append((char)b);
+                    }
+                    else if (state == 5 && !IsFileChar(b)) // accept
+                    {
+                        state = 1;
+                        if (sb.Length >= 10)
+                            yield return sb.ToString();
+                        sb.Clear();
+                    }
+                    else
+                    {
+                        state = 1;
+                        sb.Clear();
+                    }
                 }
-                catch
-                {
-                    Logger.WriteLine("Skipped " + file.FullName + " because of both local and CDN indices are missing.");
-                    return null;
-                }
-                return strings;
             }
-            return null;
         }
 
         // dash, space, underscore, point, slash, backslash, a-z, A-Z, 0-9

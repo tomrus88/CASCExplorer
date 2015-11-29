@@ -48,7 +48,7 @@ namespace CASCConsole
             Console.WriteLine("    LocaleFlags: {0}", locale);
             Console.WriteLine("    ContentFlags: {0}", content);
 
-            Wildcard wildcard = new Wildcard(pattern, RegexOptions.IgnoreCase);
+            Wildcard wildcard = new Wildcard(pattern, true, RegexOptions.IgnoreCase);
 
             foreach (var file in root.GetFiles())
             {

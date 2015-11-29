@@ -5,6 +5,7 @@ using System.Collections.Generic;
 using System.Globalization;
 using System.IO;
 using System.Linq;
+using System.Text.RegularExpressions;
 using System.Threading.Tasks;
 using System.Windows.Forms;
 
@@ -139,7 +140,7 @@ namespace CASCExplorer
 
                             foreach (var row in sk)
                             {
-                                string name = row.Value.GetField<string>(0x4);
+                                string name = row.Value.GetField<string>(0x4).Replace(':', '_');
 
                                 int type = row.Value.GetField<byte>(0x2C);
 
@@ -206,10 +207,13 @@ namespace CASCExplorer
             scanForm.ShowDialog();
         }
 
-        public void UpdateListView(CASCFolder baseEntry, NoFlickerListView fileList)
+        public void UpdateListView(CASCFolder baseEntry, NoFlickerListView fileList, string filter)
         {
+            Wildcard wildcard = new Wildcard(filter, false, RegexOptions.IgnoreCase);
+
             // Sort
-            baseEntry.Entries = baseEntry.Entries.OrderBy(v => v.Value, Sorter).ToDictionary(pair => pair.Key, pair => pair.Value);
+            baseEntry.Entries = baseEntry.EntriesMirror.Where(v => v.Value is CASCFolder || (v.Value is CASCFile && wildcard.IsMatch(v.Value.Name))).
+                OrderBy(v => v.Value, Sorter).ToDictionary(pair => pair.Key, pair => pair.Value);
 
             // Update
             fileList.Tag = baseEntry;

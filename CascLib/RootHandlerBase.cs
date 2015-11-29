@@ -55,6 +55,7 @@ namespace CASCExplorer
                     }
 
                     folder.Entries[entryName] = entry;
+                    folder.EntriesMirror[entryName] = entry;
                 }
 
                 folder = entry as CASCFolder;

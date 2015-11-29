@@ -29,15 +29,10 @@
         private void InitializeComponent()
         {
             this.components = new System.ComponentModel.Container();
+            System.ComponentModel.ComponentResourceManager resources = new System.ComponentModel.ComponentResourceManager(typeof(MainForm));
             this.splitContainer1 = new System.Windows.Forms.SplitContainer();
             this.folderTree = new System.Windows.Forms.TreeView();
             this.iconsList = new System.Windows.Forms.ImageList(this.components);
-            this.fileList = new CASCExplorer.NoFlickerListView();
-            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
-            this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             this.contextMenuStrip1 = new System.Windows.Forms.ContextMenuStrip(this.components);
             this.extractToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.copyNameToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -57,7 +52,7 @@
             this.findToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.viewToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.localeFlagsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
-            this.useLWToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.useLVToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.toolsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.scanFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.analyseUnknownFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
@@ -65,10 +60,21 @@
             this.CDNBuildsToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.extractCASCSystemFilesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.bruteforceNamesToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.exportListfileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.helpToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
             this.aboutToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStrip1 = new System.Windows.Forms.ToolStrip();
+            this.filterToolStripLabel = new System.Windows.Forms.ToolStripLabel();
+            this.filterToolStripTextBox = new System.Windows.Forms.ToolStripTextBox();
             this.storageFolderBrowserDialog = new System.Windows.Forms.FolderBrowserDialog();
-            this.exportListfileToolStripMenuItem = new System.Windows.Forms.ToolStripMenuItem();
+            this.toolStrip2 = new System.Windows.Forms.ToolStrip();
+            this.openStorageToolStripButton = new System.Windows.Forms.ToolStripButton();
+            this.fileList = new CASCExplorer.NoFlickerListView();
+            this.columnHeader1 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader2 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader3 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader5 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
+            this.columnHeader4 = ((System.Windows.Forms.ColumnHeader)(new System.Windows.Forms.ColumnHeader()));
             ((System.ComponentModel.ISupportInitialize)(this.splitContainer1)).BeginInit();
             this.splitContainer1.Panel1.SuspendLayout();
             this.splitContainer1.Panel2.SuspendLayout();
@@ -80,6 +86,8 @@
             this.toolStripContainer1.SuspendLayout();
             this.statusStrip1.SuspendLayout();
             this.menuStrip1.SuspendLayout();
+            this.toolStrip1.SuspendLayout();
+            this.toolStrip2.SuspendLayout();
             this.SuspendLayout();
             // 
             // splitContainer1
@@ -96,7 +104,7 @@
             // splitContainer1.Panel2
             // 
             this.splitContainer1.Panel2.Controls.Add(this.fileList);
-            this.splitContainer1.Size = new System.Drawing.Size(838, 491);
+            this.splitContainer1.Size = new System.Drawing.Size(838, 466);
             this.splitContainer1.SplitterDistance = 212;
             this.splitContainer1.TabIndex = 0;
             // 
@@ -110,7 +118,7 @@
             this.folderTree.Location = new System.Drawing.Point(0, 0);
             this.folderTree.Name = "folderTree";
             this.folderTree.SelectedImageIndex = 0;
-            this.folderTree.Size = new System.Drawing.Size(212, 491);
+            this.folderTree.Size = new System.Drawing.Size(212, 466);
             this.folderTree.TabIndex = 0;
             this.folderTree.BeforeExpand += new System.Windows.Forms.TreeViewCancelEventHandler(this.treeView1_BeforeExpand);
             this.folderTree.BeforeSelect += new System.Windows.Forms.TreeViewCancelEventHandler(this.treeView1_BeforeSelect);
@@ -120,59 +128,6 @@
             this.iconsList.ColorDepth = System.Windows.Forms.ColorDepth.Depth32Bit;
             this.iconsList.ImageSize = new System.Drawing.Size(15, 15);
             this.iconsList.TransparentColor = System.Drawing.Color.Transparent;
-            // 
-            // fileList
-            // 
-            this.fileList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
-            this.columnHeader1,
-            this.columnHeader2,
-            this.columnHeader3,
-            this.columnHeader5,
-            this.columnHeader4});
-            this.fileList.ContextMenuStrip = this.contextMenuStrip1;
-            this.fileList.Dock = System.Windows.Forms.DockStyle.Fill;
-            this.fileList.FullRowSelect = true;
-            this.fileList.HideSelection = false;
-            this.fileList.Location = new System.Drawing.Point(0, 0);
-            this.fileList.Name = "fileList";
-            this.fileList.SelectedIndex = -1;
-            this.fileList.Size = new System.Drawing.Size(622, 491);
-            this.fileList.SmallImageList = this.iconsList;
-            this.fileList.Sorting = System.Windows.Forms.SortOrder.Ascending;
-            this.fileList.TabIndex = 0;
-            this.fileList.UseCompatibleStateImageBehavior = false;
-            this.fileList.View = System.Windows.Forms.View.Details;
-            this.fileList.VirtualMode = true;
-            this.fileList.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.listView1_ColumnClick);
-            this.fileList.RetrieveVirtualItem += new System.Windows.Forms.RetrieveVirtualItemEventHandler(this.listView1_RetrieveVirtualItem);
-            this.fileList.SearchForVirtualItem += new System.Windows.Forms.SearchForVirtualItemEventHandler(this.fileList_SearchForVirtualItem);
-            this.fileList.KeyDown += new System.Windows.Forms.KeyEventHandler(this.listView1_KeyDown);
-            this.fileList.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.listView1_MouseDoubleClick);
-            // 
-            // columnHeader1
-            // 
-            this.columnHeader1.Text = "File Name";
-            this.columnHeader1.Width = 250;
-            // 
-            // columnHeader2
-            // 
-            this.columnHeader2.Text = "Type";
-            // 
-            // columnHeader3
-            // 
-            this.columnHeader3.Text = "Locale Flags";
-            this.columnHeader3.Width = 100;
-            // 
-            // columnHeader5
-            // 
-            this.columnHeader5.Text = "Content Flags";
-            this.columnHeader5.Width = 100;
-            // 
-            // columnHeader4
-            // 
-            this.columnHeader4.Text = "Size";
-            this.columnHeader4.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
-            this.columnHeader4.Width = 80;
             // 
             // contextMenuStrip1
             // 
@@ -215,7 +170,7 @@
             // toolStripContainer1.ContentPanel
             // 
             this.toolStripContainer1.ContentPanel.Controls.Add(this.splitContainer1);
-            this.toolStripContainer1.ContentPanel.Size = new System.Drawing.Size(838, 491);
+            this.toolStripContainer1.ContentPanel.Size = new System.Drawing.Size(838, 466);
             this.toolStripContainer1.Dock = System.Windows.Forms.DockStyle.Fill;
             this.toolStripContainer1.Location = new System.Drawing.Point(0, 0);
             this.toolStripContainer1.Name = "toolStripContainer1";
@@ -226,6 +181,8 @@
             // toolStripContainer1.TopToolStripPanel
             // 
             this.toolStripContainer1.TopToolStripPanel.Controls.Add(this.menuStrip1);
+            this.toolStripContainer1.TopToolStripPanel.Controls.Add(this.toolStrip2);
+            this.toolStripContainer1.TopToolStripPanel.Controls.Add(this.toolStrip1);
             // 
             // statusStrip1
             // 
@@ -325,7 +282,7 @@
             // findToolStripMenuItem
             // 
             this.findToolStripMenuItem.Name = "findToolStripMenuItem";
-            this.findToolStripMenuItem.Size = new System.Drawing.Size(106, 22);
+            this.findToolStripMenuItem.Size = new System.Drawing.Size(152, 22);
             this.findToolStripMenuItem.Text = "Find...";
             this.findToolStripMenuItem.Click += new System.EventHandler(this.findToolStripMenuItem_Click);
             // 
@@ -333,7 +290,7 @@
             // 
             this.viewToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
             this.localeFlagsToolStripMenuItem,
-            this.useLWToolStripMenuItem});
+            this.useLVToolStripMenuItem});
             this.viewToolStripMenuItem.Name = "viewToolStripMenuItem";
             this.viewToolStripMenuItem.Size = new System.Drawing.Size(44, 20);
             this.viewToolStripMenuItem.Text = "View";
@@ -342,17 +299,17 @@
             // 
             this.localeFlagsToolStripMenuItem.Enabled = false;
             this.localeFlagsToolStripMenuItem.Name = "localeFlagsToolStripMenuItem";
-            this.localeFlagsToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
+            this.localeFlagsToolStripMenuItem.Size = new System.Drawing.Size(108, 22);
             this.localeFlagsToolStripMenuItem.Text = "Locale";
             this.localeFlagsToolStripMenuItem.DropDownItemClicked += new System.Windows.Forms.ToolStripItemClickedEventHandler(this.localeToolStripMenuItem_DropDownItemClicked);
             // 
-            // useLWToolStripMenuItem
+            // useLVToolStripMenuItem
             // 
-            this.useLWToolStripMenuItem.Enabled = false;
-            this.useLWToolStripMenuItem.Name = "useLWToolStripMenuItem";
-            this.useLWToolStripMenuItem.Size = new System.Drawing.Size(112, 22);
-            this.useLWToolStripMenuItem.Text = "Use LW";
-            this.useLWToolStripMenuItem.Click += new System.EventHandler(this.contentFlagsToolStripMenuItem_Click);
+            this.useLVToolStripMenuItem.Enabled = false;
+            this.useLVToolStripMenuItem.Name = "useLVToolStripMenuItem";
+            this.useLVToolStripMenuItem.Size = new System.Drawing.Size(108, 22);
+            this.useLVToolStripMenuItem.Text = "Use LV";
+            this.useLVToolStripMenuItem.Click += new System.EventHandler(this.contentFlagsToolStripMenuItem_Click);
             // 
             // toolsToolStripMenuItem
             // 
@@ -415,6 +372,14 @@
             this.bruteforceNamesToolStripMenuItem.Text = "Bruteforce Names";
             this.bruteforceNamesToolStripMenuItem.Click += new System.EventHandler(this.bruteforceNamesToolStripMenuItem_Click);
             // 
+            // exportListfileToolStripMenuItem
+            // 
+            this.exportListfileToolStripMenuItem.Enabled = false;
+            this.exportListfileToolStripMenuItem.Name = "exportListfileToolStripMenuItem";
+            this.exportListfileToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
+            this.exportListfileToolStripMenuItem.Text = "Export listfile";
+            this.exportListfileToolStripMenuItem.Click += new System.EventHandler(this.exportListfileToolStripMenuItem_Click);
+            // 
             // helpToolStripMenuItem
             // 
             this.helpToolStripMenuItem.DropDownItems.AddRange(new System.Windows.Forms.ToolStripItem[] {
@@ -430,13 +395,102 @@
             this.aboutToolStripMenuItem.Text = "About...";
             this.aboutToolStripMenuItem.Click += new System.EventHandler(this.aboutToolStripMenuItem_Click);
             // 
-            // exportListfileToolStripMenuItem
+            // toolStrip1
             // 
-            this.exportListfileToolStripMenuItem.Enabled = false;
-            this.exportListfileToolStripMenuItem.Name = "exportListfileToolStripMenuItem";
-            this.exportListfileToolStripMenuItem.Size = new System.Drawing.Size(209, 22);
-            this.exportListfileToolStripMenuItem.Text = "Export listfile";
-            this.exportListfileToolStripMenuItem.Click += new System.EventHandler(this.exportListfileToolStripMenuItem_Click);
+            this.toolStrip1.Dock = System.Windows.Forms.DockStyle.None;
+            this.toolStrip1.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.filterToolStripLabel,
+            this.filterToolStripTextBox});
+            this.toolStrip1.Location = new System.Drawing.Point(38, 24);
+            this.toolStrip1.Name = "toolStrip1";
+            this.toolStrip1.Size = new System.Drawing.Size(206, 25);
+            this.toolStrip1.TabIndex = 1;
+            // 
+            // filterToolStripLabel
+            // 
+            this.filterToolStripLabel.Name = "filterToolStripLabel";
+            this.filterToolStripLabel.Size = new System.Drawing.Size(67, 22);
+            this.filterToolStripLabel.Text = "Files mask: ";
+            // 
+            // filterToolStripTextBox
+            // 
+            this.filterToolStripTextBox.Name = "filterToolStripTextBox";
+            this.filterToolStripTextBox.Size = new System.Drawing.Size(125, 25);
+            this.filterToolStripTextBox.Text = "*";
+            this.filterToolStripTextBox.TextChanged += new System.EventHandler(this.filterToolStripTextBox_TextChanged);
+            // 
+            // toolStrip2
+            // 
+            this.toolStrip2.Dock = System.Windows.Forms.DockStyle.None;
+            this.toolStrip2.Items.AddRange(new System.Windows.Forms.ToolStripItem[] {
+            this.openStorageToolStripButton});
+            this.toolStrip2.Location = new System.Drawing.Point(3, 24);
+            this.toolStrip2.Name = "toolStrip2";
+            this.toolStrip2.Size = new System.Drawing.Size(35, 25);
+            this.toolStrip2.TabIndex = 2;
+            // 
+            // openStorageToolStripButton
+            // 
+            this.openStorageToolStripButton.DisplayStyle = System.Windows.Forms.ToolStripItemDisplayStyle.Image;
+            this.openStorageToolStripButton.Image = ((System.Drawing.Image)(resources.GetObject("openStorageToolStripButton.Image")));
+            this.openStorageToolStripButton.ImageTransparentColor = System.Drawing.Color.Magenta;
+            this.openStorageToolStripButton.Name = "openStorageToolStripButton";
+            this.openStorageToolStripButton.Size = new System.Drawing.Size(23, 22);
+            this.openStorageToolStripButton.Text = "&Open Storage";
+            this.openStorageToolStripButton.Click += new System.EventHandler(this.openStorageToolStripButton_Click);
+            // 
+            // fileList
+            // 
+            this.fileList.Columns.AddRange(new System.Windows.Forms.ColumnHeader[] {
+            this.columnHeader1,
+            this.columnHeader2,
+            this.columnHeader3,
+            this.columnHeader5,
+            this.columnHeader4});
+            this.fileList.ContextMenuStrip = this.contextMenuStrip1;
+            this.fileList.Dock = System.Windows.Forms.DockStyle.Fill;
+            this.fileList.FullRowSelect = true;
+            this.fileList.HideSelection = false;
+            this.fileList.Location = new System.Drawing.Point(0, 0);
+            this.fileList.Name = "fileList";
+            this.fileList.SelectedIndex = -1;
+            this.fileList.Size = new System.Drawing.Size(622, 466);
+            this.fileList.SmallImageList = this.iconsList;
+            this.fileList.Sorting = System.Windows.Forms.SortOrder.Ascending;
+            this.fileList.TabIndex = 0;
+            this.fileList.UseCompatibleStateImageBehavior = false;
+            this.fileList.View = System.Windows.Forms.View.Details;
+            this.fileList.VirtualMode = true;
+            this.fileList.ColumnClick += new System.Windows.Forms.ColumnClickEventHandler(this.listView1_ColumnClick);
+            this.fileList.RetrieveVirtualItem += new System.Windows.Forms.RetrieveVirtualItemEventHandler(this.listView1_RetrieveVirtualItem);
+            this.fileList.SearchForVirtualItem += new System.Windows.Forms.SearchForVirtualItemEventHandler(this.fileList_SearchForVirtualItem);
+            this.fileList.KeyDown += new System.Windows.Forms.KeyEventHandler(this.listView1_KeyDown);
+            this.fileList.MouseDoubleClick += new System.Windows.Forms.MouseEventHandler(this.listView1_MouseDoubleClick);
+            // 
+            // columnHeader1
+            // 
+            this.columnHeader1.Text = "File Name";
+            this.columnHeader1.Width = 250;
+            // 
+            // columnHeader2
+            // 
+            this.columnHeader2.Text = "Type";
+            // 
+            // columnHeader3
+            // 
+            this.columnHeader3.Text = "Locale Flags";
+            this.columnHeader3.Width = 100;
+            // 
+            // columnHeader5
+            // 
+            this.columnHeader5.Text = "Content Flags";
+            this.columnHeader5.Width = 100;
+            // 
+            // columnHeader4
+            // 
+            this.columnHeader4.Text = "Size";
+            this.columnHeader4.TextAlign = System.Windows.Forms.HorizontalAlignment.Right;
+            this.columnHeader4.Width = 80;
             // 
             // MainForm
             // 
@@ -464,6 +518,10 @@
             this.statusStrip1.PerformLayout();
             this.menuStrip1.ResumeLayout(false);
             this.menuStrip1.PerformLayout();
+            this.toolStrip1.ResumeLayout(false);
+            this.toolStrip1.PerformLayout();
+            this.toolStrip2.ResumeLayout(false);
+            this.toolStrip2.PerformLayout();
             this.ResumeLayout(false);
 
         }
@@ -497,7 +555,7 @@
         private System.Windows.Forms.ToolStripMenuItem localeFlagsToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem getSizeToolStripMenuItem;
         private System.Windows.Forms.ColumnHeader columnHeader5;
-        private System.Windows.Forms.ToolStripMenuItem useLWToolStripMenuItem;
+        private System.Windows.Forms.ToolStripMenuItem useLVToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openStorageToolStripMenuItem;
         private System.Windows.Forms.FolderBrowserDialog storageFolderBrowserDialog;
         private System.Windows.Forms.ToolStripMenuItem editToolStripMenuItem;
@@ -510,6 +568,11 @@
         private System.Windows.Forms.ToolStripMenuItem closeStorageToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem openRecentStorageToolStripMenuItem;
         private System.Windows.Forms.ToolStripMenuItem exportListfileToolStripMenuItem;
+        private System.Windows.Forms.ToolStrip toolStrip1;
+        private System.Windows.Forms.ToolStripLabel filterToolStripLabel;
+        private System.Windows.Forms.ToolStripTextBox filterToolStripTextBox;
+        private System.Windows.Forms.ToolStrip toolStrip2;
+        private System.Windows.Forms.ToolStripButton openStorageToolStripButton;
     }
 }
 

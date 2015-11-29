@@ -73,7 +73,7 @@ namespace CASCExplorer
                 openRecentStorageToolStripMenuItem.DropDownItems.Add(recentStorage);
             }
 
-            useLWToolStripMenuItem.Checked = (Settings.Default.ContentFlags & ContentFlags.LowViolence) != 0;
+            useLVToolStripMenuItem.Checked = (Settings.Default.ContentFlags & ContentFlags.LowViolence) != 0;
         }
 
         private void ViewHelper_OnStorageChanged()
@@ -109,7 +109,7 @@ namespace CASCExplorer
             scanFilesToolStripMenuItem.Enabled = isWoW;
             analyseUnknownFilesToolStripMenuItem.Enabled = isWoW || gameType == CASCGameType.Overwatch;
             localeFlagsToolStripMenuItem.Enabled = CASCGame.SupportsLocaleSelection(gameType);
-            useLWToolStripMenuItem.Enabled = isWoW;
+            useLVToolStripMenuItem.Enabled = isWoW;
             exportListfileToolStripMenuItem.Enabled = true;
 
             CASCFolder root = viewHelper.Root;
@@ -135,7 +135,7 @@ namespace CASCExplorer
 
         private void treeView1_BeforeSelect(object sender, TreeViewCancelEventArgs e)
         {
-            viewHelper.UpdateListView(e.Node.Tag as CASCFolder, fileList);
+            viewHelper.UpdateListView(e.Node.Tag as CASCFolder, fileList, filterToolStripTextBox.Text);
 
             statusLabel.Text = e.Node.FullPath;
         }
@@ -148,7 +148,7 @@ namespace CASCExplorer
         private void listView1_ColumnClick(object sender, ColumnClickEventArgs e)
         {
             viewHelper.SetSort(e.Column);
-            viewHelper.UpdateListView(fileList.Tag as CASCFolder, fileList);
+            viewHelper.UpdateListView(fileList.Tag as CASCFolder, fileList, filterToolStripTextBox.Text);
         }
 
         private void listView1_RetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
@@ -195,7 +195,7 @@ namespace CASCExplorer
             folderTree.SelectedNode.Nodes[baseEntry.Name].Expand();
             folderTree.SelectedNode = folderTree.SelectedNode.Nodes[baseEntry.Name];
 
-            viewHelper.UpdateListView(baseEntry, fileList);
+            viewHelper.UpdateListView(baseEntry, fileList, filterToolStripTextBox.Text);
 
             statusLabel.Text = folderTree.SelectedNode.FullPath;
             return true;
@@ -292,9 +292,9 @@ namespace CASCExplorer
 
         private void contentFlagsToolStripMenuItem_Click(object sender, EventArgs e)
         {
-            useLWToolStripMenuItem.Checked = !useLWToolStripMenuItem.Checked;
+            useLVToolStripMenuItem.Checked = !useLVToolStripMenuItem.Checked;
 
-            viewHelper.ChangeContentFlags(useLWToolStripMenuItem.Checked);
+            viewHelper.ChangeContentFlags(useLVToolStripMenuItem.Checked);
         }
 
         private void Cleanup()
@@ -310,7 +310,7 @@ namespace CASCExplorer
             scanFilesToolStripMenuItem.Enabled = false;
             analyseUnknownFilesToolStripMenuItem.Enabled = false;
             localeFlagsToolStripMenuItem.Enabled = false;
-            useLWToolStripMenuItem.Enabled = false;
+            useLVToolStripMenuItem.Enabled = false;
             exportListfileToolStripMenuItem.Enabled = false;
             statusLabel.Text = "Ready.";
             statusProgress.Visible = false;
@@ -371,6 +371,11 @@ namespace CASCExplorer
 
         private void openStorageToolStripMenuItem_Click(object sender, EventArgs e)
         {
+            OpenStorage();
+        }
+
+        private void OpenStorage()
+        {
             if (storageFolderBrowserDialog.ShowDialog() != DialogResult.OK)
             {
                 MessageBox.Show("Please select storage folder!", "Error!", MessageBoxButtons.OK, MessageBoxIcon.Error);
@@ -414,6 +419,16 @@ namespace CASCExplorer
         private void exportListfileToolStripMenuItem_Click(object sender, EventArgs e)
         {
             viewHelper.ExportListFile();
+        }
+
+        private void filterToolStripTextBox_TextChanged(object sender, EventArgs e)
+        {
+            viewHelper.UpdateListView(fileList.Tag as CASCFolder, fileList, filterToolStripTextBox.Text);
+        }
+
+        private void openStorageToolStripButton_Click(object sender, EventArgs e)
+        {
+            OpenStorage();
         }
     }
 }

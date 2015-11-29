@@ -1,7 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.IO;
+using System.Linq;
 using System.Windows.Forms;
 
 namespace CASCExplorer
@@ -70,7 +70,7 @@ namespace CASCExplorer
         {
             running = false;
             NumScanned = 0;
-            NumFiles = CASC.Root.CountTotal;
+            NumFiles = CASC.Root.CountSelect;
             scanButton.Enabled = true;
             scanButton.Text = "Start";
             scanProgressBar.Value = 0;
@@ -179,9 +179,9 @@ namespace CASCExplorer
 
             NumScanned++;
 
-            HashSet<string> fileNames = scanner.ScanFile(file);
+            var fileNames = scanner.ScanFile(file);
 
-            if (fileNames != null)
+            if (fileNames.Any())
             {
                 // only report progress when not skipping a file, it's faster that way
                 int progress = (int)(NumScanned / (float)NumFiles * 100);
