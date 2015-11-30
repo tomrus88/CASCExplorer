@@ -112,22 +112,26 @@ namespace CASCExplorer
 
                     //Console.WriteLine("File: {0:X8} {1:X16} {2}", entries[i].FileDataId, hash, entries[i].MD5.ToHexString());
 
-                    if (FileDataStore.ContainsKey(entries[i].FileDataId))
+                    ulong hash2;
+
+                    int fileDataId = entries[i].FileDataId;
+
+                    if (FileDataStore.TryGetValue(fileDataId, out hash2))
                     {
-                        if (FileDataStore[entries[i].FileDataId] == hash)
+                        if (hash2 == hash)
                         {
                             // duplicate, skipping
                             continue;
                         }
                         else
                         {
-                            Logger.WriteLine("ERROR: got miltiple hashes for filedataid {0}", entries[i].FileDataId);
+                            Logger.WriteLine("ERROR: got miltiple hashes for filedataid {0}", fileDataId);
                             continue;
                         }
                     }
 
-                    FileDataStore.Add(entries[i].FileDataId, hash);
-                    FileDataStoreReverse.Add(hash, entries[i].FileDataId);
+                    FileDataStore.Add(fileDataId, hash);
+                    FileDataStoreReverse.Add(hash, fileDataId);
                 }
 
                 worker?.ReportProgress((int)(stream.BaseStream.Position / (float)stream.BaseStream.Length * 100));
@@ -136,9 +140,7 @@ namespace CASCExplorer
 
         public IEnumerable<RootEntry> GetAllEntriesByFileDataId(int fileDataId)
         {
-            ulong hash;
-            FileDataStore.TryGetValue(fileDataId, out hash);
-            return GetAllEntries(hash);
+            return GetAllEntries(GetHashByFileDataId(fileDataId));
         }
 
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
@@ -155,9 +157,7 @@ namespace CASCExplorer
 
         public IEnumerable<RootEntry> GetEntriesByFileDataId(int fileDataId)
         {
-            ulong hash;
-            FileDataStore.TryGetValue(fileDataId, out hash);
-            return GetEntries(hash);
+            return GetEntries(GetHashByFileDataId(fileDataId));
         }
 
         // Returns only entries that match current locale and content flags
@@ -198,9 +198,7 @@ namespace CASCExplorer
 
         public int GetFileDataIdByName(string name)
         {
-            int fid;
-            FileDataStoreReverse.TryGetValue(Hasher.ComputeHash(name), out fid);
-            return fid;
+            return GetFileDataIdByHash(Hasher.ComputeHash(name));
         }
 
         private bool LoadPreHashedListFile(string pathbin, string pathtext, BackgroundWorkerEx worker = null)
@@ -405,15 +403,12 @@ namespace CASCExplorer
         {
             foreach (var fd in RootData.OrderBy(r => r.Value.First().FileDataId))
             {
-                //if ((fd.Value.First().Block.LocaleFlags & Locale) != 0)
-                //{
-                    string name;
+                string name;
 
-                    if (!CASCFile.FileNames.TryGetValue(fd.Key, out name))
-                        name = fd.Key.ToString("X16");
+                if (!CASCFile.FileNames.TryGetValue(fd.Key, out name))
+                    name = fd.Key.ToString("X16");
 
-                    Logger.WriteLine("{0:D7} {1:X16} {2} {3}", fd.Value.First().FileDataId, fd.Key, string.Join(",", fd.Value.Select(r => r.Block.LocaleFlags.ToString())), name);
-                //}
+                Logger.WriteLine("{0:D7} {1:X16} {2} {3}", fd.Value.First().FileDataId, fd.Key, string.Join(",", fd.Value.Select(r => r.Block.LocaleFlags.ToString())), name);
             }
         }
     }
