@@ -229,13 +229,14 @@ namespace CASCExplorer
 
         public override IEnumerable<RootEntry> GetEntries(ulong hash)
         {
-            RootEntry rootEntry;
-            mndxData.TryGetValue(hash, out rootEntry);
+            //RootEntry rootEntry;
+            //mndxData.TryGetValue(hash, out rootEntry);
 
-            if (rootEntry != null)
-                yield return rootEntry;
-            else
-                yield break;
+            //if (rootEntry != null)
+            //    yield return rootEntry;
+            //else
+            //    yield break;
+            return GetAllEntries(hash);
         }
 
         private int FindMNDXPackage(string fileName)

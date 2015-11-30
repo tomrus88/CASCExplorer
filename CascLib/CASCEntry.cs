@@ -15,7 +15,6 @@ namespace CASCExplorer
     public class CASCFolder : ICASCEntry
     {
         private string _name;
-        private ulong _hash;
 
         public Dictionary<string, ICASCEntry> Entries { get; set; }
         public Dictionary<string, ICASCEntry> EntriesMirror { get; private set; }
@@ -25,7 +24,6 @@ namespace CASCExplorer
             Entries = new Dictionary<string, ICASCEntry>(StringComparer.OrdinalIgnoreCase);
             EntriesMirror = new Dictionary<string, ICASCEntry>(StringComparer.OrdinalIgnoreCase);
             _name = name;
-            _hash = 0;
         }
 
         public string Name
@@ -35,7 +33,7 @@ namespace CASCExplorer
 
         public ulong Hash
         {
-            get { return _hash; }
+            get { return 0; }
         }
 
         public ICASCEntry GetEntry(string name)

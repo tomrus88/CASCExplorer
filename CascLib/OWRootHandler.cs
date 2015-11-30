@@ -78,6 +78,16 @@ namespace CASCExplorer
 
             int current = 0;
 
+            Func<string, LocaleFlags> tag2locale = (s) =>
+            {
+                LocaleFlags locale;
+
+                if (Enum.TryParse(s, out locale))
+                    return locale;
+
+                return LocaleFlags.All;
+            };
+
             foreach (var entry in casc.Encoding.Entries)
             {
                 DownloadEntry dl = casc.Download.GetEntry(entry.Value.Key);
@@ -86,7 +96,7 @@ namespace CASCExplorer
                 {
                     string fakeName = "unknown" + "/" + entry.Key[0].ToString("X2") + "/" + entry.Key.ToHexString();
 
-                    var locales = dl.Tags.Where(tag => tag.Value.Type == 4).Select(tag => (LocaleFlags)Enum.Parse(typeof(LocaleFlags), tag.Key));
+                    var locales = dl.Tags.Where(tag => tag.Value.Type == 4).Select(tag => tag2locale(tag.Key));
 
                     LocaleFlags locale = LocaleFlags.None;
 
@@ -94,7 +104,7 @@ namespace CASCExplorer
                         locale |= loc;
 
                     ulong fileHash = Hasher.ComputeHash(fakeName);
-                    RootData[fileHash] = new RootEntry() { MD5 = entry.Key, Block = new RootBlock() { LocaleFlags = locale } };
+                    RootData.Add(fileHash, new RootEntry() { MD5 = entry.Key, Block = new RootBlock() { LocaleFlags = locale } });
 
                     CASCFile.FileNames[fileHash] = fakeName;
                 }
@@ -116,12 +126,13 @@ namespace CASCExplorer
         // Returns only entries that match current locale and content flags
         public override IEnumerable<RootEntry> GetEntries(ulong hash)
         {
-            RootEntry entry;
+            //RootEntry entry;
 
-            if (RootData.TryGetValue(hash, out entry))
-                yield return entry;
-            else
-                yield break;
+            //if (RootData.TryGetValue(hash, out entry))
+            //    yield return entry;
+            //else
+            //    yield break;
+            return GetAllEntries(hash);
         }
 
         public override void LoadListFile(string path, BackgroundWorkerEx worker = null)

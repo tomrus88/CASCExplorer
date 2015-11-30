@@ -149,13 +149,14 @@ namespace CASCExplorer
 
         public override IEnumerable<RootEntry> GetEntries(ulong hash)
         {
-            HashSet<RootEntry> result;
-            RootData.TryGetValue(hash, out result);
+            var rootInfos = GetAllEntries(hash);
 
-            if (result == null)
+            if (!rootInfos.Any())
                 yield break;
 
-            foreach (var entry in result)
+            var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & Locale) != 0);
+
+            foreach (var entry in rootInfosLocale)
                 yield return entry;
         }
 
@@ -198,7 +199,7 @@ namespace CASCExplorer
 
             entry.Block = new RootBlock();
 
-            if (Enum.TryParse<LocaleFlags>(pkg, out locale))
+            if (Enum.TryParse(pkg, out locale))
                 entry.Block.LocaleFlags = locale;
             else
                 entry.Block.LocaleFlags = LocaleFlags.All;

@@ -165,7 +165,7 @@ namespace CASCExplorer
         {
             var rootInfos = GetAllEntries(hash);
 
-            if (rootInfos == null)
+            if (!rootInfos.Any())
                 yield break;
 
             var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & Locale) != 0);
