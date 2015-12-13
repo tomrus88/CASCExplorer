@@ -98,7 +98,7 @@ namespace CASCExplorer
 
                 if (_casc.Config.GameType == CASCGameType.WoW)
                 {
-                    if(_casc.FileExists("DBFilesClient\\SoundEntries.db2"))
+                    if (_casc.FileExists("DBFilesClient\\SoundEntries.db2"))
                     {
                         using (Stream stream = _casc.OpenFile("DBFilesClient\\SoundEntries.db2"))
                         {
@@ -548,7 +548,7 @@ namespace CASCExplorer
         {
             using (StreamWriter sw = new StreamWriter("listfile_export.txt"))
             {
-                foreach (var file in Root.GetFiles(null, true))
+                foreach (var file in Root.GetFiles(null, true).OrderBy(f => f.FullName, StringComparer.OrdinalIgnoreCase))
                     sw.WriteLine(file.FullName);
             }
         }

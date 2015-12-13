@@ -48,10 +48,10 @@ namespace CASCExplorer
             var casc = CASCHandler.OpenStorage(config, backgroundWorker1);
 
             casc.Root.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), backgroundWorker1);
-            var lfdr = casc.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
+            var fldr = casc.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
             casc.Root.MergeInstall(casc.Install);
 
-            e.Result = new object[] { casc, lfdr };
+            e.Result = new object[] { casc, fldr };
         }
 
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
