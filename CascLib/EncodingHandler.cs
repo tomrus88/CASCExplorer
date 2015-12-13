@@ -1,7 +1,5 @@
-﻿using System;
-using System.Collections.Generic;
+﻿using System.Collections.Generic;
 using System.IO;
-using System.Text;
 
 namespace CASCExplorer
 {
@@ -38,13 +36,15 @@ namespace CASCExplorer
             byte b4 = stream.ReadByte();
             int stringBlockSize = stream.ReadInt32BE();
 
-            string[] strings = Encoding.ASCII.GetString(stream.ReadBytes(stringBlockSize)).Split(new[] { '\0' }, StringSplitOptions.RemoveEmptyEntries);
+            stream.Skip(stringBlockSize);
+            //string[] strings = Encoding.ASCII.GetString(stream.ReadBytes(stringBlockSize)).Split(new[] { '\0' }, StringSplitOptions.RemoveEmptyEntries);
 
-            for (int i = 0; i < numEntriesA; ++i)
-            {
-                byte[] firstHash = stream.ReadBytes(16);
-                byte[] blockHash = stream.ReadBytes(16);
-            }
+            stream.Skip(numEntriesA * 32);
+            //for (int i = 0; i < numEntriesA; ++i)
+            //{
+            //    byte[] firstHash = stream.ReadBytes(16);
+            //    byte[] blockHash = stream.ReadBytes(16);
+            //}
 
             long chunkStart = stream.BaseStream.Position;
 
@@ -82,14 +82,15 @@ namespace CASCExplorer
                 if (remaining > 0)
                     stream.BaseStream.Position += remaining;
 
-                worker?.ReportProgress((int)(i / (float)numEntriesA * 100));
+                worker?.ReportProgress((int)((i + 1) / (float)numEntriesA * 100));
             }
 
-            for (int i = 0; i < numEntriesB; ++i)
-            {
-                byte[] firstKey = stream.ReadBytes(16);
-                byte[] blockHash = stream.ReadBytes(16);
-            }
+            stream.Skip(numEntriesB * 32);
+            //for (int i = 0; i < numEntriesB; ++i)
+            //{
+            //    byte[] firstKey = stream.ReadBytes(16);
+            //    byte[] blockHash = stream.ReadBytes(16);
+            //}
 
             long chunkStart2 = stream.BaseStream.Position;
 

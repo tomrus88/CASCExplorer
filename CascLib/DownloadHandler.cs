@@ -44,7 +44,7 @@ namespace CASCExplorer
 
             short numTags = stream.ReadInt16BE();
 
-            int numMaskBytes = numFiles / 8 + (numFiles % 8 > 0 ? 1 : 0);
+            int numMaskBytes = (numFiles + 7) / 8;
 
             for (int i = 0; i < numFiles; i++)
             {
@@ -56,7 +56,8 @@ namespace CASCExplorer
 
                 DownloadData.Add(key, entry);
 
-                worker?.ReportProgress((int)(i / (float)numFiles * 100));
+                if (i % 10 == 0)
+                    worker?.ReportProgress((int)((i + 1) / (float)numFiles * 100));
             }
 
             for (int i = 0; i < numTags; i++)

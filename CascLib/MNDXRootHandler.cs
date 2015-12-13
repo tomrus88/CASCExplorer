@@ -165,7 +165,7 @@ namespace CASCExplorer
                 //        p[entry.Flags & 0x00FFFFFF]++;
                 //}
 
-                worker?.ReportProgress((int)(i / (float)MndxEntriesTotal * 100));
+                worker?.ReportProgress((int)((i + 1) / (float)MndxEntriesTotal * 100));
             }
 
             //for (int i = 0; i < MndxEntriesTotal; ++i)

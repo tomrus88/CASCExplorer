@@ -48,10 +48,10 @@ namespace CASCExplorer
             var casc = CASCHandler.OpenStorage(config, backgroundWorker1);
 
             casc.Root.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), backgroundWorker1);
-            casc.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
+            var lfdr = casc.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
             casc.Root.MergeInstall(casc.Install);
 
-            e.Result = casc;
+            e.Result = new object[] { casc, lfdr };
         }
 
         private void backgroundWorker1_ProgressChanged(object sender, ProgressChangedEventArgs e)
@@ -89,8 +89,9 @@ namespace CASCExplorer
                 return;
             }
 
-            CASC = (CASCHandler)e.Result;
-            Root = CASC.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
+            var result = (object[])e.Result;
+            CASC = (CASCHandler)result[0];
+            Root = (CASCFolder)result[1];
 
             DialogResult = DialogResult.OK;
         }

@@ -42,7 +42,7 @@ namespace CASCExplorer
             short numTags = stream.ReadInt16BE();
             int numFiles = stream.ReadInt32BE();
 
-            int numMaskBytes = numFiles / 8 + (numFiles % 8 > 0 ? 1 : 0);
+            int numMaskBytes = (numFiles + 7) / 8;
 
             List<InstallTag> Tags = new List<InstallTag>();
 
