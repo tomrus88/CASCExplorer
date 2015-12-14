@@ -56,8 +56,7 @@ namespace CASCExplorer
 
                 DownloadData.Add(key, entry);
 
-                if (i % 10 == 0)
-                    worker?.ReportProgress((int)((i + 1) / (float)numFiles * 100));
+                worker?.ReportProgress((int)((i + 1) / (float)numFiles * 100));
             }
 
             for (int i = 0; i < numTags; i++)
