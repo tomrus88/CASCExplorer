@@ -25,9 +25,8 @@ namespace CASCExplorer
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            CASCConfig config = _onlineMode
-                ? CASCConfig.LoadOnlineStorageConfig((string)e.Argument, "us")
-                : CASCConfig.LoadLocalStorageConfig((string)e.Argument);
+            string arg = (string)e.Argument;
+            CASCConfig config = _onlineMode ? CASCConfig.LoadOnlineStorageConfig(arg, "us") : CASCConfig.LoadLocalStorageConfig(arg);
 
             if (_onlineMode)
             {

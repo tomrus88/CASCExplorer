@@ -28,9 +28,12 @@ namespace CASCConsole
 
             BackgroundWorkerEx bgLoader = new BackgroundWorkerEx();
             bgLoader.ProgressChanged += BgLoader_ProgressChanged;
-            CASCHandler cascHandler = Settings.Default.OnlineMode
-                ? CASCHandler.OpenOnlineStorage(Settings.Default.Product, bgLoader)
-                : CASCHandler.OpenLocalStorage(Settings.Default.StoragePath, bgLoader);
+
+            CASCConfig config = Settings.Default.OnlineMode
+                ? CASCConfig.LoadOnlineStorageConfig(Settings.Default.Product, "us")
+                : CASCConfig.LoadLocalStorageConfig(Settings.Default.StoragePath);
+
+            CASCHandler cascHandler = CASCHandler.OpenStorage(config, bgLoader);
 
             string pattern = args[0];
             string dest = args[1];

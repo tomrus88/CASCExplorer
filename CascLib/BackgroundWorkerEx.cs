@@ -200,6 +200,8 @@ namespace CASCExplorer
 
     public class BackgroundWorkerEx : BackgroundWorker
     {
+        private int lastProgressPercentage;
+
         public BackgroundWorkerEx()
         {
             WorkerReportsProgress = true;
@@ -223,8 +225,10 @@ namespace CASCExplorer
             if (CancellationPending)
                 throw new OperationCanceledException();
 
-            if (IsBusy)
+            if (IsBusy && percentProgress > lastProgressPercentage)
                 base.ReportProgress(percentProgress);
+
+            lastProgressPercentage = percentProgress;
         }
 
         public new void ReportProgress(int percentProgress, object userState)
@@ -234,6 +238,8 @@ namespace CASCExplorer
 
             if (IsBusy)
                 base.ReportProgress(percentProgress, userState);
+
+            lastProgressPercentage = percentProgress;
         }
     }
 }

@@ -336,9 +336,9 @@ namespace CASCExplorer
             return Open(worker, config);
         }
 
-        public static CASCHandler OpenOnlineStorage(string product, BackgroundWorkerEx worker = null)
+        public static CASCHandler OpenOnlineStorage(string product, string region = "us", BackgroundWorkerEx worker = null)
         {
-            CASCConfig config = CASCConfig.LoadOnlineStorageConfig(product, "us");
+            CASCConfig config = CASCConfig.LoadOnlineStorageConfig(product, region);
 
             return Open(worker, config);
         }

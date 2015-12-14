@@ -126,7 +126,7 @@ namespace CASCExplorer
         public static bool ThrowOnFileNotFound { get; set; } = true;
         public static LoadFlags LoadFlags { get; set; } = LoadFlags.All;
 
-        public static CASCConfig LoadOnlineStorageConfig(string product, string region)
+        public static CASCConfig LoadOnlineStorageConfig(string product, string region, bool useCurrentBuild = false)
         {
             var config = new CASCConfig { OnlineMode = true };
 
@@ -143,20 +143,20 @@ namespace CASCExplorer
                 config._VersionsData = VerBarConfig.ReadVerBarConfig(versionsStream);
             }
 
-            int index = 0;
+            int versionIndex = 0;
 
             for (int i = 0; i < config._VersionsData.Count; ++i)
             {
                 if (config._VersionsData[i]["Region"] == region)
                 {
-                    index = i;
+                    versionIndex = i;
                     break;
                 }
             }
 
             config.GameType = CASCGame.DetectOnlineGame(product);
 
-            string cdnKey = config._VersionsData[index]["CDNConfig"];
+            string cdnKey = config._VersionsData[versionIndex]["CDNConfig"];
             using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, cdnKey))
             {
                 config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
@@ -180,6 +180,16 @@ namespace CASCExplorer
                 {
 
                 }
+            }
+
+            if (useCurrentBuild)
+            {
+                string buildKey = config._VersionsData[versionIndex]["BuildConfig"];
+
+                int buildIndex = config._CDNConfig["builds"].IndexOf(buildKey);
+
+                if (buildIndex != -1)
+                    config.ActiveBuild = buildIndex;
             }
 
             return config;
