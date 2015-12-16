@@ -65,8 +65,9 @@ namespace CASCExplorer
 
     class DB3Reader : IEnumerable<KeyValuePair<int, DB3Row>>
     {
-        private const int HeaderSize = 48;
+        private readonly int HeaderSize;
         private const uint DB3FmtSig = 0x33424457;          // WDB3
+        private const uint DB4FmtSig = 0x34424457;          // WDB4
 
         public int RecordsCount { get; private set; }
         public int FieldsCount { get; private set; }
@@ -90,10 +91,17 @@ namespace CASCExplorer
                     throw new InvalidDataException(string.Format("DB3 file is corrupted!"));
                 }
 
-                if (reader.ReadUInt32() != DB3FmtSig)
+                uint magic = reader.ReadUInt32();
+
+                if (magic != DB3FmtSig && magic != DB4FmtSig)
                 {
                     throw new InvalidDataException(string.Format("DB3 file is corrupted!"));
                 }
+
+                if (magic == DB3FmtSig)
+                    HeaderSize = 48;
+                else
+                    HeaderSize = 52;
 
                 RecordsCount = reader.ReadInt32();
                 FieldsCount = reader.ReadInt32();
@@ -108,6 +116,11 @@ namespace CASCExplorer
                 int MaxId = reader.ReadInt32();
                 int locale = reader.ReadInt32();
                 int CopyTableSize = reader.ReadInt32();
+
+                if (magic == DB4FmtSig)
+                {
+                    int metaFlags = reader.ReadInt32();
+                }
 
                 int stringTableStart = HeaderSize + RecordsCount * RecordSize;
                 int stringTableEnd = stringTableStart + StringTableSize;
