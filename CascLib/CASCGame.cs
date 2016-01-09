@@ -11,7 +11,8 @@ namespace CASCExplorer
         S2,
         Agent,
         Hearthstone,
-        Overwatch
+        Overwatch,
+        Bna
     }
 
     public class CASCGame
@@ -44,6 +45,9 @@ namespace CASCExplorer
                 if (File.Exists(Path.Combine(path, "Agent.exe")))
                     return CASCGameType.Agent;
 
+                if (File.Exists(Path.Combine(path, "Battle.net.exe")))
+                    return CASCGameType.Bna;
+
                 if (File.Exists(Path.Combine(path, "Overwatch Launcher.exe")))
                     return CASCGameType.Overwatch;
             }
@@ -73,6 +77,9 @@ namespace CASCExplorer
 
             if (uid.StartsWith("pro"))
                 return CASCGameType.Overwatch;
+
+            if (uid.StartsWith("bna"))
+                return CASCGameType.Bna;
 
             return CASCGameType.Unknown;
         }

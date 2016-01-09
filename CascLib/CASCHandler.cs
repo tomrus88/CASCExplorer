@@ -95,7 +95,7 @@ namespace CASCExplorer
                         RootHandler = new D3RootHandler(fs, worker, this);
                     else if (config.GameType == CASCGameType.WoW)
                         RootHandler = new WowRootHandler(fs, worker);
-                    else if (config.GameType == CASCGameType.Agent)
+                    else if (config.GameType == CASCGameType.Agent || config.GameType == CASCGameType.Bna)
                         RootHandler = new AgentRootHandler(fs, worker);
                     else if (config.GameType == CASCGameType.Hearthstone)
                         RootHandler = new HSRootHandler(fs, worker);
