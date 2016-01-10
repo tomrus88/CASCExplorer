@@ -148,7 +148,13 @@ namespace CASCExplorer
         private void listView1_ColumnClick(object sender, ColumnClickEventArgs e)
         {
             viewHelper.SetSort(e.Column);
-            viewHelper.UpdateListView(fileList.Tag as CASCFolder, fileList, filterToolStripTextBox.Text);
+
+            CASCFolder folder = fileList.Tag as CASCFolder;
+
+            if (folder == null)
+                return;
+
+            viewHelper.UpdateListView(folder, fileList, filterToolStripTextBox.Text);
         }
 
         private void listView1_RetrieveVirtualItem(object sender, RetrieveVirtualItemEventArgs e)
@@ -164,6 +170,13 @@ namespace CASCExplorer
 
         private void listView1_KeyDown(object sender, KeyEventArgs e)
         {
+            if (e.KeyData == (Keys.A | Keys.Control))
+            {
+                for (int i = 0; i < fileList.VirtualListSize; i++)
+                    fileList.Items[i].Selected = true;
+                return;
+            }
+
             if (e.KeyCode == Keys.Enter)
                 NavigateFolder();
             else if (e.KeyCode == Keys.Back)
