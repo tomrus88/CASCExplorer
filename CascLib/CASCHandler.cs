@@ -315,7 +315,7 @@ namespace CASCExplorer
 
             string dataFolder = CASCGame.GetDataFolder(Config.GameType);
 
-            string dataFile = Path.Combine(Config.BasePath, String.Format("{0}\\data\\data.{1:D3}", dataFolder, index));
+            string dataFile = Path.Combine(Config.BasePath, dataFolder, "data", string.Format("data.{0:D3}", index));
 
             stream = new FileStream(dataFile, FileMode.Open, FileAccess.Read, FileShare.ReadWrite);
 

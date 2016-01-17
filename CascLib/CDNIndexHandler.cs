@@ -109,9 +109,8 @@ namespace CASCExplorer
             try
             {
                 string dataFolder = CASCGame.GetDataFolder(CASCConfig.GameType);
-                string indexPath = string.Format("{0}\\indices\\", dataFolder);
 
-                string path = Path.Combine(CASCConfig.BasePath, indexPath, archive + ".index");
+                string path = Path.Combine(CASCConfig.BasePath, dataFolder, "indices", archive + ".index");
 
                 using (FileStream fs = new FileStream(path, FileMode.Open, FileAccess.Read, FileShare.ReadWrite))
                     ParseIndex(fs, i);

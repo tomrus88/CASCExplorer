@@ -65,7 +65,7 @@ namespace CASCExplorer
             if (isData && !CacheData)
                 return null;
 
-            string file = cachePath + "/" + name;
+            string file = Path.Combine(cachePath, name);
 
             Logger.WriteLine("CDNCache: Opening file {0}", file);
 
@@ -98,7 +98,7 @@ namespace CASCExplorer
 
         public bool HasFile(string name)
         {
-            return File.Exists(cachePath + "/" + name);
+            return File.Exists(Path.Combine(cachePath, name));
         }
     }
 }
