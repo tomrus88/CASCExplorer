@@ -194,17 +194,10 @@ namespace CASCExplorer
             }
             else
             {
-                try
+                using (Stream s = CDNIndex.OpenDataFileDirect(key))
+                using (BLTEHandler blte = new BLTEHandler(s, key))
                 {
-                    using (Stream s = CDNIndex.OpenDataFileDirect(key))
-                    using (BLTEHandler blte = new BLTEHandler(s, key))
-                    {
-                        return blte.OpenFile(true);
-                    }
-                }
-                catch
-                {
-                    throw new Exception("CDN index missing");
+                    return blte.OpenFile(true);
                 }
             }
         }
@@ -281,17 +274,10 @@ namespace CASCExplorer
             }
             else
             {
-                try
+                using (Stream s = CDNIndex.OpenDataFileDirect(key))
+                using (BLTEHandler blte = new BLTEHandler(s, key))
                 {
-                    using (Stream s = CDNIndex.OpenDataFileDirect(key))
-                    using (BLTEHandler blte = new BLTEHandler(s, key))
-                    {
-                        blte.ExtractToFile(path, name);
-                    }
-                }
-                catch
-                {
-                    throw new Exception("CDN index missing");
+                    blte.ExtractToFile(path, name);
                 }
             }
         }
