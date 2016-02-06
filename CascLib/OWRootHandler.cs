@@ -113,6 +113,12 @@ namespace CASCExplorer
             }
         }
 
+        public override IEnumerable<KeyValuePair<ulong, RootEntry>> GetAllEntries()
+        {
+            foreach (var entry in RootData)
+                yield return entry;
+        }
+
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
             RootEntry entry;

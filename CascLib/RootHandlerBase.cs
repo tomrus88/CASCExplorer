@@ -14,6 +14,8 @@ namespace CASCExplorer
         public virtual LocaleFlags Locale { get; protected set; }
         public virtual ContentFlags Content { get; protected set; }
 
+        public abstract IEnumerable<KeyValuePair<ulong, RootEntry>> GetAllEntries();
+
         public abstract IEnumerable<RootEntry> GetAllEntries(ulong hash);
 
         public abstract IEnumerable<RootEntry> GetEntries(ulong hash);

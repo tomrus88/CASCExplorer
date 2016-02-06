@@ -53,7 +53,7 @@ namespace CASCExplorer
 
             try
             {
-                fileStream = CASC.OpenFile(file.Hash, file.FullName);
+                fileStream = CASC.OpenFile(file.Hash);
             }
             catch
             {
@@ -149,7 +149,7 @@ namespace CASCExplorer
         {
             try
             {
-                using (Stream stream = CASC.OpenFile(file.Hash, file.FullName))
+                using (Stream stream = CASC.OpenFile(file.Hash))
                 {
                     byte[] magic = new byte[4];
 

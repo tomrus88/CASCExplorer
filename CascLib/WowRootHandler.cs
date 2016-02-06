@@ -143,6 +143,13 @@ namespace CASCExplorer
             return GetAllEntries(GetHashByFileDataId(fileDataId));
         }
 
+        public override IEnumerable<KeyValuePair<ulong, RootEntry>> GetAllEntries()
+        {
+            foreach (var set in RootData)
+                foreach (var entry in set.Value)
+                    yield return new KeyValuePair<ulong, RootEntry>(set.Key, entry);
+        }
+
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
             HashSet<RootEntry> result;
@@ -395,7 +402,8 @@ namespace CASCExplorer
             FileDataStore.Clear();
             FileDataStoreReverse.Clear();
             UnknownFiles.Clear();
-            Root.Entries.Clear();
+            if (Root != null)
+                Root.Entries.Clear();
             CASCFile.FileNames.Clear();
         }
 

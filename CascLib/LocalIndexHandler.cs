@@ -5,7 +5,7 @@ using System.Linq;
 
 namespace CASCExplorer
 {
-    class LocalIndexHandler
+    public class LocalIndexHandler
     {
         private static readonly ByteArrayComparer comparer = new ByteArrayComparer();
         private readonly Dictionary<byte[], IndexEntry> LocalIndexData = new Dictionary<byte[], IndexEntry>(comparer);

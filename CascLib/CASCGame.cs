@@ -12,7 +12,8 @@ namespace CASCExplorer
         Agent,
         Hearthstone,
         Overwatch,
-        Bna
+        Bna,
+        Client
     }
 
     public class CASCGame
@@ -80,6 +81,9 @@ namespace CASCExplorer
 
             if (uid.StartsWith("bna"))
                 return CASCGameType.Bna;
+
+            if (uid.StartsWith("clnt"))
+                return CASCGameType.Client;
 
             return CASCGameType.Unknown;
         }

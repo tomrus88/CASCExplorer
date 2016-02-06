@@ -14,6 +14,11 @@ namespace CASCExplorer
             worker?.ReportProgress(100);
         }
 
+        public override IEnumerable<KeyValuePair<ulong, RootEntry>> GetAllEntries()
+        {
+            yield break;
+        }
+
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
             yield break;

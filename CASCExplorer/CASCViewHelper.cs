@@ -392,7 +392,7 @@ namespace CASCExplorer
 
         private void PreviewText(CASCFile file)
         {
-            using (var stream = _casc.OpenFile(file.Hash, file.FullName))
+            using (var stream = _casc.OpenFile(file.Hash))
             {
                 var text = new StreamReader(stream).ReadToEnd();
                 var form = new Form { FormBorderStyle = FormBorderStyle.SizableToolWindow, StartPosition = FormStartPosition.CenterParent };
@@ -410,7 +410,7 @@ namespace CASCExplorer
 
         private void PreviewBlp(CASCFile file)
         {
-            using (var stream = _casc.OpenFile(file.Hash, file.FullName))
+            using (var stream = _casc.OpenFile(file.Hash))
             {
                 var blp = new BlpFile(stream);
                 var bitmap = blp.GetBitmap(0);

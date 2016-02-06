@@ -45,6 +45,8 @@
     <Compile Include="BackgroundWorkerEx.cs">
       <SubType>Component</SubType>
     </Compile>
+    <Compile Include="CASCHandlerBase.cs" />
+    <Compile Include="CASCHandlerLite.cs" />
     <Compile Include="DownloadHandler.cs" />
     <Compile Include="KeyService.cs" />
     <Compile Include="OWRootHandler.cs" />
