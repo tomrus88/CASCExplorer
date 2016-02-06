@@ -234,7 +234,7 @@ namespace CASCExplorer
                     {
                         string dirName = br.ReadString();
 
-                        Logger.WriteLine(dirName);
+                        //Logger.WriteLine(dirName);
 
                         int numFiles = br.ReadInt32();
 
@@ -326,7 +326,7 @@ namespace CASCExplorer
                     {
                         bw.Write(dir.Key); // dir name
 
-                        Logger.WriteLine(dir.Key);
+                        //Logger.WriteLine(dir.Key);
 
                         bw.Write(dirData[dir.Key].Count); // count of files in dir
 
