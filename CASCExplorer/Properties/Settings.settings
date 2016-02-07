@@ -2,11 +2,15 @@
 <SettingsFile xmlns="http://schemas.microsoft.com/VisualStudio/2004/01/settings" CurrentProfile="(Default)" GeneratedClassNamespace="CASCExplorer.Properties" GeneratedClassName="Settings">
   <Profiles />
   <Settings>
-    <Setting Name="WowPath" Type="System.String" Scope="User">
-      <Value Profile="(Default)">c:\Games\World of Warcraft Beta\</Value>
+    <Setting Name="LocaleFlags" Type="CASCExplorer.LocaleFlags" Scope="User">
+      <Value Profile="(Default)">enUS</Value>
     </Setting>
-    <Setting Name="OnlineMode" Type="System.Boolean" Scope="User">
-      <Value Profile="(Default)">False</Value>
+    <Setting Name="ContentFlags" Type="CASCExplorer.ContentFlags" Scope="User">
+      <Value Profile="(Default)">None</Value>
+    </Setting>
+    <Setting Name="RecentStorages" Type="System.Collections.Specialized.StringCollection" Scope="User">
+      <Value Profile="(Default)">&lt;?xml version="1.0" encoding="utf-16"?&gt;
+&lt;ArrayOfString xmlns:xsi="http://www.w3.org/2001/XMLSchema-instance" xmlns:xsd="http://www.w3.org/2001/XMLSchema" /&gt;</Value>
     </Setting>
   </Settings>
 </SettingsFile>

@@ -1,13 +1,16 @@
-﻿using System.IO;
+﻿using System;
+using System.IO;
 
 namespace CASCExplorer
 {
     public class Logger
     {
-        static StreamWriter logger = new StreamWriter("debug.log") { AutoFlush = true };
+        static FileStream fs = new FileStream("debug.log", FileMode.Create, FileAccess.Write, FileShare.ReadWrite);
+        static StreamWriter logger = new StreamWriter(fs) { AutoFlush = true };
 
         public static void WriteLine(string format, params object[] args)
         {
+            logger.Write("[{0}]: ", DateTime.Now);
             logger.WriteLine(format, args);
         }
     }

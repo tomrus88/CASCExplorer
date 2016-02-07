@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CascLib</RootNamespace>
     <AssemblyName>CascLib</AssemblyName>
-    <TargetFrameworkVersion>v4.0</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -30,6 +30,7 @@
     <DefineConstants>TRACE</DefineConstants>
     <ErrorReport>prompt</ErrorReport>
     <WarningLevel>4</WarningLevel>
+    <AllowUnsafeBlocks>true</AllowUnsafeBlocks>
   </PropertyGroup>
   <ItemGroup>
     <Reference Include="System" />
@@ -41,15 +42,41 @@
     <Reference Include="System.Xml" />
   </ItemGroup>
   <ItemGroup>
+    <Compile Include="BackgroundWorkerEx.cs">
+      <SubType>Component</SubType>
+    </Compile>
+    <Compile Include="CASCHandlerBase.cs" />
+    <Compile Include="CASCHandlerLite.cs" />
+    <Compile Include="DownloadHandler.cs" />
+    <Compile Include="KeyService.cs" />
+    <Compile Include="OWRootHandler.cs" />
+    <Compile Include="HSRootHandler.cs" />
     <Compile Include="BLTEHandler.cs" />
     <Compile Include="ByteArrayComparer.cs" />
     <Compile Include="CASCConfig.cs" />
+    <Compile Include="CASCEntry.cs" />
+    <Compile Include="CASCGame.cs" />
     <Compile Include="CASCHandler.cs" />
-    <Compile Include="CDNHandler.cs" />
+    <Compile Include="CDNCache.cs" />
+    <Compile Include="CDNIndexHandler.cs" />
+    <Compile Include="D3RootHandler.cs" />
+    <Compile Include="EncodingHandler.cs" />
     <Compile Include="Extensions.cs" />
+    <Compile Include="InstallHandler.cs" />
+    <Compile Include="RootHandlerBase.cs" />
     <Compile Include="Jenkins96.cs" />
+    <Compile Include="Jenkins96Old.cs" />
+    <Compile Include="LocalIndexHandler.cs" />
     <Compile Include="Logger.cs" />
+    <Compile Include="MNDXRootHandler.cs" />
+    <Compile Include="MultiDictionary.cs" />
+    <Compile Include="PerfCounter.cs" />
     <Compile Include="Properties\AssemblyInfo.cs" />
+    <Compile Include="Salsa20.cs" />
+    <Compile Include="SyncDownloader.cs" />
+    <Compile Include="AgentRootHandler.cs" />
+    <Compile Include="Wildcard.cs" />
+    <Compile Include="WowRootHandler.cs" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 

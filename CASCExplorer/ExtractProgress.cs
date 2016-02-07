@@ -1,7 +1,6 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.ComponentModel;
-using System.Linq;
 using System.Windows.Forms;
 
 namespace CASCExplorer
@@ -9,38 +8,21 @@ namespace CASCExplorer
     public partial class ExtractProgress : Form
     {
         private string ExtractPath;
-        private int NumFiles;
         private int NumExtracted;
-        private CASCHandler cascHandler;
-        private LocaleFlags locale;
-        private IEnumerable<CASCFile> files;
+        private ICollection<CASCFile> files;
+        private CASCHandler CASC;
 
         public ExtractProgress()
         {
             InitializeComponent();
-
-            comboBox1.Items.AddRange(Enum.GetNames(typeof(LocaleFlags)));
-
-            comboBox1.SelectedIndex = comboBox1.Items.Count - 1;
         }
 
-        public void SetExtractData(CASCHandler cascHandler, ICollection<CASCFile> files)
+        public void SetExtractData(CASCHandler handler, ICollection<CASCFile> files)
         {
-            this.cascHandler = cascHandler;
             NumExtracted = 0;
-            NumFiles = files.Count;
             progressBar1.Value = 0;
+            CASC = handler;
             this.files = files;
-        }
-
-        private void ExtractFile(CASCFile file)
-        {
-            if (backgroundWorker1.CancellationPending)
-                throw new OperationCanceledException();
-
-            backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)NumFiles * 100));
-
-            cascHandler.SaveFileTo(file.FullName, ExtractPath, locale);
         }
 
         private void button1_Click(object sender, EventArgs e)
@@ -50,8 +32,14 @@ namespace CASCExplorer
             if (result != DialogResult.OK)
                 return;
 
-            ExtractPath = folderBrowserDialog1.SelectedPath;
+            var path = folderBrowserDialog1.SelectedPath;
+
+            if (path == null)
+                return;
+
+            ExtractPath = path;
             textBox1.Text = ExtractPath;
+            button2.Enabled = true;
         }
 
         private void button3_Click(object sender, EventArgs e)
@@ -68,22 +56,29 @@ namespace CASCExplorer
         private void button2_Click(object sender, EventArgs e)
         {
             button2.Enabled = false;
-            comboBox1.Enabled = false;
             backgroundWorker1.RunWorkerAsync();
         }
 
         private void backgroundWorker1_DoWork(object sender, DoWorkEventArgs e)
         {
-            try
+            foreach (var file in files)
             {
-                foreach (var file in files)
+                if (backgroundWorker1.CancellationPending)
                 {
-                    ExtractFile(file);
+                    e.Cancel = true;
+                    break;
                 }
-            }
-            catch (OperationCanceledException)
-            {
-                e.Cancel = true;
+
+                try
+                {
+                    backgroundWorker1.ReportProgress((int)((float)++NumExtracted / (float)files.Count * 100));
+
+                    CASC.SaveFileTo(file.Hash, ExtractPath, file.FullName);
+                }
+                catch (Exception exc)
+                {
+                    Logger.WriteLine("Unable to extract file {0}: {1}", file.FullName, exc.Message);
+                }
             }
         }
 
@@ -95,7 +90,6 @@ namespace CASCExplorer
         private void backgroundWorker1_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             button2.Enabled = true;
-            comboBox1.Enabled = true;
 
             if (e.Cancelled)
             {
@@ -106,11 +100,6 @@ namespace CASCExplorer
             }
 
             Hide();
-        }
-
-        private void comboBox1_SelectedIndexChanged(object sender, EventArgs e)
-        {
-            locale = (LocaleFlags)Enum.Parse(typeof(LocaleFlags), comboBox1.SelectedItem as string);
         }
     }
 }
