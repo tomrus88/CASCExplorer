@@ -86,7 +86,7 @@ namespace CASCExplorer
 
         private Stream OpenFileLocal(byte[] key)
         {
-            Stream stream = GetLocalIndexData(key);
+            Stream stream = GetLocalDataStream(key);
 
             using (BLTEHandler blte = new BLTEHandler(stream, key))
             {
@@ -94,7 +94,7 @@ namespace CASCExplorer
             }
         }
 
-        private Stream GetLocalIndexData(byte[] key)
+        private Stream GetLocalDataStream(byte[] key)
         {
             IndexEntry idxInfo = LocalIndex.GetIndexInfo(key);
 
@@ -166,7 +166,7 @@ namespace CASCExplorer
 
         private void ExtractFileLocal(byte[] key, string path, string name)
         {
-            Stream stream = GetLocalIndexData(key);
+            Stream stream = GetLocalDataStream(key);
 
             using (BLTEHandler blte = new BLTEHandler(stream, key))
             {
