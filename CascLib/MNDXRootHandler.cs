@@ -8,14 +8,14 @@ using System.Text.RegularExpressions;
 
 namespace CASCExplorer
 {
-    struct MNDXHeader
+    public struct MNDXHeader
     {
         public int Signature;                            // 'MNDX'
         public int HeaderVersion;                        // Must be <= 2
         public int FormatVersion;
     }
 
-    struct MARInfo
+    public struct MARInfo
     {
         public int MarIndex;
         public int MarDataSize;
@@ -31,7 +31,7 @@ namespace CASCExplorer
         public int Value3;
     }
 
-    struct NAME_FRAG
+    public struct NAME_FRAG
     {
         public int ItemIndex;   // Back index to various tables
         public int NextIndex;   // The following item index
@@ -65,13 +65,6 @@ namespace CASCExplorer
             field_C = -1;
             field_10 = -1;
         }
-    }
-
-    class MNDXRootEntry
-    {
-        public CASC_ROOT_ENTRY_MNDX Data;
-        public int Package;
-        public string Name;
     }
 
     class MNDXRootHandler : RootHandlerBase
@@ -385,10 +378,6 @@ namespace CASCExplorer
 
                 ulong fileHash = Hasher.ComputeHash(file);
 
-                //MNDXRootEntry entry = new MNDXRootEntry();
-                //entry.Package = FindMNDXPackage(file);
-                //entry.Data = FindMNDXInfo(file, entry.Package);
-                //entry.Name = file;
                 CASCFile.FileNames[fileHash] = file;
 
                 RootEntry entry = new RootEntry();

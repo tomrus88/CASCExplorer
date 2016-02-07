@@ -347,7 +347,7 @@ namespace CASCExplorer
     {
         private const int NUM_SNO_GROUPS = 70;
 
-        struct TOCHeader
+        public struct TOCHeader
         {
             [MarshalAs(UnmanagedType.ByValArray, SizeConst = NUM_SNO_GROUPS)]
             public int[] entryCounts;
