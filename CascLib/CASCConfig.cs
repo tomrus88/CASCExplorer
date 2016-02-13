@@ -232,14 +232,14 @@ namespace CASCExplorer
             config._Builds = new List<KeyValueConfig>();
 
             string buildKey = bi["BuildKey"];
-            string buildCfgPath = Path.Combine(basePath, string.Format("{0}\\config\\", dataFolder), buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
+            string buildCfgPath = Path.Combine(basePath, dataFolder, "config", buildKey.Substring(0, 2), buildKey.Substring(2, 2), buildKey);
             using (Stream stream = new FileStream(buildCfgPath, FileMode.Open))
             {
                 config._Builds.Add(KeyValueConfig.ReadKeyValueConfig(stream));
             }
 
             string cdnKey = bi["CDNKey"];
-            string cdnCfgPath = Path.Combine(basePath, string.Format("{0}\\config\\", dataFolder), cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
+            string cdnCfgPath = Path.Combine(basePath, dataFolder, "config", cdnKey.Substring(0, 2), cdnKey.Substring(2, 2), cdnKey);
             using (Stream stream = new FileStream(cdnCfgPath, FileMode.Open))
             {
                 config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
