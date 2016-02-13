@@ -24,53 +24,52 @@ namespace CASCExplorer
             {
                 string[] filedata = array[i].Split('|');
 
-                if (Path.GetExtension(filedata[2]) == ".apm")
+                string name = filedata[4];
+
+                if (Path.GetExtension(name) == ".apm")
                 {
                     // add apm file for dev purposes
-                    ulong fileHash1 = Hasher.ComputeHash(filedata[2]);
-                    RootData[fileHash1] = new RootEntry() { MD5 = filedata[0].ToByteArray(), Block = RootBlock.Empty };
+                    ulong fileHash1 = Hasher.ComputeHash(name);
+                    byte[] md5 = filedata[0].ToByteArray();
+                    RootData[fileHash1] = new RootEntry() { MD5 = md5, Block = RootBlock.Empty };
 
-                    CASCFile.FileNames[fileHash1] = filedata[2];
+                    CASCFile.FileNames[fileHash1] = name;
 
                     // add files listed in apm file
-                    byte[] md5 = filedata[0].ToByteArray();
-
                     EncodingEntry enc = casc.Encoding.GetEntry(md5);
 
-                    using (BinaryReader s = new BinaryReader(casc.OpenFile(enc.Key)))
+                    using (Stream s = casc.OpenFile(enc.Key))
+                    using (BinaryReader br = new BinaryReader(s))
                     {
-                        if (s != null)
+                        // still need to figure out complete apm structure
+                        // at start of file there's a lot of data that is same in all apm files
+                        s.Position = 0xC;
+
+                        uint count = br.ReadUInt32();
+
+                        s.Position = 0x930;
+
+                        // size of each entry seems to be 0x48 bytes (0x2C bytes unk data; int size; ulong unk; byte[16] md5)
+                        for (int j = 0; j < count; j++)
                         {
-                            // still need to figure out complete apm structure
-                            // at start of file there's a lot of data that is same in all apm files
-                            s.BaseStream.Position = 0xC;
+                            s.Position += 0x2C; // skip unknown
+                            int size = br.ReadInt32(); // size (matches size in encoding file)
+                            s.Position += 8; // skip unknown
+                            byte[] md5_2 = br.ReadBytes(16);
 
-                            uint count = s.ReadUInt32();
+                            EncodingEntry enc2 = casc.Encoding.GetEntry(md5_2);
 
-                            s.BaseStream.Position = 0x894;
-
-                            // size of each entry seems to be 0x48 bytes (0x2C bytes unk data; int size; ulong unk; byte[16] md5)
-                            for (int j = 0; j < count; j++)
+                            if (enc2 == null)
                             {
-                                s.BaseStream.Position += 0x2C; // skip unknown
-                                int size = s.ReadInt32(); // size (matches size in encoding file)
-                                s.BaseStream.Position += 8; // skip unknown
-                                byte[] md5_2 = s.ReadBytes(16);
-
-                                EncodingEntry enc2 = casc.Encoding.GetEntry(md5_2);
-
-                                if (enc2 == null)
-                                {
-                                    throw new Exception("enc2 == null");
-                                }
-
-                                string fakeName = Path.GetFileNameWithoutExtension(filedata[2]) + "/" + md5_2.ToHexString();
-
-                                ulong fileHash = Hasher.ComputeHash(fakeName);
-                                RootData[fileHash] = new RootEntry() { MD5 = md5_2, Block = RootBlock.Empty };
-
-                                CASCFile.FileNames[fileHash] = fakeName;
+                                throw new Exception("enc2 == null");
                             }
+
+                            string fakeName = Path.GetFileNameWithoutExtension(name) + "/" + md5_2.ToHexString();
+
+                            ulong fileHash = Hasher.ComputeHash(fakeName);
+                            RootData[fileHash] = new RootEntry() { MD5 = md5_2, Block = RootBlock.Empty };
+
+                            CASCFile.FileNames[fileHash] = fakeName;
                         }
                     }
                 }
