@@ -183,6 +183,14 @@ namespace CASCExplorer
                     {
                         string ext = scanner.GetFileExtension(unknownFile);
                         unknownFile.FullName += ext;
+
+                        if (ext == ".m2")
+                        {
+                            using (var m2file = _casc.OpenFile(unknownFile.Hash))
+                            {
+                                // TODO: read name
+                            }
+                        }
                     }
 
                     progress.Report((int)(++numDone / (float)numTotal * 100.0f));
