@@ -302,12 +302,15 @@ namespace CASCExplorer
             if (LoadPreHashedListFile("listfile.bin", path, worker))
                 return;
 
+            if (!File.Exists(path))
+            {
+                Logger.WriteLine("WowRootHandler: list file missing!");
+                return;
+            }
+
             using (var _ = new PerfCounter("WowRootHandler::LoadListFile()"))
             {
                 worker?.ReportProgress(0, "Loading \"listfile\"...");
-
-                if (!File.Exists(path))
-                    throw new FileNotFoundException("list file missing!");
 
                 Logger.WriteLine("WowRootHandler: loading file names...");
 
