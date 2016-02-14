@@ -76,14 +76,11 @@ namespace CASCExplorer
         {
             using (var _ = new PerfCounter(GetType().Name + "::SetFlags()"))
             {
-                if (Locale != locale || Content != content)
-                {
-                    Locale = locale;
-                    Content = content;
+                Locale = locale;
+                Content = content;
 
-                    if (createTree)
-                        Root = CreateStorageTree();
-                }
+                if (createTree)
+                    Root = CreateStorageTree();
 
                 return Root;
             }

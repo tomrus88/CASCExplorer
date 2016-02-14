@@ -9,7 +9,7 @@
     <AppDesignerFolder>Properties</AppDesignerFolder>
     <RootNamespace>CascLib</RootNamespace>
     <AssemblyName>CascLib</AssemblyName>
-    <TargetFrameworkVersion>v4.6</TargetFrameworkVersion>
+    <TargetFrameworkVersion>v4.5</TargetFrameworkVersion>
     <FileAlignment>512</FileAlignment>
     <TargetFrameworkProfile />
   </PropertyGroup>
@@ -47,6 +47,7 @@
     </Compile>
     <Compile Include="CASCHandlerBase.cs" />
     <Compile Include="CASCHandlerLite.cs" />
+    <Compile Include="DBCReader.cs" />
     <Compile Include="DownloadHandler.cs" />
     <Compile Include="KeyService.cs" />
     <Compile Include="OWRootHandler.cs" />
