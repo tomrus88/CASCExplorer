@@ -45,7 +45,7 @@ namespace CASCConsole
 
             Console.WriteLine("Loaded.");
 
-            Console.WriteLine("Extract params:", pattern, dest, locale);
+            Console.WriteLine("Extract params:");
             Console.WriteLine("    Pattern: {0}", pattern);
             Console.WriteLine("    Destination: {0}", dest);
             Console.WriteLine("    LocaleFlags: {0}", locale);

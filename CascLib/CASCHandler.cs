@@ -118,14 +118,10 @@ namespace CASCExplorer
         {
             WowRootHandler rh = Root as WowRootHandler;
 
-            if (rh != null)
-            {
-                var hash = rh.GetHashByFileDataId(fileDataId);
+            if (rh == null)
+                return false;
 
-                return FileExists(hash);
-            }
-
-            return false;
+            return FileExists(rh.GetHashByFileDataId(fileDataId));
         }
 
         public bool FileExists(string file)
@@ -161,11 +157,7 @@ namespace CASCExplorer
             WowRootHandler rh = Root as WowRootHandler;
 
             if (rh != null)
-            {
-                var hash = rh.GetHashByFileDataId(fileDataId);
-
-                return OpenFile(hash);
-            }
+                return OpenFile(rh.GetHashByFileDataId(fileDataId));
 
             if (CASCConfig.ThrowOnFileNotFound)
                 throw new FileNotFoundException("FileData: " + fileDataId.ToString());
