@@ -137,7 +137,7 @@ namespace CASCExplorer
         public bool FileExists(ulong hash)
         {
             var rootInfos = RootHandler.GetAllEntries(hash);
-            return rootInfos != null && rootInfos.Any();
+            return rootInfos?.Any() ?? false;
         }
 
         public EncodingEntry GetEncodingEntry(ulong hash)
@@ -214,7 +214,7 @@ namespace CASCExplorer
 
         public void Clear()
         {
-            CDNIndex.Clear();
+            CDNIndex?.Clear();
             CDNIndex = null;
 
             foreach (var stream in DataStreams)
@@ -222,29 +222,20 @@ namespace CASCExplorer
 
             DataStreams.Clear();
 
-            EncodingHandler.Clear();
+            EncodingHandler?.Clear();
             EncodingHandler = null;
 
-            if (InstallHandler != null)
-            {
-                InstallHandler.Clear();
-                InstallHandler = null;
-            }
+            InstallHandler?.Clear();
+            InstallHandler = null;
 
-            if (LocalIndex != null)
-            {
-                LocalIndex.Clear();
-                LocalIndex = null;
-            }
+            LocalIndex?.Clear();
+            LocalIndex = null;
 
-            RootHandler.Clear();
+            RootHandler?.Clear();
             RootHandler = null;
 
-            if (DownloadHandler != null)
-            {
-                DownloadHandler.Clear();
-                DownloadHandler = null;
-            }
+            DownloadHandler?.Clear();
+            DownloadHandler = null;
         }
     }
 }

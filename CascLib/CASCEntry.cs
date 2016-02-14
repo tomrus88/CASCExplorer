@@ -141,10 +141,7 @@ namespace CASCExplorer
         {
             var encoding = casc.GetEncodingEntry(hash);
 
-            if (encoding != null)
-                return encoding.Size;
-
-            return 0;
+            return encoding?.Size ?? 0;
         }
 
         public int CompareTo(ICASCEntry other, int col, CASCHandler casc)

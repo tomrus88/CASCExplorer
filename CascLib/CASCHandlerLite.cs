@@ -62,8 +62,8 @@ namespace CASCExplorer
             }
 
             RootHandler.Clear();
-            EncodingHandler.Clear();
             RootHandler = null;
+            EncodingHandler.Clear();
             EncodingHandler = null;
             GC.Collect();
 

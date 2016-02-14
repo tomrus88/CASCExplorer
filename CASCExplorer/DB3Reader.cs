@@ -204,10 +204,9 @@ namespace CASCExplorer
 
         public DB3Row GetRow(int index)
         {
-            if (!m_index.ContainsKey(index))
-                return null;
-
-            return m_index[index];
+            DB3Row row;
+            m_index.TryGetValue(index, out row);
+            return row;
         }
 
         public IEnumerator<KeyValuePair<int, DB3Row>> GetEnumerator()
