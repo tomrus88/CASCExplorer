@@ -265,6 +265,38 @@ namespace CASCExplorer
             return true;
         }
 
+        public void LoadFileDataComplete(CASCHandler casc)
+        {
+            if (!casc.FileExists("DBFilesClient\\FileDataComplete.dbc"))
+                return;
+
+            Logger.WriteLine("WowRootHandler: loading file names from FileDataComplete.dbc...");
+
+            using (var s = casc.OpenFile("DBFilesClient\\FileDataComplete.dbc"))
+            {
+                DBCReader fd = new DBCReader(s);
+
+                foreach (var row in fd)
+                {
+                    string path = row.Value.GetField<string>(1);
+                    string name = row.Value.GetField<string>(2);
+
+                    string fullname = path + name;
+
+                    ulong fileHash = Hasher.ComputeHash(fullname);
+
+                    // skip invalid names
+                    if (!RootData.ContainsKey(fileHash))
+                    {
+                        //Logger.WriteLine("Invalid file name: {0}", fullname);
+                        continue;
+                    }
+
+                    CASCFile.FileNames[fileHash] = fullname;
+                }
+            }
+        }
+
         public override void LoadListFile(string path, BackgroundWorkerEx worker = null)
         {
             if (LoadPreHashedListFile("listfile.bin", path, worker))

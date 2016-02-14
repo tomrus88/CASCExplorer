@@ -46,7 +46,12 @@ namespace CASCExplorer
 
             var casc = CASCHandler.OpenStorage(config, backgroundWorker1);
 
+            casc.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags, false);
+
+            (casc.Root as WowRootHandler)?.LoadFileDataComplete(casc);
+
             casc.Root.LoadListFile(Path.Combine(Application.StartupPath, "listfile.txt"), backgroundWorker1);
+
             var fldr = casc.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
             casc.Root.MergeInstall(casc.Install);
 
