@@ -5,10 +5,17 @@ using System.Net;
 
 namespace CASCExplorer
 {
+    public class IndexEntry
+    {
+        public int Index;
+        public int Offset;
+        public int Size;
+    }
+
     public class CDNIndexHandler
     {
-        private static readonly ByteArrayComparer comparer = new ByteArrayComparer();
-        private readonly Dictionary<byte[], IndexEntry> CDNIndexData = new Dictionary<byte[], IndexEntry>(comparer);
+        private static readonly MD5HashComparer comparer = new MD5HashComparer();
+        private readonly Dictionary<MD5Hash, IndexEntry> CDNIndexData = new Dictionary<MD5Hash, IndexEntry>(comparer);
 
         private CASCConfig CASCConfig;
         private BackgroundWorkerEx worker;
@@ -61,10 +68,10 @@ namespace CASCExplorer
 
                 for (int j = 0; j < count; ++j)
                 {
-                    byte[] key = br.ReadBytes(16);
+                    MD5Hash key = br.Read<MD5Hash>();
 
                     if (key.IsZeroed()) // wtf?
-                        key = br.ReadBytes(16);
+                        key = br.Read<MD5Hash>();
 
                     if (key.IsZeroed()) // wtf?
                         throw new Exception("key.IsZeroed()");
@@ -150,7 +157,7 @@ namespace CASCExplorer
             }
         }
 
-        public Stream OpenDataFileDirect(byte[] key)
+        public Stream OpenDataFileDirect(MD5Hash key)
         {
             var keyStr = key.ToHexString().ToLower();
 
@@ -192,7 +199,7 @@ namespace CASCExplorer
             }
         }
 
-        public IndexEntry GetIndexInfo(byte[] key)
+        public IndexEntry GetIndexInfo(MD5Hash key)
         {
             IndexEntry result;
 

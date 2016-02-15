@@ -10,7 +10,7 @@ namespace CASCExplorer
     {
         private readonly Dictionary<ulong, RootEntry> RootData = new Dictionary<ulong, RootEntry>();
 
-        public OWRootHandler(BinaryReader stream, BackgroundWorkerEx worker, CASCHandler casc)
+        public unsafe OWRootHandler(BinaryReader stream, BackgroundWorkerEx worker, CASCHandler casc)
         {
             worker?.ReportProgress(0, "Loading \"root\"...");
 
@@ -30,7 +30,7 @@ namespace CASCExplorer
                 {
                     // add apm file for dev purposes
                     ulong fileHash1 = Hasher.ComputeHash(name);
-                    byte[] md5 = filedata[0].ToByteArray();
+                    MD5Hash md5 = filedata[0].ToByteArray().ToMD5();
                     RootData[fileHash1] = new RootEntry() { MD5 = md5, Block = RootBlock.Empty };
 
                     CASCFile.FileNames[fileHash1] = name;
@@ -55,7 +55,7 @@ namespace CASCExplorer
                             s.Position += 0x2C; // skip unknown
                             int size = br.ReadInt32(); // size (matches size in encoding file)
                             s.Position += 8; // skip unknown
-                            byte[] md5_2 = br.ReadBytes(16);
+                            MD5Hash md5_2 = br.Read<MD5Hash>();
 
                             EncodingEntry enc2 = casc.Encoding.GetEntry(md5_2);
 
@@ -87,13 +87,17 @@ namespace CASCExplorer
                 return LocaleFlags.All;
             };
 
+            MD5Hash key;
+
             foreach (var entry in casc.Encoding.Entries)
             {
                 DownloadEntry dl = casc.Download.GetEntry(entry.Value.Key);
 
                 if (dl != null)
                 {
-                    string fakeName = "unknown" + "/" + entry.Key[0].ToString("X2") + "/" + entry.Key.ToHexString();
+                    key = entry.Key;
+
+                    string fakeName = "unknown" + "/" + key.Value[0].ToString("X2") + "/" + entry.Key.ToHexString();
 
                     var locales = dl.Tags.Where(tag => tag.Value.Type == 4).Select(tag => tag2locale(tag.Key));
 

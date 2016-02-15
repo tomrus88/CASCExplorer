@@ -1,4 +1,5 @@
 ﻿using CASCExplorer.Properties;
+using System;
 using System.ComponentModel;
 using System.IO;
 using System.Windows.Forms;
@@ -54,6 +55,8 @@ namespace CASCExplorer
 
             var fldr = casc.Root.SetFlags(Settings.Default.LocaleFlags, Settings.Default.ContentFlags);
             casc.Root.MergeInstall(casc.Install);
+
+            GC.Collect();
 
             e.Result = new object[] { casc, fldr };
         }

@@ -258,29 +258,29 @@ namespace CASCExplorer
 
         public string Product { get; private set; }
 
-        public byte[] RootMD5
+        public MD5Hash RootMD5
         {
-            get { return _Builds[ActiveBuild]["root"][0].ToByteArray(); }
+            get { return _Builds[ActiveBuild]["root"][0].ToByteArray().ToMD5(); }
         }
 
-        public byte[] DownloadMD5
+        public MD5Hash DownloadMD5
         {
-            get { return _Builds[ActiveBuild]["download"][0].ToByteArray(); }
+            get { return _Builds[ActiveBuild]["download"][0].ToByteArray().ToMD5(); }
         }
 
-        public byte[] InstallMD5
+        public MD5Hash InstallMD5
         {
-            get { return _Builds[ActiveBuild]["install"][0].ToByteArray(); }
+            get { return _Builds[ActiveBuild]["install"][0].ToByteArray().ToMD5(); }
         }
 
-        public byte[] EncodingMD5
+        public MD5Hash EncodingMD5
         {
-            get { return _Builds[ActiveBuild]["encoding"][0].ToByteArray(); }
+            get { return _Builds[ActiveBuild]["encoding"][0].ToByteArray().ToMD5(); }
         }
 
-        public byte[] EncodingKey
+        public MD5Hash EncodingKey
         {
-            get { return _Builds[ActiveBuild]["encoding"][1].ToByteArray(); }
+            get { return _Builds[ActiveBuild]["encoding"][1].ToByteArray().ToMD5(); }
         }
 
         public string BuildUID

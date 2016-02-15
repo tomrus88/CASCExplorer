@@ -9,7 +9,7 @@ namespace CASCExplorer
     class D3RootEntry
     {
         public int Type;
-        public byte[] MD5;
+        public MD5Hash MD5;
         public int SNO;
         public int FileIndex;
         public string Name;
@@ -19,7 +19,7 @@ namespace CASCExplorer
             D3RootEntry e = new D3RootEntry();
 
             e.Type = type;
-            e.MD5 = s.ReadBytes(16);
+            e.MD5 = s.Read<MD5Hash>();
 
             if (type == 0 || type == 1) // has SNO id
             {
@@ -60,7 +60,7 @@ namespace CASCExplorer
 
             for (int j = 0; j < count; j++)
             {
-                byte[] md5 = stream.ReadBytes(16);
+                MD5Hash md5 = stream.Read<MD5Hash>();
                 string name = stream.ReadCString();
 
                 var entries = new List<D3RootEntry>();

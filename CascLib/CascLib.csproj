@@ -53,7 +53,7 @@
     <Compile Include="OWRootHandler.cs" />
     <Compile Include="HSRootHandler.cs" />
     <Compile Include="BLTEHandler.cs" />
-    <Compile Include="ByteArrayComparer.cs" />
+    <Compile Include="MD5HashComparer.cs" />
     <Compile Include="CASCConfig.cs" />
     <Compile Include="CASCEntry.cs" />
     <Compile Include="CASCGame.cs" />

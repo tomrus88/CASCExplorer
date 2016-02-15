@@ -8,7 +8,7 @@ namespace CASCExplorer
     public class InstallEntry
     {
         public string Name;
-        public byte[] MD5;
+        public MD5Hash MD5;
         public int Size;
 
         public List<InstallTag> Tags;
@@ -66,7 +66,7 @@ namespace CASCExplorer
             {
                 InstallEntry entry = new InstallEntry();
                 entry.Name = stream.ReadCString();
-                entry.MD5 = stream.ReadBytes(16);
+                entry.MD5 = stream.Read<MD5Hash>();
                 entry.Size = stream.ReadInt32BE();
 
                 InstallData.Add(entry);

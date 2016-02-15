@@ -20,6 +20,7 @@ namespace CASCExplorer
         private CASCHandler _casc;
         private CASCFolder _root;
         private CASCFolder _currentFolder;
+        private List<ICASCEntry> _displayedEntries;
         private CASCEntrySorter Sorter = new CASCEntrySorter();
         private ScanForm scanForm;
         private NumberFormatInfo sizeNumberFmt = new NumberFormatInfo()
@@ -47,6 +48,11 @@ namespace CASCExplorer
             get { return _currentFolder; }
         }
 
+        public List<ICASCEntry> DisplayedEntries
+        {
+            get { return _displayedEntries; }
+        }
+
         public void ExtractFiles(NoFlickerListView filesList)
         {
             if (_currentFolder == null)
@@ -58,7 +64,7 @@ namespace CASCExplorer
             if (extractProgress == null)
                 extractProgress = new ExtractProgress();
 
-            var files = _currentFolder.GetFiles(filesList.SelectedIndices.Cast<int>()).ToList();
+            var files = CASCFolder.GetFiles(_displayedEntries, filesList.SelectedIndices.Cast<int>()).ToList();
             extractProgress.SetExtractData(_casc, files);
             extractProgress.ShowDialog();
         }
@@ -172,7 +178,7 @@ namespace CASCExplorer
                 if (unknownFolder == null)
                     return;
 
-                IEnumerable<CASCFile> files = unknownFolder.GetFiles(null, true);
+                IEnumerable<CASCFile> files = CASCFolder.GetFiles(unknownFolder.Entries.Select(kv => kv.Value), null, true);
                 int numTotal = files.Count();
                 int numDone = 0;
 
@@ -224,14 +230,14 @@ namespace CASCExplorer
             Wildcard wildcard = new Wildcard(filter, false, RegexOptions.IgnoreCase);
 
             // Sort
-            baseEntry.Entries = baseEntry.EntriesMirror.Where(v => v.Value is CASCFolder || (v.Value is CASCFile && wildcard.IsMatch(v.Value.Name))).
-                OrderBy(v => v.Value, Sorter).ToDictionary(pair => pair.Key, pair => pair.Value);
+            _displayedEntries = baseEntry.Entries.Where(v => v.Value is CASCFolder || (v.Value is CASCFile && wildcard.IsMatch(v.Value.Name))).
+                OrderBy(v => v.Value, Sorter).Select(kv => kv.Value).ToList();
 
             _currentFolder = baseEntry;
 
             // Update
             fileList.VirtualListSize = 0;
-            fileList.VirtualListSize = baseEntry.Entries.Count;
+            fileList.VirtualListSize = _displayedEntries.Count;
 
             if (fileList.VirtualListSize > 0)
             {
@@ -343,7 +349,7 @@ namespace CASCExplorer
             if (!fileList.HasSelection)
                 return;
 
-            var files = _currentFolder.GetFiles(fileList.SelectedIndices.Cast<int>());
+            var files = CASCFolder.GetFiles(_displayedEntries, fileList.SelectedIndices.Cast<int>());
 
             long size = files.Sum(f => (long)f.GetSize(_casc));
 
@@ -358,7 +364,7 @@ namespace CASCExplorer
             if (!fileList.HasSingleSelection)
                 return;
 
-            var file = _currentFolder.Entries.ElementAt(fileList.SelectedIndex).Value as CASCFile;
+            var file = _displayedEntries[fileList.SelectedIndex] as CASCFile;
 
             var extension = Path.GetExtension(file.Name);
 
@@ -433,10 +439,10 @@ namespace CASCExplorer
             if (_currentFolder == null)
                 return;
 
-            if (e.ItemIndex < 0 || e.ItemIndex >= _currentFolder.Entries.Count)
+            if (e.ItemIndex < 0 || e.ItemIndex >= _displayedEntries.Count)
                 return;
 
-            ICASCEntry entry = _currentFolder.Entries.ElementAt(e.ItemIndex).Value;
+            ICASCEntry entry = _displayedEntries[e.ItemIndex];
 
             var localeFlags = LocaleFlags.None;
             var contentFlags = ContentFlags.None;
@@ -501,6 +507,8 @@ namespace CASCExplorer
             _currentFolder = null;
             _root = null;
 
+            _displayedEntries?.Clear();
+
             _casc?.Clear();
             _casc = null;
 
@@ -521,7 +529,7 @@ namespace CASCExplorer
             {
                 for (var i = SelectedIndex - 1; i >= 0; --i)
                 {
-                    var op = _currentFolder.Entries.ElementAt(i).Value.Name;
+                    var op = _displayedEntries[i].Name;
                     if (op.IndexOf(e.Text, comparisonType) != -1)
                     {
                         e.Index = i;
@@ -533,7 +541,7 @@ namespace CASCExplorer
             {
                 for (int i = SelectedIndex + 1; i < fileList.Items.Count; ++i)
                 {
-                    var op = _currentFolder.Entries.ElementAt(i).Value.Name;
+                    var op = _displayedEntries[i].Name;
                     if (op.IndexOf(e.Text, comparisonType) != -1)
                     {
                         e.Index = i;
@@ -547,7 +555,7 @@ namespace CASCExplorer
         {
             using (StreamWriter sw = new StreamWriter("listfile_export.txt"))
             {
-                foreach (var file in Root.GetFiles(null, true).OrderBy(f => f.FullName, StringComparer.OrdinalIgnoreCase))
+                foreach (var file in CASCFolder.GetFiles(_root.Entries.Select(kv => kv.Value), null, true).OrderBy(f => f.FullName, StringComparer.OrdinalIgnoreCase))
                     sw.WriteLine(file.FullName);
             }
         }
@@ -557,7 +565,7 @@ namespace CASCExplorer
             if (_casc == null)
                 return;
 
-            var files = new Dictionary<string, byte[]>()
+            var files = new Dictionary<string, MD5Hash>()
             {
                 { "root", _casc.Encoding.GetEntry(_casc.Config.RootMD5).Key },
                 { "install", _casc.Encoding.GetEntry(_casc.Config.InstallMD5).Key },

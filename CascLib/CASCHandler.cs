@@ -4,13 +4,6 @@ using System.Linq;
 
 namespace CASCExplorer
 {
-    public class IndexEntry
-    {
-        public int Index;
-        public int Offset;
-        public int Size;
-    }
-
     public sealed class CASCHandler : CASCHandlerBase
     {
         private EncodingHandler EncodingHandler;

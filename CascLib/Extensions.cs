@@ -116,6 +116,61 @@ namespace CASCExplorer
 
             return sb.ToString();
         }
+
+        public static unsafe bool EqualsTo(this MD5Hash key, MD5Hash other)
+        {
+            for (var i = 0; i < 16; ++i)
+                if (key.Value[i] != other.Value[i])
+                    return false;
+            return true;
+        }
+
+        public static unsafe bool EqualsTo(this MD5Hash key, byte[] array)
+        {
+            if (array.Length != 16)
+                return false;
+
+            MD5Hash other;
+
+            fixed (byte* ptr = array)
+                other = *(MD5Hash*)ptr;
+
+            for (var i = 0; i < 16; ++i)
+                if (key.Value[i] != other.Value[i])
+                    return false;
+            return true;
+        }
+
+        public static unsafe string ToHexString(this MD5Hash key)
+        {
+            byte[] array = new byte[16];
+
+            fixed (byte* aptr = array)
+            {
+                *(MD5Hash*)aptr = key;
+            }
+
+            return array.ToHexString();
+        }
+
+        public static unsafe bool IsZeroed(this MD5Hash key)
+        {
+            for (var i = 0; i < 16; ++i)
+                if (key.Value[i] != 0)
+                    return false;
+            return true;
+        }
+
+        public static unsafe MD5Hash ToMD5(this byte[] array)
+        {
+            if (array.Length != 16)
+                throw new ArgumentException("array size != 16");
+
+            fixed (byte* ptr = array)
+            {
+                return *(MD5Hash*)ptr;
+            }
+        }
     }
 
     public static class CStringExtensions

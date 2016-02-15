@@ -199,7 +199,7 @@ namespace CASCExplorer
                 return false;
 
             // Selected folder
-            CASCFolder baseEntry = folder.Entries.ElementAt(fileList.SelectedIndex).Value as CASCFolder;
+            CASCFolder baseEntry = viewHelper.DisplayedEntries[fileList.SelectedIndex] as CASCFolder;
 
             if (baseEntry == null)
                 return false;
@@ -222,7 +222,7 @@ namespace CASCExplorer
         private void contextMenuStrip1_Opening(object sender, CancelEventArgs e)
         {
             extractToolStripMenuItem.Enabled = fileList.HasSelection;
-            copyNameToolStripMenuItem.Enabled = (fileList.HasSelection && viewHelper.CurrentFolder.GetFiles(fileList.SelectedIndices.Cast<int>(), false).Count() > 0) || false;
+            copyNameToolStripMenuItem.Enabled = (fileList.HasSelection && CASCFolder.GetFiles(viewHelper.DisplayedEntries, fileList.SelectedIndices.Cast<int>(), false).Count() > 0) || false;
             getSizeToolStripMenuItem.Enabled = fileList.HasSelection;
         }
 
@@ -242,7 +242,7 @@ namespace CASCExplorer
             if (!fileList.HasSelection)
                 return;
 
-            var files = folder.GetFiles(fileList.SelectedIndices.Cast<int>(), false).Select(f => f.FullName);
+            var files = CASCFolder.GetFiles(viewHelper.DisplayedEntries, fileList.SelectedIndices.Cast<int>(), false).Select(f => f.FullName);
 
             string temp = string.Join(Environment.NewLine, files);
 

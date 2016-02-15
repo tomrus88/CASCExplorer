@@ -6,7 +6,7 @@ namespace CASCExplorer
 {
     public sealed class CASCHandlerLite : CASCHandlerBase
     {
-        private Dictionary<ulong, byte[]> HashToKey = new Dictionary<ulong, byte[]>();
+        private Dictionary<ulong, MD5Hash> HashToKey = new Dictionary<ulong, MD5Hash>();
         private Dictionary<int, ulong> FileDataIdToHash = new Dictionary<int, ulong>();
 
         private CASCHandlerLite(CASCConfig config, LocaleFlags locale, BackgroundWorkerEx worker) : base(config, worker)
@@ -132,7 +132,7 @@ namespace CASCExplorer
 
         public override Stream OpenFile(ulong hash)
         {
-            byte[] key;
+            MD5Hash key;
 
             if (HashToKey.TryGetValue(hash, out key))
                 return OpenFile(key);

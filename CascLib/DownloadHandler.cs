@@ -21,8 +21,8 @@ namespace CASCExplorer
 
     public class DownloadHandler
     {
-        private static readonly ByteArrayComparer comparer = new ByteArrayComparer();
-        private readonly Dictionary<byte[], DownloadEntry> DownloadData = new Dictionary<byte[], DownloadEntry>(comparer);
+        private static readonly MD5HashComparer comparer = new MD5HashComparer();
+        private readonly Dictionary<MD5Hash, DownloadEntry> DownloadData = new Dictionary<MD5Hash, DownloadEntry>(comparer);
         Dictionary<string, DownloadTag> Tags = new Dictionary<string, DownloadTag>();
 
         public int Count
@@ -48,7 +48,7 @@ namespace CASCExplorer
 
             for (int i = 0; i < numFiles; i++)
             {
-                byte[] key = stream.ReadBytes(0x10);
+                MD5Hash key = stream.Read<MD5Hash>();
 
                 byte[] unk = stream.ReadBytes(0xA);
 
@@ -87,7 +87,7 @@ namespace CASCExplorer
             }
         }
 
-        public DownloadEntry GetEntry(byte[] key)
+        public DownloadEntry GetEntry(MD5Hash key)
         {
             DownloadEntry entry;
             DownloadData.TryGetValue(key, out entry);

@@ -47,11 +47,16 @@ namespace CASCExplorer
         public LocaleFlags LocaleFlags;
     }
 
+    public unsafe struct MD5Hash
+    {
+        public fixed byte Value[16];
+    }
+
     public class RootEntry
     {
         public RootBlock Block;
         public int FileDataId;
-        public byte[] MD5;
+        public MD5Hash MD5;
 
         public override string ToString()
         {
@@ -104,7 +109,7 @@ namespace CASCExplorer
 
                 for (var i = 0; i < count; ++i)
                 {
-                    entries[i].MD5 = stream.ReadBytes(16);
+                    entries[i].MD5 = stream.Read<MD5Hash>();
 
                     ulong hash = stream.ReadUInt64();
 

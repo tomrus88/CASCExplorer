@@ -47,7 +47,7 @@ namespace CASCExplorer
         public abstract Stream OpenFile(string name);
         public abstract Stream OpenFile(ulong hash);
 
-        public Stream OpenFile(byte[] key)
+        public Stream OpenFile(MD5Hash key)
         {
             try
             {
@@ -62,7 +62,7 @@ namespace CASCExplorer
             }
         }
 
-        private Stream OpenFileOnline(byte[] key)
+        private Stream OpenFileOnline(MD5Hash key)
         {
             IndexEntry idxInfo = CDNIndex.GetIndexInfo(key);
 
@@ -84,7 +84,7 @@ namespace CASCExplorer
             }
         }
 
-        private Stream OpenFileLocal(byte[] key)
+        private Stream OpenFileLocal(MD5Hash key)
         {
             Stream stream = GetLocalDataStream(key);
 
@@ -94,7 +94,7 @@ namespace CASCExplorer
             }
         }
 
-        private Stream GetLocalDataStream(byte[] key)
+        private Stream GetLocalDataStream(MD5Hash key)
         {
             IndexEntry idxInfo = LocalIndex.GetIndexInfo(key);
 
@@ -109,7 +109,7 @@ namespace CASCExplorer
                 byte[] md5 = reader.ReadBytes(16);
                 Array.Reverse(md5);
 
-                if (!md5.EqualsTo(key))
+                if (!key.EqualsTo(md5))
                     throw new Exception("local data corrupted");
 
                 int size = reader.ReadInt32();
@@ -127,7 +127,7 @@ namespace CASCExplorer
             }
         }
 
-        public void ExtractFile(byte[] key, string path, string name)
+        public void ExtractFile(MD5Hash key, string path, string name)
         {
             try
             {
@@ -142,7 +142,7 @@ namespace CASCExplorer
             }
         }
 
-        private void ExtractFileOnline(byte[] key, string path, string name)
+        private void ExtractFileOnline(MD5Hash key, string path, string name)
         {
             IndexEntry idxInfo = CDNIndex.GetIndexInfo(key);
 
@@ -164,7 +164,7 @@ namespace CASCExplorer
             }
         }
 
-        private void ExtractFileLocal(byte[] key, string path, string name)
+        private void ExtractFileLocal(MD5Hash key, string path, string name)
         {
             Stream stream = GetLocalDataStream(key);
 

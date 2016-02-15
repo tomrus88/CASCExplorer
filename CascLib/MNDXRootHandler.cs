@@ -43,7 +43,7 @@ namespace CASCExplorer
     {
         public int Flags;           // High 8 bits: Flags, low 24 bits: package index
         //[MarshalAs(UnmanagedType.ByValArray, SizeConst = 0x10)]
-        public byte[] MD5;          // Encoding key for the file
+        public MD5Hash MD5;         // Encoding key for the file
         public int FileSize;        // Uncompressed file size, in bytes
 
         public CASC_ROOT_ENTRY_MNDX Next;
@@ -146,7 +146,7 @@ namespace CASCExplorer
 
                 prevEntry = entry;
                 entry.Flags = stream.ReadInt32();
-                entry.MD5 = stream.ReadBytes(16);
+                entry.MD5 = stream.Read<MD5Hash>();
                 entry.FileSize = stream.ReadInt32();
                 mndxRootEntries.Add(i, entry);
 
