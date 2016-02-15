@@ -57,7 +57,6 @@ namespace CASCExplorer
         private readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
         private readonly Dictionary<int, ulong> FileDataStore = new Dictionary<int, ulong>();
         private readonly Dictionary<ulong, int> FileDataStoreReverse = new Dictionary<ulong, int>();
-        private readonly HashSet<ulong> UnknownFiles = new HashSet<ulong>();
 
         public override int Count { get { return RootData.Count; } }
         public override int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
@@ -131,10 +130,7 @@ namespace CASCExplorer
             }
         }
 
-        public IEnumerable<RootEntry> GetAllEntriesByFileDataId(int fileDataId)
-        {
-            return GetAllEntries(GetHashByFileDataId(fileDataId));
-        }
+        public IEnumerable<RootEntry> GetAllEntriesByFileDataId(int fileDataId) => GetAllEntries(GetHashByFileDataId(fileDataId));
 
         public override IEnumerable<KeyValuePair<ulong, RootEntry>> GetAllEntries()
         {
@@ -155,10 +151,7 @@ namespace CASCExplorer
                 yield return entry;
         }
 
-        public IEnumerable<RootEntry> GetEntriesByFileDataId(int fileDataId)
-        {
-            return GetEntries(GetHashByFileDataId(fileDataId));
-        }
+        public IEnumerable<RootEntry> GetEntriesByFileDataId(int fileDataId) => GetEntries(GetHashByFileDataId(fileDataId));
 
         // Returns only entries that match current locale and content flags
         public override IEnumerable<RootEntry> GetEntries(ulong hash)
@@ -196,10 +189,7 @@ namespace CASCExplorer
             return fid;
         }
 
-        public int GetFileDataIdByName(string name)
-        {
-            return GetFileDataIdByHash(Hasher.ComputeHash(name));
-        }
+        public int GetFileDataIdByName(string name) => GetFileDataIdByHash(Hasher.ComputeHash(name));
 
         private bool LoadPreHashedListFile(string pathbin, string pathtext, BackgroundWorkerEx worker = null)
         {
@@ -376,13 +366,9 @@ namespace CASCExplorer
         {
             var root = new CASCFolder("root");
 
+            // Reset counts
             CountSelect = 0;
-
-            // Cleanup fake names for unknown files
             CountUnknown = 0;
-
-            foreach (var unkFile in UnknownFiles)
-                CASCFile.FileNames.Remove(unkFile);
 
             // Create new tree based on specified locale
             foreach (var rootEntry in RootData)
@@ -407,7 +393,6 @@ namespace CASCExplorer
                     file = "unknown\\" + rootEntry.Key.ToString("X16") + "_" + GetFileDataIdByHash(rootEntry.Key);
 
                     CountUnknown++;
-                    UnknownFiles.Add(rootEntry.Key);
                 }
 
                 CreateSubTree(root, rootEntry.Key, file);
@@ -419,17 +404,13 @@ namespace CASCExplorer
             return root;
         }
 
-        public bool IsUnknownFile(ulong hash)
-        {
-            return UnknownFiles.Contains(hash);
-        }
+        public bool IsUnknownFile(ulong hash) => !CASCFile.FileNames.ContainsKey(hash);
 
         public override void Clear()
         {
             RootData.Clear();
             FileDataStore.Clear();
             FileDataStoreReverse.Clear();
-            UnknownFiles.Clear();
             Root?.Entries.Clear();
             CASCFile.FileNames.Clear();
         }
