@@ -31,12 +31,15 @@ namespace CASCExplorer
                     // add apm file for dev purposes
                     ulong fileHash1 = Hasher.ComputeHash(name);
                     MD5Hash md5 = filedata[0].ToByteArray().ToMD5();
-                    RootData[fileHash1] = new RootEntry() { MD5 = md5, Block = RootBlock.Empty };
+                    RootData[fileHash1] = new RootEntry() { MD5 = md5, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
 
                     CASCFile.FileNames[fileHash1] = name;
 
                     // add files listed in apm file
-                    EncodingEntry enc = casc.Encoding.GetEntry(md5);
+                    EncodingEntry enc;
+
+                    if (!casc.Encoding.GetEntry(md5, out enc))
+                        continue;
 
                     using (Stream s = casc.OpenFile(enc.Key))
                     using (BinaryReader br = new BinaryReader(s))
@@ -57,9 +60,9 @@ namespace CASCExplorer
                             s.Position += 8; // skip unknown
                             MD5Hash md5_2 = br.Read<MD5Hash>();
 
-                            EncodingEntry enc2 = casc.Encoding.GetEntry(md5_2);
+                            EncodingEntry enc2;
 
-                            if (enc2 == null)
+                            if (!casc.Encoding.GetEntry(md5_2, out enc2))
                             {
                                 throw new Exception("enc2 == null");
                             }
@@ -67,7 +70,7 @@ namespace CASCExplorer
                             string fakeName = Path.GetFileNameWithoutExtension(name) + "/" + md5_2.ToHexString();
 
                             ulong fileHash = Hasher.ComputeHash(fakeName);
-                            RootData[fileHash] = new RootEntry() { MD5 = md5_2, Block = RootBlock.Empty };
+                            RootData[fileHash] = new RootEntry() { MD5 = md5_2, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
 
                             CASCFile.FileNames[fileHash] = fakeName;
                         }
@@ -107,7 +110,7 @@ namespace CASCExplorer
                         locale |= loc;
 
                     ulong fileHash = Hasher.ComputeHash(fakeName);
-                    RootData.Add(fileHash, new RootEntry() { MD5 = entry.Key, Block = new RootBlock() { LocaleFlags = locale } });
+                    RootData.Add(fileHash, new RootEntry() { MD5 = entry.Key, LocaleFlags = locale, ContentFlags = ContentFlags.None });
 
                     CASCFile.FileNames[fileHash] = fakeName;
                 }
@@ -160,7 +163,7 @@ namespace CASCExplorer
 
             foreach (var rootEntry in RootData)
             {
-                if ((rootEntry.Value.Block.LocaleFlags & Locale) == 0)
+                if ((rootEntry.Value.LocaleFlags & Locale) == 0)
                     continue;
 
                 CreateSubTree(root, rootEntry.Key, CASCFile.FileNames[rootEntry.Key]);

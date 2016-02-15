@@ -176,9 +176,9 @@ namespace CASCExplorer
 
         protected static BinaryReader OpenInstallFile(EncodingHandler enc, CASCHandlerBase casc)
         {
-            var encInfo = enc.GetEntry(casc.Config.InstallMD5);
+            EncodingEntry encInfo;
 
-            if (encInfo == null)
+            if (!enc.GetEntry(casc.Config.InstallMD5, out encInfo))
                 throw new FileNotFoundException("encoding info for install file missing!");
 
             //ExtractFile(encInfo.Key, ".", "install");
@@ -188,9 +188,9 @@ namespace CASCExplorer
 
         protected BinaryReader OpenDownloadFile(EncodingHandler enc, CASCHandlerBase casc)
         {
-            var encInfo = enc.GetEntry(casc.Config.DownloadMD5);
+            EncodingEntry encInfo;
 
-            if (encInfo == null)
+            if (!enc.GetEntry(casc.Config.DownloadMD5, out encInfo))
                 throw new FileNotFoundException("encoding info for download file missing!");
 
             //ExtractFile(encInfo.Key, ".", "download");
@@ -200,9 +200,9 @@ namespace CASCExplorer
 
         protected BinaryReader OpenRootFile(EncodingHandler enc, CASCHandlerBase casc)
         {
-            var encInfo = enc.GetEntry(casc.Config.RootMD5);
+            EncodingEntry encInfo;
 
-            if (encInfo == null)
+            if (!enc.GetEntry(casc.Config.RootMD5, out encInfo))
                 throw new FileNotFoundException("encoding info for root file missing!");
 
             //ExtractFile(encInfo.Key, ".", "root");

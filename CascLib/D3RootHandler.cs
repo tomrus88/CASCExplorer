@@ -6,10 +6,10 @@ using System.Runtime.InteropServices;
 
 namespace CASCExplorer
 {
-    class D3RootEntry
+    struct D3RootEntry
     {
-        public int Type;
         public MD5Hash MD5;
+        public int Type;
         public int SNO;
         public int FileIndex;
         public string Name;
@@ -66,7 +66,10 @@ namespace CASCExplorer
                 var entries = new List<D3RootEntry>();
                 D3RootData[name] = entries;
 
-                EncodingEntry enc = casc.Encoding.GetEntry(md5);
+                EncodingEntry enc;
+
+                if (!casc.Encoding.GetEntry(md5, out enc))
+                    continue;
 
                 using (BinaryReader s = new BinaryReader(casc.OpenFile(enc.Key)))
                 {
@@ -103,7 +106,8 @@ namespace CASCExplorer
             // Parse CoreTOC.dat
             var coreTocEntry = D3RootData["Base"].Find(e => e.Name == "CoreTOC.dat");
 
-            EncodingEntry enc1 = casc.Encoding.GetEntry(coreTocEntry.MD5);
+            EncodingEntry enc1;
+            casc.Encoding.GetEntry(coreTocEntry.MD5, out enc1);
 
             using (var file = casc.OpenFile(enc1.Key))
                 tocParser = new CoreTOCParser(file);
@@ -113,7 +117,8 @@ namespace CASCExplorer
             // Parse Packages.dat
             var pkgEntry = D3RootData["Base"].Find(e => e.Name == "Data_D3\\PC\\Misc\\Packages.dat");
 
-            EncodingEntry enc2 = casc.Encoding.GetEntry(pkgEntry.MD5);
+            EncodingEntry enc2;
+            casc.Encoding.GetEntry(pkgEntry.MD5, out enc2);
 
             using (var file = casc.OpenFile(enc2.Key))
                 pkgParser = new PackagesParser(file);
@@ -144,7 +149,7 @@ namespace CASCExplorer
 
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
-            HashSet<RootEntry> result;
+            List<RootEntry> result;
             RootData.TryGetValue(hash, out result);
 
             if (result == null)
@@ -161,7 +166,7 @@ namespace CASCExplorer
             if (!rootInfos.Any())
                 yield break;
 
-            var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & Locale) != 0);
+            var rootInfosLocale = rootInfos.Where(re => (re.LocaleFlags & Locale) != 0);
 
             foreach (var entry in rootInfosLocale)
                 yield return entry;
@@ -204,12 +209,10 @@ namespace CASCExplorer
 
             LocaleFlags locale;
 
-            entry.Block = new RootBlock();
-
             if (Enum.TryParse(pkg, out locale))
-                entry.Block.LocaleFlags = locale;
+                entry.LocaleFlags = locale;
             else
-                entry.Block.LocaleFlags = LocaleFlags.All;
+                entry.LocaleFlags = LocaleFlags.All;
 
             ulong fileHash = Hasher.ComputeHash(name);
             CASCFile.FileNames[fileHash] = name;
@@ -249,7 +252,7 @@ namespace CASCExplorer
             // Create new tree based on specified locale
             foreach (var rootEntry in RootData)
             {
-                var rootInfosLocale = rootEntry.Value.Where(re => (re.Block.LocaleFlags & Locale) != 0);
+                var rootInfosLocale = rootEntry.Value.Where(re => (re.LocaleFlags & Locale) != 0);
 
                 if (!rootInfosLocale.Any())
                     continue;

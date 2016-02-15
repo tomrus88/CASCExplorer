@@ -86,7 +86,10 @@ namespace CASCExplorer
 
                 foreach (var file in installFiles)
                 {
-                    _casc.ExtractFile(_casc.Encoding.GetEntry(file.MD5).Key, Path.Combine("data", build, "install_files"), file.Name);
+                    EncodingEntry enc;
+
+                    if (_casc.Encoding.GetEntry(file.MD5, out enc))
+                        _casc.ExtractFile(enc.Key, Path.Combine("data", build, "install_files"), file.Name);
 
                     progress.Report((int)(++numDone / (float)numFiles * 100.0f));
                 }
@@ -182,12 +185,14 @@ namespace CASCExplorer
                 int numTotal = files.Count();
                 int numDone = 0;
 
+                WowRootHandler wowRoot = _casc.Root as WowRootHandler;
+
                 foreach (var unknownEntry in files)
                 {
                     CASCFile unknownFile = unknownEntry as CASCFile;
 
                     string name;
-                    if (idToName.TryGetValue(_casc.Root.GetEntries(unknownFile.Hash).First().FileDataId, out name))
+                    if (idToName.TryGetValue(wowRoot.GetFileDataIdByHash(unknownFile.Hash), out name))
                         unknownFile.FullName = name;
                     else
                     {
@@ -454,16 +459,16 @@ namespace CASCExplorer
 
                 if (rootInfosLocale.Any())
                 {
-                    var enc = _casc.Encoding.GetEntry(rootInfosLocale.First().MD5);
+                    EncodingEntry enc;
 
-                    size = enc?.Size.ToString("N", sizeNumberFmt) ?? "0";
-
-                    foreach (var rootInfo in rootInfosLocale)
+                    if (_casc.Encoding.GetEntry(rootInfosLocale.First().MD5, out enc))
                     {
-                        if (rootInfo.Block != null)
+                        size = enc.Size.ToString("N", sizeNumberFmt) ?? "0";
+
+                        foreach (var rootInfo in rootInfosLocale)
                         {
-                            localeFlags |= rootInfo.Block.LocaleFlags;
-                            contentFlags |= rootInfo.Block.ContentFlags;
+                            localeFlags |= rootInfo.LocaleFlags;
+                            contentFlags |= rootInfo.ContentFlags;
                         }
                     }
                 }
@@ -473,18 +478,21 @@ namespace CASCExplorer
 
                     if (installInfos.Any())
                     {
-                        var enc = _casc.Encoding.GetEntry(installInfos.First().MD5);
+                        EncodingEntry enc;
 
-                        size = enc?.Size.ToString("N", sizeNumberFmt) ?? "0";
+                        if (_casc.Encoding.GetEntry(installInfos.First().MD5, out enc))
+                        {
+                            size = enc.Size.ToString("N", sizeNumberFmt) ?? "0";
 
-                        //foreach (var rootInfo in rootInfosLocale)
-                        //{
-                        //    if (rootInfo.Block != null)
-                        //    {
-                        //        localeFlags |= rootInfo.Block.LocaleFlags;
-                        //        contentFlags |= rootInfo.Block.ContentFlags;
-                        //    }
-                        //}
+                            //foreach (var rootInfo in rootInfosLocale)
+                            //{
+                            //    if (rootInfo.Block != null)
+                            //    {
+                            //        localeFlags |= rootInfo.Block.LocaleFlags;
+                            //        contentFlags |= rootInfo.Block.ContentFlags;
+                            //    }
+                            //}
+                        }
                     }
                 }
             }
@@ -565,13 +573,20 @@ namespace CASCExplorer
             if (_casc == null)
                 return;
 
-            var files = new Dictionary<string, MD5Hash>()
-            {
-                { "root", _casc.Encoding.GetEntry(_casc.Config.RootMD5).Key },
-                { "install", _casc.Encoding.GetEntry(_casc.Config.InstallMD5).Key },
-                { "encoding", _casc.Config.EncodingKey },
-                { "download", _casc.Encoding.GetEntry(_casc.Config.DownloadMD5).Key }
-            };
+            EncodingEntry enc;
+
+            var files = new Dictionary<string, MD5Hash>();
+
+            files.Add("encoding", _casc.Config.EncodingKey);
+
+            if (_casc.Encoding.GetEntry(_casc.Config.RootMD5, out enc))
+                files.Add("root", enc.Key);
+
+            if (_casc.Encoding.GetEntry(_casc.Config.InstallMD5, out enc))
+                files.Add("install", enc.Key);
+
+            if (_casc.Encoding.GetEntry(_casc.Config.DownloadMD5, out enc))
+                files.Add("download", enc.Key);
 
             foreach (var file in files)
             {

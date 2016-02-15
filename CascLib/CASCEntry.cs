@@ -141,9 +141,8 @@ namespace CASCExplorer
 
         public int GetSize(CASCHandler casc)
         {
-            var encoding = casc.GetEncodingEntry(hash);
-
-            return encoding?.Size ?? 0;
+            EncodingEntry enc;
+            return casc.GetEncodingEntry(hash, out enc) ? enc.Size : 0;
         }
 
         public int CompareTo(ICASCEntry other, int col, CASCHandler casc)
@@ -165,8 +164,8 @@ namespace CASCExplorer
                     {
                         var e1 = casc.Root.GetEntries(Hash);
                         var e2 = casc.Root.GetEntries(other.Hash);
-                        var flags1 = e1.Any() ? e1.First().Block.LocaleFlags : LocaleFlags.None;
-                        var flags2 = e2.Any() ? e2.First().Block.LocaleFlags : LocaleFlags.None;
+                        var flags1 = e1.Any() ? e1.First().LocaleFlags : LocaleFlags.None;
+                        var flags2 = e2.Any() ? e2.First().LocaleFlags : LocaleFlags.None;
                         result = flags1.CompareTo(flags2);
                     }
                     break;
@@ -174,8 +173,8 @@ namespace CASCExplorer
                     {
                         var e1 = casc.Root.GetEntries(Hash);
                         var e2 = casc.Root.GetEntries(other.Hash);
-                        var flags1 = e1.Any() ? e1.First().Block.ContentFlags : ContentFlags.None;
-                        var flags2 = e2.Any() ? e2.First().Block.ContentFlags : ContentFlags.None;
+                        var flags1 = e1.Any() ? e1.First().ContentFlags : ContentFlags.None;
+                        var flags2 = e2.Any() ? e2.First().ContentFlags : ContentFlags.None;
                         result = flags1.CompareTo(flags2);
                     }
                     break;

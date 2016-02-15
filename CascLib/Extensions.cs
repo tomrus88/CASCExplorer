@@ -2,7 +2,6 @@
 using System.Collections;
 using System.Collections.Generic;
 using System.IO;
-using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
@@ -12,7 +11,8 @@ namespace CASCExplorer
     {
         public static int ReadInt32BE(this BinaryReader reader)
         {
-            return BitConverter.ToInt32(reader.ReadBytes(4).Reverse().ToArray(), 0);
+            byte[] val = reader.ReadBytes(4);
+            return val[3] | val[2] << 8 | val[1] << 16 | val[0] << 24;
         }
 
         public static void Skip(this BinaryReader reader, int bytes)
@@ -22,7 +22,8 @@ namespace CASCExplorer
 
         public static uint ReadUInt32BE(this BinaryReader reader)
         {
-            return BitConverter.ToUInt32(reader.ReadBytes(4).Reverse().ToArray(), 0);
+            byte[] val = reader.ReadBytes(4);
+            return (uint)(val[3] | val[2] << 8 | val[1] << 16 | val[0] << 24);
         }
 
         public static T Read<T>(this BinaryReader reader) where T : struct
@@ -52,7 +53,8 @@ namespace CASCExplorer
 
         public static short ReadInt16BE(this BinaryReader reader)
         {
-            return BitConverter.ToInt16(reader.ReadBytes(2).Reverse().ToArray(), 0);
+            byte[] val = reader.ReadBytes(2);
+            return (short)(val[1] | val[0] << 8);
         }
 
         public static void CopyBytes(this Stream input, Stream output, int bytes)

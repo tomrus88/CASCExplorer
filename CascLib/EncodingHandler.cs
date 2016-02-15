@@ -3,10 +3,10 @@ using System.IO;
 
 namespace CASCExplorer
 {
-    public class EncodingEntry
+    public struct EncodingEntry
     {
-        public int Size;
         public MD5Hash Key;
+        public int Size;
     }
 
     public class EncodingHandler
@@ -120,11 +120,9 @@ namespace CASCExplorer
             }
         }
 
-        public EncodingEntry GetEntry(MD5Hash md5)
+        public bool GetEntry(MD5Hash md5, out EncodingEntry enc)
         {
-            EncodingEntry result;
-            EncodingData.TryGetValue(md5, out result);
-            return result;
+            return EncodingData.TryGetValue(md5, out enc);
         }
 
         public void Clear()

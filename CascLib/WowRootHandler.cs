@@ -40,28 +40,16 @@ namespace CASCExplorer
         NoCompression = 0x80000000 // sounds have this flag
     }
 
-    public class RootBlock
-    {
-        public static readonly RootBlock Empty = new RootBlock() { ContentFlags = ContentFlags.None, LocaleFlags = LocaleFlags.All };
-        public ContentFlags ContentFlags;
-        public LocaleFlags LocaleFlags;
-    }
-
     public unsafe struct MD5Hash
     {
         public fixed byte Value[16];
     }
 
-    public class RootEntry
+    public struct RootEntry
     {
-        public RootBlock Block;
-        public int FileDataId;
         public MD5Hash MD5;
-
-        public override string ToString()
-        {
-            return string.Format("RootBlock: {0:X8} {1:X8}, File: {2:X8} {3}", Block.ContentFlags, Block.LocaleFlags, FileDataId, MD5.ToHexString());
-        }
+        public ContentFlags ContentFlags;
+        public LocaleFlags LocaleFlags;
     }
 
     public class WowRootHandler : RootHandlerBase
@@ -82,27 +70,27 @@ namespace CASCExplorer
             {
                 int count = stream.ReadInt32();
 
-                RootBlock block = new RootBlock();
-                block.ContentFlags = (ContentFlags)stream.ReadUInt32();
-                block.LocaleFlags = (LocaleFlags)stream.ReadUInt32();
+                ContentFlags contentFlags = (ContentFlags)stream.ReadUInt32();
+                LocaleFlags localeFlags = (LocaleFlags)stream.ReadUInt32();
 
-                if (block.LocaleFlags == LocaleFlags.None)
+                if (localeFlags == LocaleFlags.None)
                     throw new Exception("block.LocaleFlags == LocaleFlags.None");
 
-                if (block.ContentFlags != ContentFlags.None && (block.ContentFlags & (ContentFlags.LowViolence | ContentFlags.NoCompression)) == 0)
+                if (contentFlags != ContentFlags.None && (contentFlags & (ContentFlags.LowViolence | ContentFlags.NoCompression)) == 0)
                     throw new Exception("block.ContentFlags != ContentFlags.None");
 
                 RootEntry[] entries = new RootEntry[count];
+                int[] filedataIds = new int[count];
 
                 int fileDataIndex = 0;
 
                 for (var i = 0; i < count; ++i)
                 {
-                    entries[i] = new RootEntry();
-                    entries[i].Block = block;
-                    entries[i].FileDataId = fileDataIndex + stream.ReadInt32();
+                    entries[i].LocaleFlags = localeFlags;
+                    entries[i].ContentFlags = contentFlags;
 
-                    fileDataIndex = entries[i].FileDataId + 1;
+                    filedataIds[i] = fileDataIndex + stream.ReadInt32();
+                    fileDataIndex = filedataIds[i] + 1;
                 }
 
                 //Console.WriteLine("Block: {0} {1} (size {2})", block.ContentFlags, block.LocaleFlags, count);
@@ -119,7 +107,7 @@ namespace CASCExplorer
 
                     ulong hash2;
 
-                    int fileDataId = entries[i].FileDataId;
+                    int fileDataId = filedataIds[i];
 
                     if (FileDataStore.TryGetValue(fileDataId, out hash2))
                     {
@@ -157,7 +145,7 @@ namespace CASCExplorer
 
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
-            HashSet<RootEntry> result;
+            List<RootEntry> result;
             RootData.TryGetValue(hash, out result);
 
             if (result == null)
@@ -180,11 +168,11 @@ namespace CASCExplorer
             if (!rootInfos.Any())
                 yield break;
 
-            var rootInfosLocale = rootInfos.Where(re => (re.Block.LocaleFlags & Locale) != 0);
+            var rootInfosLocale = rootInfos.Where(re => (re.LocaleFlags & Locale) != 0);
 
             if (rootInfosLocale.Count() > 1)
             {
-                var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.Block.ContentFlags == Content));
+                var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.ContentFlags == Content));
 
                 if (rootInfosLocaleAndContent.Any())
                     rootInfosLocale = rootInfosLocaleAndContent;
@@ -399,11 +387,11 @@ namespace CASCExplorer
             // Create new tree based on specified locale
             foreach (var rootEntry in RootData)
             {
-                var rootInfosLocale = rootEntry.Value.Where(re => (re.Block.LocaleFlags & Locale) != 0);
+                var rootInfosLocale = rootEntry.Value.Where(re => (re.LocaleFlags & Locale) != 0);
 
                 if (rootInfosLocale.Count() > 1)
                 {
-                    var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.Block.ContentFlags == Content));
+                    var rootInfosLocaleAndContent = rootInfosLocale.Where(re => (re.ContentFlags == Content));
 
                     if (rootInfosLocaleAndContent.Any())
                         rootInfosLocale = rootInfosLocaleAndContent;
@@ -416,7 +404,7 @@ namespace CASCExplorer
 
                 if (!CASCFile.FileNames.TryGetValue(rootEntry.Key, out file))
                 {
-                    file = "unknown\\" + rootEntry.Key.ToString("X16") + "_" + rootEntry.Value.First().FileDataId;
+                    file = "unknown\\" + rootEntry.Key.ToString("X16") + "_" + GetFileDataIdByHash(rootEntry.Key);
 
                     CountUnknown++;
                     UnknownFiles.Add(rootEntry.Key);
@@ -448,14 +436,14 @@ namespace CASCExplorer
 
         public override void Dump()
         {
-            foreach (var fd in RootData.OrderBy(r => r.Value.First().FileDataId))
+            foreach (var fd in RootData.OrderBy(r => GetFileDataIdByHash(r.Key)))
             {
                 string name;
 
                 if (!CASCFile.FileNames.TryGetValue(fd.Key, out name))
                     name = fd.Key.ToString("X16");
 
-                Logger.WriteLine("{0:D7} {1:X16} {2} {3}", fd.Value.First().FileDataId, fd.Key, string.Join(",", fd.Value.Select(r => r.Block.LocaleFlags.ToString())), name);
+                Logger.WriteLine("{0:D7} {1:X16} {2} {3}", GetFileDataIdByHash(fd.Key), fd.Key, string.Join(",", fd.Value.Select(r => r.LocaleFlags.ToString())), name);
             }
         }
     }

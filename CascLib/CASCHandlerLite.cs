@@ -28,7 +28,7 @@ namespace CASCExplorer
 
             Logger.WriteLine("CASCHandlerLite: loading root data...");
 
-            RootHandlerBase RootHandler;
+            WowRootHandler RootHandler;
 
             using (var _ = new PerfCounter("new RootHandler()"))
             {
@@ -46,16 +46,16 @@ namespace CASCExplorer
             {
                 rootEntry = entry.Value;
 
-                if ((rootEntry.Block.LocaleFlags == locale || (rootEntry.Block.LocaleFlags & locale) != LocaleFlags.None) && (rootEntry.Block.ContentFlags & ContentFlags.LowViolence) == ContentFlags.None)
+                if ((rootEntry.LocaleFlags == locale || (rootEntry.LocaleFlags & locale) != LocaleFlags.None) && (rootEntry.ContentFlags & ContentFlags.LowViolence) == ContentFlags.None)
                 {
-                    var enc = EncodingHandler.GetEntry(rootEntry.MD5);
+                    EncodingEntry enc;
 
-                    if (enc != null)
+                    if (EncodingHandler.GetEntry(rootEntry.MD5, out enc))
                     {
                         if (!HashToKey.ContainsKey(entry.Key))
                         {
                             HashToKey.Add(entry.Key, enc.Key);
-                            FileDataIdToHash.Add(rootEntry.FileDataId, entry.Key);
+                            FileDataIdToHash.Add(RootHandler.GetFileDataIdByHash(entry.Key), entry.Key);
                         }
                     }
                 }

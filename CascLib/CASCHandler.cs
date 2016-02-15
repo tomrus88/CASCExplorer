@@ -80,10 +80,7 @@ namespace CASCExplorer
             }
         }
 
-        public static CASCHandler OpenStorage(CASCConfig config, BackgroundWorkerEx worker = null)
-        {
-            return Open(worker, config);
-        }
+        public static CASCHandler OpenStorage(CASCConfig config, BackgroundWorkerEx worker = null) => Open(worker, config);
 
         public static CASCHandler OpenLocalStorage(string basePath, BackgroundWorkerEx worker = null)
         {
@@ -117,32 +114,25 @@ namespace CASCExplorer
             return FileExists(rh.GetHashByFileDataId(fileDataId));
         }
 
-        public bool FileExists(string file)
-        {
-            var hash = Hasher.ComputeHash(file);
-            return FileExists(hash);
-        }
+        public bool FileExists(string file) => FileExists(Hasher.ComputeHash(file));
 
-        public bool FileExists(ulong hash)
-        {
-            var rootInfos = RootHandler.GetAllEntries(hash);
-            return rootInfos?.Any() ?? false;
-        }
+        public bool FileExists(ulong hash) => RootHandler.GetAllEntries(hash).Any();
 
-        public EncodingEntry GetEncodingEntry(ulong hash)
+        public bool GetEncodingEntry(ulong hash, out EncodingEntry enc)
         {
             var rootInfos = RootHandler.GetEntries(hash);
             if (rootInfos.Any())
-                return EncodingHandler.GetEntry(rootInfos.First().MD5);
+                return EncodingHandler.GetEntry(rootInfos.First().MD5, out enc);
 
             if ((CASCConfig.LoadFlags & LoadFlags.Install) != 0)
             {
                 var installInfos = Install.GetEntries().Where(e => Hasher.ComputeHash(e.Name) == hash);
                 if (installInfos.Any())
-                    return EncodingHandler.GetEntry(installInfos.First().MD5);
+                    return EncodingHandler.GetEntry(installInfos.First().MD5, out enc);
             }
 
-            return null;
+            enc = default(EncodingEntry);
+            return false;
         }
 
         public override Stream OpenFile(int fileDataId)
@@ -157,18 +147,13 @@ namespace CASCExplorer
             return null;
         }
 
-        public override Stream OpenFile(string name)
-        {
-            var hash = Hasher.ComputeHash(name);
-
-            return OpenFile(hash);
-        }
+        public override Stream OpenFile(string name) => OpenFile(Hasher.ComputeHash(name));
 
         public override Stream OpenFile(ulong hash)
         {
-            EncodingEntry encInfo = GetEncodingEntry(hash);
+            EncodingEntry encInfo;
 
-            if (encInfo != null)
+            if (GetEncodingEntry(hash, out encInfo))
                 return OpenFile(encInfo.Key);
 
             if (CASCConfig.ThrowOnFileNotFound)
@@ -176,18 +161,13 @@ namespace CASCExplorer
             return null;
         }
 
-        public void SaveFileTo(string fullName, string extractPath)
-        {
-            var hash = Hasher.ComputeHash(fullName);
-
-            SaveFileTo(hash, extractPath, fullName);
-        }
+        public void SaveFileTo(string fullName, string extractPath) => SaveFileTo(Hasher.ComputeHash(fullName), extractPath, fullName);
 
         public void SaveFileTo(ulong hash, string extractPath, string fullName)
         {
-            EncodingEntry encInfo = GetEncodingEntry(hash);
+            EncodingEntry encInfo;
 
-            if (encInfo != null)
+            if (GetEncodingEntry(hash, out encInfo))
             {
                 ExtractFile(encInfo.Key, extractPath, fullName);
                 return;
