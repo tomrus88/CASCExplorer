@@ -89,14 +89,6 @@ namespace CASCExplorer
             return true;
         }
 
-        public static bool IsZeroed(this byte[] array)
-        {
-            for (var i = 0; i < array.Length; ++i)
-                if (array[i] != 0)
-                    return false;
-            return true;
-        }
-
         public static byte[] Copy(this byte[] array, int len)
         {
             byte[] ret = new byte[len];
@@ -115,14 +107,6 @@ namespace CASCExplorer
             }
 
             return sb.ToString();
-        }
-
-        public static unsafe bool EqualsTo(this MD5Hash key, MD5Hash other)
-        {
-            for (var i = 0; i < 16; ++i)
-                if (key.Value[i] != other.Value[i])
-                    return false;
-            return true;
         }
 
         public static unsafe bool EqualsTo(this MD5Hash key, byte[] array)
