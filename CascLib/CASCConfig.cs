@@ -9,6 +9,7 @@ namespace CASCExplorer
     public enum LoadFlags
     {
         All = -1,
+        None = 0,
         Download = 1,
         Install = 2,
     }
@@ -124,7 +125,7 @@ namespace CASCExplorer
         public CASCGameType GameType { get; private set; }
         public static bool ValidateData { get; set; } = true;
         public static bool ThrowOnFileNotFound { get; set; } = true;
-        public static LoadFlags LoadFlags { get; set; } = LoadFlags.All;
+        public static LoadFlags LoadFlags { get; set; } = LoadFlags.None;
 
         public static CASCConfig LoadOnlineStorageConfig(string product, string region, bool useCurrentBuild = false)
         {

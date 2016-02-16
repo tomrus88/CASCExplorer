@@ -94,26 +94,14 @@ namespace CASCExplorer
 
             foreach (var entry in casc.Encoding.Entries)
             {
-                DownloadEntry dl = casc.Download.GetEntry(entry.Value.Key);
+                key = entry.Key;
 
-                if (dl != null)
-                {
-                    key = entry.Key;
+                string fakeName = "unknown" + "/" + key.Value[0].ToString("X2") + "/" + entry.Key.ToHexString();
 
-                    string fakeName = "unknown" + "/" + key.Value[0].ToString("X2") + "/" + entry.Key.ToHexString();
+                ulong fileHash = Hasher.ComputeHash(fakeName);
+                RootData.Add(fileHash, new RootEntry() { MD5 = entry.Key, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None });
 
-                    var locales = dl.Tags.Where(tag => tag.Value.Type == 4).Select(tag => tag2locale(tag.Key));
-
-                    LocaleFlags locale = LocaleFlags.None;
-
-                    foreach (var loc in locales)
-                        locale |= loc;
-
-                    ulong fileHash = Hasher.ComputeHash(fakeName);
-                    RootData.Add(fileHash, new RootEntry() { MD5 = entry.Key, LocaleFlags = locale, ContentFlags = ContentFlags.None });
-
-                    CASCFile.FileNames[fileHash] = fakeName;
-                }
+                CASCFile.FileNames[fileHash] = fakeName;
 
                 worker?.ReportProgress((int)(++current / (float)casc.Encoding.Count * 100));
             }

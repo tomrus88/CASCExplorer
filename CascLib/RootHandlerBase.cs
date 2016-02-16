@@ -65,6 +65,9 @@ namespace CASCExplorer
 
         public void MergeInstall(InstallHandler install)
         {
+            if (install == null)
+                return;
+
             foreach (var entry in install.GetEntries())
             {
                 CreateSubTree(Root, Hasher.ComputeHash(entry.Name), entry.Name);
