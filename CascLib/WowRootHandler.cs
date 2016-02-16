@@ -58,8 +58,8 @@ namespace CASCExplorer
         private readonly Dictionary<int, ulong> FileDataStore = new Dictionary<int, ulong>();
         private readonly Dictionary<ulong, int> FileDataStoreReverse = new Dictionary<ulong, int>();
 
-        public override int Count { get { return RootData.Count; } }
-        public override int CountTotal { get { return RootData.Sum(re => re.Value.Count); } }
+        public override int Count => RootData.Count;
+        public override int CountTotal => RootData.Sum(re => re.Value.Count);
 
         public WowRootHandler(BinaryReader stream, BackgroundWorkerEx worker)
         {

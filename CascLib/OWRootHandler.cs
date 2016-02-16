@@ -157,8 +157,6 @@ namespace CASCExplorer
             var root = new CASCFolder("root");
 
             CountSelect = 0;
-
-            // Cleanup fake names for unknown files
             CountUnknown = 0;
 
             foreach (var rootEntry in RootData)

@@ -25,10 +25,7 @@ namespace CASCExplorer
         private readonly Dictionary<MD5Hash, DownloadEntry> DownloadData = new Dictionary<MD5Hash, DownloadEntry>(comparer);
         private readonly Dictionary<string, DownloadTag> Tags = new Dictionary<string, DownloadTag>();
 
-        public int Count
-        {
-            get { return DownloadData.Count; }
-        }
+        public int Count => DownloadData.Count;
 
         public DownloadHandler(BinaryReader stream, BackgroundWorkerEx worker)
         {
@@ -103,6 +100,7 @@ namespace CASCExplorer
         public void Clear()
         {
             DownloadData.Clear();
+            Tags.Clear();
         }
     }
 }

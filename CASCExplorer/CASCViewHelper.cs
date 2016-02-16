@@ -33,25 +33,13 @@ namespace CASCExplorer
         public event OnStorageChangedDelegate OnStorageChanged;
         public event OnCleanupDelegate OnCleanup;
 
-        public CASCHandler CASC
-        {
-            get { return _casc; }
-        }
+        public CASCHandler CASC => _casc;
 
-        public CASCFolder Root
-        {
-            get { return _root; }
-        }
+        public CASCFolder Root => _root;
 
-        public CASCFolder CurrentFolder
-        {
-            get { return _currentFolder; }
-        }
+        public CASCFolder CurrentFolder => _currentFolder;
 
-        public List<ICASCEntry> DisplayedEntries
-        {
-            get { return _displayedEntries; }
-        }
+        public List<ICASCEntry> DisplayedEntries => _displayedEntries;
 
         public void ExtractFiles(NoFlickerListView filesList)
         {
@@ -575,23 +563,16 @@ namespace CASCExplorer
 
             EncodingEntry enc;
 
-            var files = new Dictionary<string, MD5Hash>();
-
-            files.Add("encoding", _casc.Config.EncodingKey);
+            _casc.ExtractFile(_casc.Config.EncodingKey, ".", "encoding");
 
             if (_casc.Encoding.GetEntry(_casc.Config.RootMD5, out enc))
-                files.Add("root", enc.Key);
+                _casc.ExtractFile(enc.Key, ".", "root");
 
             if (_casc.Encoding.GetEntry(_casc.Config.InstallMD5, out enc))
-                files.Add("install", enc.Key);
+                _casc.ExtractFile(enc.Key, ".", "install");
 
             if (_casc.Encoding.GetEntry(_casc.Config.DownloadMD5, out enc))
-                files.Add("download", enc.Key);
-
-            foreach (var file in files)
-            {
-                _casc.ExtractFile(file.Value, ".", file.Key);
-            }
+                _casc.ExtractFile(enc.Key, ".", "download");
         }
     }
 }

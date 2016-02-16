@@ -11,10 +11,10 @@ namespace CASCExplorer
         private RootHandlerBase RootHandler;
         private InstallHandler InstallHandler;
 
-        public EncodingHandler Encoding { get { return EncodingHandler; } }
-        public DownloadHandler Download { get { return DownloadHandler; } }
-        public RootHandlerBase Root { get { return RootHandler; } }
-        public InstallHandler Install { get { return InstallHandler; } }
+        public EncodingHandler Encoding => EncodingHandler;
+        public DownloadHandler Download => DownloadHandler;
+        public RootHandlerBase Root => RootHandler;
+        public InstallHandler Install => InstallHandler;
 
         private CASCHandler(CASCConfig config, BackgroundWorkerEx worker) : base(config, worker)
         {

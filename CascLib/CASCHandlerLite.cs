@@ -97,21 +97,11 @@ namespace CASCExplorer
             }
         }
 
-        public bool FileExists(int fileDataId)
-        {
-            return FileDataIdToHash.ContainsKey(fileDataId);
-        }
+        public bool FileExists(int fileDataId) => FileDataIdToHash.ContainsKey(fileDataId);
 
-        public bool FileExists(string file)
-        {
-            var hash = Hasher.ComputeHash(file);
-            return FileExists(hash);
-        }
+        public bool FileExists(string file) => FileExists(Hasher.ComputeHash(file));
 
-        public bool FileExists(ulong hash)
-        {
-            return HashToKey.ContainsKey(hash);
-        }
+        public bool FileExists(ulong hash) => HashToKey.ContainsKey(hash);
 
         public override Stream OpenFile(int filedata)
         {
@@ -123,12 +113,7 @@ namespace CASCExplorer
             return null;
         }
 
-        public override Stream OpenFile(string name)
-        {
-            var hash = Hasher.ComputeHash(name);
-
-            return OpenFile(hash);
-        }
+        public override Stream OpenFile(string name) => OpenFile(Hasher.ComputeHash(name));
 
         public override Stream OpenFile(ulong hash)
         {
