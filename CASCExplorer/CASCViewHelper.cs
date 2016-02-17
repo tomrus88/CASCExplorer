@@ -77,7 +77,7 @@ namespace CASCExplorer
                     EncodingEntry enc;
 
                     if (_casc.Encoding.GetEntry(file.MD5, out enc))
-                        _casc.ExtractFile(enc.Key, Path.Combine("data", build, "install_files"), file.Name);
+                        _casc.SaveFileTo(enc.Key, Path.Combine("data", build, "install_files"), file.Name);
 
                     progress.Report((int)(++numDone / (float)numFiles * 100.0f));
                 }
@@ -504,6 +504,7 @@ namespace CASCExplorer
             _root = null;
 
             _displayedEntries?.Clear();
+            _displayedEntries = null;
 
             _casc?.Clear();
             _casc = null;
@@ -563,16 +564,16 @@ namespace CASCExplorer
 
             EncodingEntry enc;
 
-            _casc.ExtractFile(_casc.Config.EncodingKey, ".", "encoding");
+            _casc.SaveFileTo(_casc.Config.EncodingKey, ".", "encoding");
 
             if (_casc.Encoding.GetEntry(_casc.Config.RootMD5, out enc))
-                _casc.ExtractFile(enc.Key, ".", "root");
+                _casc.SaveFileTo(enc.Key, ".", "root");
 
             if (_casc.Encoding.GetEntry(_casc.Config.InstallMD5, out enc))
-                _casc.ExtractFile(enc.Key, ".", "install");
+                _casc.SaveFileTo(enc.Key, ".", "install");
 
             if (_casc.Encoding.GetEntry(_casc.Config.DownloadMD5, out enc))
-                _casc.ExtractFile(enc.Key, ".", "download");
+                _casc.SaveFileTo(enc.Key, ".", "download");
         }
     }
 }

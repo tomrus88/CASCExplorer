@@ -54,9 +54,9 @@ namespace CASCExplorer
 
     public class WowRootHandler : RootHandlerBase
     {
-        private readonly MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
-        private readonly Dictionary<int, ulong> FileDataStore = new Dictionary<int, ulong>();
-        private readonly Dictionary<ulong, int> FileDataStoreReverse = new Dictionary<ulong, int>();
+        private MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
+        private Dictionary<int, ulong> FileDataStore = new Dictionary<int, ulong>();
+        private Dictionary<ulong, int> FileDataStoreReverse = new Dictionary<ulong, int>();
 
         public override int Count => RootData.Count;
         public override int CountTotal => RootData.Sum(re => re.Value.Count);
@@ -409,9 +409,13 @@ namespace CASCExplorer
         public override void Clear()
         {
             RootData.Clear();
+            RootData = null;
             FileDataStore.Clear();
+            FileDataStore = null;
             FileDataStoreReverse.Clear();
+            FileDataStoreReverse = null;
             Root?.Entries.Clear();
+            Root = null;
             CASCFile.FileNames.Clear();
         }
 

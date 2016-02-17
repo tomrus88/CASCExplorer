@@ -8,7 +8,7 @@ namespace CASCExplorer
     public class LocalIndexHandler
     {
         private static readonly MD5HashComparer comparer = new MD5HashComparer();
-        private readonly Dictionary<MD5Hash, IndexEntry> LocalIndexData = new Dictionary<MD5Hash, IndexEntry>(comparer);
+        private Dictionary<MD5Hash, IndexEntry> LocalIndexData = new Dictionary<MD5Hash, IndexEntry>(comparer);
 
         public int Count
         {
@@ -143,6 +143,7 @@ namespace CASCExplorer
         public void Clear()
         {
             LocalIndexData.Clear();
+            LocalIndexData = null;
         }
     }
 }

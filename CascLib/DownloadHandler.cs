@@ -22,8 +22,8 @@ namespace CASCExplorer
     public class DownloadHandler
     {
         private static readonly MD5HashComparer comparer = new MD5HashComparer();
-        private readonly Dictionary<MD5Hash, DownloadEntry> DownloadData = new Dictionary<MD5Hash, DownloadEntry>(comparer);
-        private readonly Dictionary<string, DownloadTag> Tags = new Dictionary<string, DownloadTag>();
+        private Dictionary<MD5Hash, DownloadEntry> DownloadData = new Dictionary<MD5Hash, DownloadEntry>(comparer);
+        private Dictionary<string, DownloadTag> Tags = new Dictionary<string, DownloadTag>();
 
         public int Count => DownloadData.Count;
 
@@ -99,8 +99,10 @@ namespace CASCExplorer
 
         public void Clear()
         {
-            DownloadData.Clear();
             Tags.Clear();
+            Tags = null;
+            DownloadData.Clear();
+            DownloadData = null;
         }
     }
 }

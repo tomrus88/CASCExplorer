@@ -12,7 +12,7 @@ namespace CASCExplorer
     public class EncodingHandler
     {
         private static readonly MD5HashComparer comparer = new MD5HashComparer();
-        private readonly Dictionary<MD5Hash, EncodingEntry> EncodingData = new Dictionary<MD5Hash, EncodingEntry>(comparer);
+        private Dictionary<MD5Hash, EncodingEntry> EncodingData = new Dictionary<MD5Hash, EncodingEntry>(comparer);
 
         private const int CHUNK_SIZE = 4096;
 
@@ -128,6 +128,7 @@ namespace CASCExplorer
         public void Clear()
         {
             EncodingData.Clear();
+            EncodingData = null;
         }
     }
 }

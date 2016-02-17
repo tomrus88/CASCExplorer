@@ -104,7 +104,7 @@ namespace CASCExplorer
             }
         }
 
-        public bool FileExists(int fileDataId)
+        public override bool FileExists(int fileDataId)
         {
             WowRootHandler rh = Root as WowRootHandler;
 
@@ -114,9 +114,9 @@ namespace CASCExplorer
             return FileExists(rh.GetHashByFileDataId(fileDataId));
         }
 
-        public bool FileExists(string file) => FileExists(Hasher.ComputeHash(file));
+        public override bool FileExists(string file) => FileExists(Hasher.ComputeHash(file));
 
-        public bool FileExists(ulong hash) => RootHandler.GetAllEntries(hash).Any();
+        public override bool FileExists(ulong hash) => RootHandler.GetAllEntries(hash).Any();
 
         public bool GetEncodingEntry(ulong hash, out EncodingEntry enc)
         {
@@ -161,20 +161,36 @@ namespace CASCExplorer
             return null;
         }
 
-        public void SaveFileTo(string fullName, string extractPath) => SaveFileTo(Hasher.ComputeHash(fullName), extractPath, fullName);
-
-        public void SaveFileTo(ulong hash, string extractPath, string fullName)
+        public override void SaveFileTo(ulong hash, string extractPath, string fullName)
         {
             EncodingEntry encInfo;
 
             if (GetEncodingEntry(hash, out encInfo))
             {
-                ExtractFile(encInfo.Key, extractPath, fullName);
+                SaveFileTo(encInfo.Key, extractPath, fullName);
                 return;
             }
 
             if (CASCConfig.ThrowOnFileNotFound)
                 throw new FileNotFoundException(fullName);
+        }
+
+        protected override Stream OpenFileOnline(MD5Hash key)
+        {
+            IndexEntry idxInfo = CDNIndex.GetIndexInfo(key);
+            return OpenFileLocalInternal(idxInfo, key);
+        }
+
+        protected override Stream GetLocalDataStream(MD5Hash key)
+        {
+            IndexEntry idxInfo = LocalIndex.GetIndexInfo(key);
+            return GetLocalDataStreamInternal(idxInfo, key);
+        }
+
+        protected override void ExtractFileOnline(MD5Hash key, string path, string name)
+        {
+            IndexEntry idxInfo = CDNIndex.GetIndexInfo(key);
+            ExtractFileOnlineInternal(idxInfo, key, path, name);
         }
 
         public void Clear()

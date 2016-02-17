@@ -1,6 +1,7 @@
 ﻿using System;
 using System.Collections.Generic;
 using System.IO;
+using System.Text;
 
 namespace CASCExplorer
 {
@@ -43,9 +44,16 @@ namespace CASCExplorer
             }
         }
 
+        public abstract bool FileExists(int fileDataId);
+        public abstract bool FileExists(string file);
+        public abstract bool FileExists(ulong hash);
+
         public abstract Stream OpenFile(int filedata);
         public abstract Stream OpenFile(string name);
         public abstract Stream OpenFile(ulong hash);
+
+        public void SaveFileTo(string fullName, string extractPath) => SaveFileTo(Hasher.ComputeHash(fullName), extractPath, fullName);
+        public abstract void SaveFileTo(ulong hash, string extractPath, string fullName);
 
         public Stream OpenFile(MD5Hash key)
         {
@@ -62,10 +70,10 @@ namespace CASCExplorer
             }
         }
 
-        private Stream OpenFileOnline(MD5Hash key)
-        {
-            IndexEntry idxInfo = CDNIndex.GetIndexInfo(key);
+        protected abstract Stream OpenFileOnline(MD5Hash key);
 
+        protected Stream OpenFileLocalInternal(IndexEntry idxInfo, MD5Hash key)
+        {
             if (idxInfo != null)
             {
                 using (Stream s = CDNIndex.OpenDataFile(idxInfo))
@@ -94,17 +102,17 @@ namespace CASCExplorer
             }
         }
 
-        private Stream GetLocalDataStream(MD5Hash key)
-        {
-            IndexEntry idxInfo = LocalIndex.GetIndexInfo(key);
+        protected abstract Stream GetLocalDataStream(MD5Hash key);
 
+        protected Stream GetLocalDataStreamInternal(IndexEntry idxInfo, MD5Hash key)
+        {
             if (idxInfo == null)
                 throw new Exception("local index missing");
 
             Stream dataStream = GetDataStream(idxInfo.Index);
             dataStream.Position = idxInfo.Offset;
 
-            using (BinaryReader reader = new BinaryReader(dataStream, System.Text.Encoding.ASCII, true))
+            using (BinaryReader reader = new BinaryReader(dataStream, Encoding.ASCII, true))
             {
                 byte[] md5 = reader.ReadBytes(16);
                 Array.Reverse(md5);
@@ -127,7 +135,7 @@ namespace CASCExplorer
             }
         }
 
-        public void ExtractFile(MD5Hash key, string path, string name)
+        public void SaveFileTo(MD5Hash key, string path, string name)
         {
             try
             {
@@ -142,10 +150,10 @@ namespace CASCExplorer
             }
         }
 
-        private void ExtractFileOnline(MD5Hash key, string path, string name)
-        {
-            IndexEntry idxInfo = CDNIndex.GetIndexInfo(key);
+        protected abstract void ExtractFileOnline(MD5Hash key, string path, string name);
 
+        protected void ExtractFileOnlineInternal(IndexEntry idxInfo, MD5Hash key, string path, string name)
+        {
             if (idxInfo != null)
             {
                 using (Stream s = CDNIndex.OpenDataFile(idxInfo))
@@ -217,7 +225,7 @@ namespace CASCExplorer
             return new BinaryReader(casc.OpenFile(casc.Config.EncodingKey));
         }
 
-        protected Stream GetDataStream(int index)
+        private Stream GetDataStream(int index)
         {
             Stream stream;
 

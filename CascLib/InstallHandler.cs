@@ -23,7 +23,7 @@ namespace CASCExplorer
 
     public class InstallHandler
     {
-        private readonly List<InstallEntry> InstallData = new List<InstallEntry>();
+        private List<InstallEntry> InstallData = new List<InstallEntry>();
         private static readonly Jenkins96 Hasher = new Jenkins96();
 
         public int Count
@@ -117,6 +117,7 @@ namespace CASCExplorer
         public void Clear()
         {
             InstallData.Clear();
+            InstallData = null;
         }
     }
 }
