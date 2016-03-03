@@ -250,19 +250,19 @@ namespace CASCExplorer
 
         public void LoadFileDataComplete(CASCHandler casc)
         {
-            if (!casc.FileExists("DBFilesClient\\FileDataComplete.dbc"))
+            if (!casc.FileExists("DBFilesClient\\FileDataComplete.db2"))
                 return;
 
-            Logger.WriteLine("WowRootHandler: loading file names from FileDataComplete.dbc...");
+            Logger.WriteLine("WowRootHandler: loading file names from FileDataComplete.db2...");
 
-            using (var s = casc.OpenFile("DBFilesClient\\FileDataComplete.dbc"))
+            using (var s = casc.OpenFile("DBFilesClient\\FileDataComplete.db2"))
             {
-                DBCReader fd = new DBCReader(s);
+                DB3Reader fd = new DB3Reader(s);
 
                 foreach (var row in fd)
                 {
-                    string path = row.Value.GetField<string>(1);
-                    string name = row.Value.GetField<string>(2);
+                    string path = row.Value.GetField<string>(4);
+                    string name = row.Value.GetField<string>(8);
 
                     string fullname = path + name;
 

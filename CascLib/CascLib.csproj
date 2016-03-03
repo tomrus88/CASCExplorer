@@ -47,8 +47,11 @@
     </Compile>
     <Compile Include="CASCHandlerBase.cs" />
     <Compile Include="CASCHandlerLite.cs" />
+    <Compile Include="DB2Reader.cs" />
+    <Compile Include="DB3Reader.cs" />
     <Compile Include="DBCReader.cs" />
     <Compile Include="DownloadHandler.cs" />
+    <Compile Include="FastStruct.cs" />
     <Compile Include="KeyService.cs" />
     <Compile Include="OWRootHandler.cs" />
     <Compile Include="HSRootHandler.cs" />
