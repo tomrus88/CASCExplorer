@@ -350,14 +350,14 @@ namespace CASCExplorer
     {
         private const int NUM_SNO_GROUPS = 70;
 
-        public struct TOCHeader
+        public unsafe struct TOCHeader
         {
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = NUM_SNO_GROUPS)]
-            public int[] entryCounts;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = NUM_SNO_GROUPS)]
-            public int[] entryOffsets;
-            [MarshalAs(UnmanagedType.ByValArray, SizeConst = NUM_SNO_GROUPS)]
-            public int[] entryUnkCounts;
+            //[MarshalAs(UnmanagedType.ByValArray, SizeConst = NUM_SNO_GROUPS)]
+            public fixed int entryCounts[NUM_SNO_GROUPS];
+            //[MarshalAs(UnmanagedType.ByValArray, SizeConst = NUM_SNO_GROUPS)]
+            public fixed int entryOffsets[NUM_SNO_GROUPS];
+            //[MarshalAs(UnmanagedType.ByValArray, SizeConst = NUM_SNO_GROUPS)]
+            public fixed int entryUnkCounts[NUM_SNO_GROUPS];
             public int unk;
         }
 
@@ -435,7 +435,7 @@ namespace CASCExplorer
             { SNOGroup.DungeonFinder, "" },
         };
 
-        public CoreTOCParser(Stream stream)
+        public unsafe CoreTOCParser(Stream stream)
         {
             using (var br = new BinaryReader(stream))
             {
