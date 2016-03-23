@@ -342,7 +342,8 @@ namespace CASCExplorer
             if (searchForm == null)
                 searchForm = new SearchForm(fileList);
 
-            searchForm.Show(this);
+            if (!searchForm.Visible)
+                searchForm.Show(this);
         }
 
         private void fileList_SearchForVirtualItem(object sender, SearchForVirtualItemEventArgs e)

@@ -20,63 +20,63 @@ namespace CASCExplorer
 
             // need to figure out what to do with those apm files
 
-            for (int i = 1; i < array.Length; i++)
-            {
-                string[] filedata = array[i].Split('|');
+            //for (int i = 1; i < array.Length; i++)
+            //{
+            //    string[] filedata = array[i].Split('|');
 
-                string name = filedata[4];
+            //    string name = filedata[4];
 
-                if (Path.GetExtension(name) == ".apm")
-                {
-                    // add apm file for dev purposes
-                    ulong fileHash1 = Hasher.ComputeHash(name);
-                    MD5Hash md5 = filedata[0].ToByteArray().ToMD5();
-                    RootData[fileHash1] = new RootEntry() { MD5 = md5, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
+            //    if (Path.GetExtension(name) == ".apm")
+            //    {
+            //        // add apm file for dev purposes
+            //        ulong fileHash1 = Hasher.ComputeHash(name);
+            //        MD5Hash md5 = filedata[0].ToByteArray().ToMD5();
+            //        RootData[fileHash1] = new RootEntry() { MD5 = md5, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
 
-                    CASCFile.FileNames[fileHash1] = name;
+            //        CASCFile.FileNames[fileHash1] = name;
 
-                    // add files listed in apm file
-                    EncodingEntry enc;
+            //        // add files listed in apm file
+            //        EncodingEntry enc;
 
-                    if (!casc.Encoding.GetEntry(md5, out enc))
-                        continue;
+            //        if (!casc.Encoding.GetEntry(md5, out enc))
+            //            continue;
 
-                    using (Stream s = casc.OpenFile(enc.Key))
-                    using (BinaryReader br = new BinaryReader(s))
-                    {
-                        // still need to figure out complete apm structure
-                        // at start of file there's a lot of data that is same in all apm files
-                        s.Position = 0xC;
+            //        using (Stream s = casc.OpenFile(enc.Key))
+            //        using (BinaryReader br = new BinaryReader(s))
+            //        {
+            //            // still need to figure out complete apm structure
+            //            // at start of file there's a lot of data that is same in all apm files
+            //            s.Position = 0xC;
 
-                        uint count = br.ReadUInt32();
+            //            uint count = br.ReadUInt32();
 
-                        s.Position = 0x930;
+            //            s.Position = 0x930;
 
-                        // size of each entry seems to be 0x48 bytes (0x2C bytes unk data; int size; ulong unk; byte[16] md5)
-                        for (int j = 0; j < count; j++)
-                        {
-                            s.Position += 0x2C; // skip unknown
-                            int size = br.ReadInt32(); // size (matches size in encoding file)
-                            s.Position += 8; // skip unknown
-                            MD5Hash md5_2 = br.Read<MD5Hash>();
+            //            // size of each entry seems to be 0x48 bytes (0x2C bytes unk data; int size; ulong unk; byte[16] md5)
+            //            for (int j = 0; j < count; j++)
+            //            {
+            //                s.Position += 0x2C; // skip unknown
+            //                int size = br.ReadInt32(); // size (matches size in encoding file)
+            //                s.Position += 8; // skip unknown
+            //                MD5Hash md5_2 = br.Read<MD5Hash>();
 
-                            EncodingEntry enc2;
+            //                EncodingEntry enc2;
 
-                            if (!casc.Encoding.GetEntry(md5_2, out enc2))
-                            {
-                                throw new Exception("enc2 == null");
-                            }
+            //                if (!casc.Encoding.GetEntry(md5_2, out enc2))
+            //                {
+            //                    throw new Exception("enc2 == null");
+            //                }
 
-                            string fakeName = Path.GetFileNameWithoutExtension(name) + "/" + md5_2.ToHexString();
+            //                string fakeName = Path.GetFileNameWithoutExtension(name) + "/" + md5_2.ToHexString();
 
-                            ulong fileHash = Hasher.ComputeHash(fakeName);
-                            RootData[fileHash] = new RootEntry() { MD5 = md5_2, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
+            //                ulong fileHash = Hasher.ComputeHash(fakeName);
+            //                RootData[fileHash] = new RootEntry() { MD5 = md5_2, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
 
-                            CASCFile.FileNames[fileHash] = fakeName;
-                        }
-                    }
-                }
-            }
+            //                CASCFile.FileNames[fileHash] = fakeName;
+            //            }
+            //        }
+            //    }
+            //}
 
             int current = 0;
 
