@@ -131,8 +131,7 @@ namespace CASCExplorer
 
                 if (magic == DB5FmtSig)
                 {
-                    uint unk1 = reader.ReadUInt32();
-                    uint unk2 = reader.ReadUInt32();
+                    reader.BaseStream.Position += FieldsCount * 4;
                 }
 
                 int stringTableStart = HeaderSize + RecordsCount * RecordSize;
