@@ -114,12 +114,10 @@ namespace CASCExplorer
                 uint tableHash = reader.ReadUInt32();
                 uint build = reader.ReadUInt32();
 
-                if (magic == DB5FmtSig)
+                if (magic != DB5FmtSig)
                 {
-                    uint unk2 = reader.ReadUInt32();
+                    uint unk1 = reader.ReadUInt32(); // timemodified
                 }
-
-                uint unk1 = reader.ReadUInt32();
 
                 int MinId = reader.ReadInt32();
                 int MaxId = reader.ReadInt32();
@@ -129,6 +127,12 @@ namespace CASCExplorer
                 if (magic == DB4FmtSig)
                 {
                     int metaFlags = reader.ReadInt32();
+                }
+
+                if (magic == DB5FmtSig)
+                {
+                    uint unk1 = reader.ReadUInt32();
+                    uint unk2 = reader.ReadUInt32();
                 }
 
                 int stringTableStart = HeaderSize + RecordsCount * RecordSize;
