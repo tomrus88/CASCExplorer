@@ -6,17 +6,17 @@ using System.Text;
 
 namespace CASCExplorer
 {
-    public class OWRootHandler : RootHandlerBase
+    public class OwRootHandler : RootHandlerBase
     {
-        private readonly Dictionary<ulong, RootEntry> RootData = new Dictionary<ulong, RootEntry>();
+        private readonly Dictionary<ulong, RootEntry> _rootData = new Dictionary<ulong, RootEntry>();
 
-        public unsafe OWRootHandler(BinaryReader stream, BackgroundWorkerEx worker, CASCHandler casc)
+        public unsafe OwRootHandler(BinaryReader stream, BackgroundWorkerEx worker, CASCHandler casc)
         {
             worker?.ReportProgress(0, "Loading \"root\"...");
 
-            string str = Encoding.ASCII.GetString(stream.ReadBytes((int)stream.BaseStream.Length));
+            //string str = Encoding.ASCII.GetString(stream.ReadBytes((int)stream.BaseStream.Length));
 
-            string[] array = str.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
+            //string[] array = str.Split(new[] { '\r', '\n' }, StringSplitOptions.RemoveEmptyEntries);
 
             // need to figure out what to do with those apm files
 
@@ -31,7 +31,7 @@ namespace CASCExplorer
             //        // add apm file for dev purposes
             //        ulong fileHash1 = Hasher.ComputeHash(name);
             //        MD5Hash md5 = filedata[0].ToByteArray().ToMD5();
-            //        RootData[fileHash1] = new RootEntry() { MD5 = md5, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
+            //        _rootData[fileHash1] = new RootEntry() { MD5 = md5, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
 
             //        CASCFile.FileNames[fileHash1] = name;
 
@@ -70,7 +70,7 @@ namespace CASCExplorer
             //                string fakeName = Path.GetFileNameWithoutExtension(name) + "/" + md5_2.ToHexString();
 
             //                ulong fileHash = Hasher.ComputeHash(fakeName);
-            //                RootData[fileHash] = new RootEntry() { MD5 = md5_2, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
+            //                _rootData[fileHash] = new RootEntry() { MD5 = md5_2, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
 
             //                CASCFile.FileNames[fileHash] = fakeName;
             //            }
@@ -80,15 +80,15 @@ namespace CASCExplorer
 
             int current = 0;
 
-            Func<string, LocaleFlags> tag2locale = (s) =>
-            {
-                LocaleFlags locale;
+            //Func<string, LocaleFlags> tag2locale = (s) =>
+            //{
+            //    LocaleFlags locale;
 
-                if (Enum.TryParse(s, out locale))
-                    return locale;
+            //    if (Enum.TryParse(s, out locale))
+            //        return locale;
 
-                return LocaleFlags.All;
-            };
+            //    return LocaleFlags.All;
+            //};
 
             MD5Hash key;
 
@@ -99,7 +99,7 @@ namespace CASCExplorer
                 string fakeName = "unknown" + "/" + key.Value[0].ToString("X2") + "/" + entry.Key.ToHexString();
 
                 ulong fileHash = Hasher.ComputeHash(fakeName);
-                RootData.Add(fileHash, new RootEntry() { MD5 = entry.Key, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None });
+                _rootData.Add(fileHash, new RootEntry() { MD5 = entry.Key, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None });
 
                 CASCFile.FileNames[fileHash] = fakeName;
 
@@ -109,18 +109,15 @@ namespace CASCExplorer
 
         public override IEnumerable<KeyValuePair<ulong, RootEntry>> GetAllEntries()
         {
-            foreach (var entry in RootData)
-                yield return entry;
+            return _rootData;
         }
 
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
             RootEntry entry;
 
-            if (RootData.TryGetValue(hash, out entry))
+            if (_rootData.TryGetValue(hash, out entry))
                 yield return entry;
-            else
-                yield break;
         }
 
         // Returns only entries that match current locale and content flags
@@ -128,7 +125,7 @@ namespace CASCExplorer
         {
             //RootEntry entry;
 
-            //if (RootData.TryGetValue(hash, out entry))
+            //if (_rootData.TryGetValue(hash, out entry))
             //    yield return entry;
             //else
             //    yield break;
@@ -147,7 +144,7 @@ namespace CASCExplorer
             CountSelect = 0;
             CountUnknown = 0;
 
-            foreach (var rootEntry in RootData)
+            foreach (var rootEntry in _rootData)
             {
                 if ((rootEntry.Value.LocaleFlags & Locale) == 0)
                     continue;
@@ -156,14 +153,14 @@ namespace CASCExplorer
                 CountSelect++;
             }
 
-            Logger.WriteLine("OWRootHandler: {0} file names missing for locale {1}", CountUnknown, Locale);
+            Logger.WriteLine("OwRootHandler: {0} file names missing for locale {1}", CountUnknown, Locale);
 
             return root;
         }
 
         public override void Clear()
         {
-            RootData.Clear();
+            _rootData.Clear();
             Root.Entries.Clear();
             CASCFile.FileNames.Clear();
         }

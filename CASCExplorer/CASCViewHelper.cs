@@ -119,7 +119,7 @@ namespace CASCExplorer
                         }
                     }
 
-                    if (_casc.FileExists("DBFilesClient\\SoundKit.db2") && _casc.FileExists("DBFilesClient\\SoundKitEntry.db2"))
+                    if (false && _casc.FileExists("DBFilesClient\\SoundKit.db2") && _casc.FileExists("DBFilesClient\\SoundKitEntry.db2"))
                     {
                         using (Stream skStream = _casc.OpenFile("DBFilesClient\\SoundKit.db2"))
                         using (Stream skeStream = _casc.OpenFile("DBFilesClient\\SoundKitEntry.db2"))

@@ -361,9 +361,9 @@ namespace CASCExplorer
             public int unk;
         }
 
-        Dictionary<int, SNOInfo> snoDic = new Dictionary<int, SNOInfo>();
+        readonly Dictionary<int, SNOInfo> snoDic = new Dictionary<int, SNOInfo>();
 
-        Dictionary<SNOGroup, string> extensions = new Dictionary<SNOGroup, string>()
+        readonly Dictionary<SNOGroup, string> extensions = new Dictionary<SNOGroup, string>()
         {
             { SNOGroup.Code, "" },
             { SNOGroup.None, "" },
@@ -475,7 +475,7 @@ namespace CASCExplorer
 
     public class PackagesParser
     {
-        Dictionary<string, string> nameToExtDic = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
+        readonly Dictionary<string, string> nameToExtDic = new Dictionary<string, string>(StringComparer.OrdinalIgnoreCase);
 
         public PackagesParser(Stream stream)
         {

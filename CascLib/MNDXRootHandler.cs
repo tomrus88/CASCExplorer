@@ -209,8 +209,7 @@ namespace CASCExplorer
 
         public override IEnumerable<KeyValuePair<ulong, RootEntry>> GetAllEntries()
         {
-            foreach (var entry in mndxData)
-                yield return entry;
+            return mndxData;
         }
 
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
@@ -219,8 +218,6 @@ namespace CASCExplorer
 
             if (mndxData.TryGetValue(hash, out rootEntry))
                 yield return rootEntry;
-            else
-                yield break;
         }
 
         public override IEnumerable<RootEntry> GetEntries(ulong hash)
@@ -846,7 +843,7 @@ namespace CASCExplorer
             {
                 // Binary search
                 // HOTS: 1959FAD
-                if ((eax + 1) < edi)
+                if (eax + 1 < edi)
                 {
                     // HOTS: 1959FB4
                     esi = (edi + eax) >> 1;

@@ -58,7 +58,7 @@ namespace CASCExplorer
                     else if (config.GameType == CASCGameType.Hearthstone)
                         RootHandler = new HSRootHandler(fs, worker);
                     else if (config.GameType == CASCGameType.Overwatch)
-                        RootHandler = new OWRootHandler(fs, worker, this);
+                        RootHandler = new OwRootHandler(fs, worker, this);
                     else
                         throw new Exception("Unsupported game " + config.BuildUID);
                 }
@@ -74,6 +74,8 @@ namespace CASCExplorer
                 {
                     using (var fs = OpenInstallFile(EncodingHandler, this))
                         InstallHandler = new InstallHandler(fs, worker);
+
+                    InstallHandler.Print();
                 }
 
                 Logger.WriteLine("CASCHandler: loaded {0} install data", InstallHandler.Count);
