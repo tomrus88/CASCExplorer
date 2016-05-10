@@ -5,17 +5,16 @@ using System.Windows.Forms;
 
 namespace CASCExplorer
 {
-    partial class AboutBox : Form
+    sealed partial class AboutBox : Form
     {
         public AboutBox()
         {
             InitializeComponent();
-            this.Text = String.Format("About {0}", AssemblyTitle);
+            this.Text = string.Format("About {0}", AssemblyTitle);
             this.labelProductName.Text = AssemblyProduct;
-            this.labelVersion.Text = String.Format("Version {0}", AssemblyVersion);
+            this.labelVersion.Text = string.Format("Version {0}", AssemblyVersion);
             this.labelCopyright.Text = AssemblyCopyright;
-            var link = new LinkLabel.Link();
-            link.LinkData = Properties.Resources.donateURL;
+            var link = new LinkLabel.Link {LinkData = Properties.Resources.donateURL};
             this.labelDonate.Links.Add(link);
             this.textBoxDescription.Text = AssemblyDescription;
         }
@@ -89,7 +88,7 @@ namespace CASCExplorer
 
         private void labelDonate_LinkClicked(object sender, LinkLabelLinkClickedEventArgs e)
         {
-            Process.Start(e.Link.LinkData as string);
+            Process.Start(e.Link?.LinkData as string);
         }
     }
 }

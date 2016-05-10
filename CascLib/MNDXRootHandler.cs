@@ -41,11 +41,9 @@ namespace CASCExplorer
 
     class CASC_ROOT_ENTRY_MNDX
     {
+        public MD5Hash MD5;         // Encoding key for the file
         public int Flags;           // High 8 bits: Flags, low 24 bits: package index
-        //[MarshalAs(UnmanagedType.ByValArray, SizeConst = 0x10)]
-        public byte[] MD5;          // Encoding key for the file
         public int FileSize;        // Uncompressed file size, in bytes
-
         public CASC_ROOT_ENTRY_MNDX Next;
     }
 
@@ -146,7 +144,7 @@ namespace CASCExplorer
 
                 prevEntry = entry;
                 entry.Flags = stream.ReadInt32();
-                entry.MD5 = stream.ReadBytes(16);
+                entry.MD5 = stream.Read<MD5Hash>();
                 entry.FileSize = stream.ReadInt32();
                 mndxRootEntries.Add(i, entry);
 
@@ -211,19 +209,15 @@ namespace CASCExplorer
 
         public override IEnumerable<KeyValuePair<ulong, RootEntry>> GetAllEntries()
         {
-            foreach (var entry in mndxData)
-                yield return entry;
+            return mndxData;
         }
 
         public override IEnumerable<RootEntry> GetAllEntries(ulong hash)
         {
             RootEntry rootEntry;
-            mndxData.TryGetValue(hash, out rootEntry);
 
-            if (rootEntry != null)
+            if (mndxData.TryGetValue(hash, out rootEntry))
                 yield return rootEntry;
-            else
-                yield break;
         }
 
         public override IEnumerable<RootEntry> GetEntries(ulong hash)
@@ -383,7 +377,8 @@ namespace CASCExplorer
                 RootEntry entry = new RootEntry();
 
                 int package = FindMNDXPackage(file);
-                entry.Block = new RootBlock() { LocaleFlags = PackagesLocale[package], ContentFlags = ContentFlags.None };
+                entry.LocaleFlags = PackagesLocale[package];
+                entry.ContentFlags = ContentFlags.None;
                 entry.MD5 = FindMNDXInfo(file, package).MD5;
                 mndxData[fileHash] = entry;
 
@@ -407,7 +402,7 @@ namespace CASCExplorer
 
             foreach (var entry in mndxData)
             {
-                if ((entry.Value.Block.LocaleFlags & Locale) == 0)
+                if ((entry.Value.LocaleFlags & Locale) == 0)
                     continue;
 
                 CreateSubTree(root, entry.Key, CASCFile.FileNames[entry.Key]);
@@ -848,7 +843,7 @@ namespace CASCExplorer
             {
                 // Binary search
                 // HOTS: 1959FAD
-                if ((eax + 1) < edi)
+                if (eax + 1 < edi)
                 {
                     // HOTS: 1959FB4
                     esi = (edi + eax) >> 1;

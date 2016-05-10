@@ -6,12 +6,12 @@ using System.Text;
 
 namespace CASCExplorer
 {
-    class DB2Row
+    public class DB2Row
     {
-        private byte[] m_data;
-        private DB2Reader m_reader;
+        private readonly byte[] m_data;
+        private readonly DB2Reader m_reader;
 
-        public byte[] Data { get { return m_data; } }
+        public byte[] Data => m_data;
 
         public DB2Row(DB2Reader reader, byte[] data)
         {
@@ -43,7 +43,7 @@ namespace CASCExplorer
         }
     }
 
-    class DB2Reader : IEnumerable<KeyValuePair<int, DB2Row>>
+    public class DB2Reader : IEnumerable<KeyValuePair<int, DB2Row>>
     {
         private const int HeaderSize = 48;
         private const uint DB2FmtSig = 0x32424457;          // WDB2
@@ -58,7 +58,7 @@ namespace CASCExplorer
         private readonly DB2Row[] m_rows;
         public byte[] StringTable { get; private set; }
 
-        Dictionary<int, DB2Row> m_index = new Dictionary<int, DB2Row>();
+        readonly Dictionary<int, DB2Row> m_index = new Dictionary<int, DB2Row>();
 
         public DB2Reader(string dbcFile) : this(new FileStream(dbcFile, FileMode.Open)) { }
 
@@ -129,10 +129,9 @@ namespace CASCExplorer
 
         public DB2Row GetRow(int index)
         {
-            if (!m_index.ContainsKey(index))
-                return null;
-
-            return m_index[index];
+            DB2Row row;
+            m_index.TryGetValue(index, out row);
+            return row;
         }
 
         public IEnumerator<KeyValuePair<int, DB2Row>> GetEnumerator()

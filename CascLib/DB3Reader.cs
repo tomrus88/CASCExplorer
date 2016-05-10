@@ -6,7 +6,7 @@ using System.Text;
 
 namespace CASCExplorer
 {
-    class DB3Row
+    public class DB3Row
     {
         private byte[] m_data;
         private DB3Reader m_reader;
@@ -63,11 +63,12 @@ namespace CASCExplorer
         }
     }
 
-    class DB3Reader : IEnumerable<KeyValuePair<int, DB3Row>>
+    public class DB3Reader : IEnumerable<KeyValuePair<int, DB3Row>>
     {
         private readonly int HeaderSize;
         private const uint DB3FmtSig = 0x33424457;          // WDB3
         private const uint DB4FmtSig = 0x34424457;          // WDB4
+        private const uint DB5FmtSig = 0x35424457;          // WDB5
 
         public int RecordsCount { get; private set; }
         public int FieldsCount { get; private set; }
@@ -93,15 +94,17 @@ namespace CASCExplorer
 
                 uint magic = reader.ReadUInt32();
 
-                if (magic != DB3FmtSig && magic != DB4FmtSig)
+                if (magic != DB3FmtSig && magic != DB4FmtSig && magic != DB5FmtSig)
                 {
                     throw new InvalidDataException(string.Format("DB3 file is corrupted!"));
                 }
 
                 if (magic == DB3FmtSig)
                     HeaderSize = 48;
-                else
+                else if (magic == DB4FmtSig)
                     HeaderSize = 52;
+                else
+                    HeaderSize = 56;
 
                 RecordsCount = reader.ReadInt32();
                 FieldsCount = reader.ReadInt32();
@@ -110,7 +113,11 @@ namespace CASCExplorer
 
                 uint tableHash = reader.ReadUInt32();
                 uint build = reader.ReadUInt32();
-                uint unk1 = reader.ReadUInt32();
+
+                if (magic != DB5FmtSig)
+                {
+                    uint unk1 = reader.ReadUInt32(); // timemodified
+                }
 
                 int MinId = reader.ReadInt32();
                 int MaxId = reader.ReadInt32();
@@ -120,6 +127,11 @@ namespace CASCExplorer
                 if (magic == DB4FmtSig)
                 {
                     int metaFlags = reader.ReadInt32();
+                }
+
+                if (magic == DB5FmtSig)
+                {
+                    reader.BaseStream.Position += FieldsCount * 4;
                 }
 
                 int stringTableStart = HeaderSize + RecordsCount * RecordSize;
@@ -204,10 +216,9 @@ namespace CASCExplorer
 
         public DB3Row GetRow(int index)
         {
-            if (!m_index.ContainsKey(index))
-                return null;
-
-            return m_index[index];
+            DB3Row row;
+            m_index.TryGetValue(index, out row);
+            return row;
         }
 
         public IEnumerator<KeyValuePair<int, DB3Row>> GetEnumerator()
