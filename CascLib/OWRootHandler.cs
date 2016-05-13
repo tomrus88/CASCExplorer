@@ -157,12 +157,16 @@ namespace CASCExplorer
                                     {
                                         records[k] = recordsReader.Read<PackageIndexRecord>();
 
-                                        fakeName = string.Format("{0}/package_{1:X4}_{2}/record_{3:X4}_{4}", apmName, j, pkgIndexMD5String, k, records[k].contentKey.ToHexString());
+                                        // skip files not in encoding (what do we do with them?)
+                                        if ((records[k].flags & 0x40000000) == 0)
+                                        {
+                                            fakeName = string.Format("{0}/package_{1:X4}_{2}/record_{3:X4}_{4}", apmName, j, pkgIndexMD5String, k, records[k].contentKey.ToHexString());
 
-                                        fileHash = Hasher.ComputeHash(fakeName);
-                                        _rootData[fileHash] = new RootEntry() { MD5 = records[k].contentKey, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
+                                            fileHash = Hasher.ComputeHash(fakeName);
+                                            _rootData[fileHash] = new RootEntry() { MD5 = records[k].contentKey, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
 
-                                        CASCFile.FileNames[fileHash] = fakeName;
+                                            CASCFile.FileNames[fileHash] = fakeName;
+                                        }
                                     }
                                 }
 
