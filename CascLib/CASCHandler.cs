@@ -158,16 +158,29 @@ namespace CASCExplorer
             if (GetEncodingEntry(hash, out encInfo))
                 return OpenFile(encInfo.Key);
 
-            //var rootInfos = RootHandler.GetEntries(hash);
-            //if (rootInfos.Any())
-            //{
-            //    var rootEntry = rootInfos.First();
-            //    if ((rootEntry.ContentFlags & ContentFlags.Bundle) != ContentFlags.None)
-            //    {
-            //        var key = rootEntry.MD5.ToHexString();
-            //        return OpenFile(rootEntry.MD5);
-            //    }
-            //}
+            if (RootHandler is OwRootHandler)
+            {
+                OWRootEntry entry;
+
+                if ((RootHandler as OwRootHandler).GetEntry(hash, out entry))
+                {
+                    if ((entry.baseEntry.ContentFlags & ContentFlags.Bundle) != ContentFlags.None)
+                    {
+                        if (Encoding.GetEntry(entry.pkgIndex.bundleContentKey, out encInfo))
+                        {
+                            using (Stream bundle = OpenFile(encInfo.Key))
+                            {
+                                MemoryStream ms = new MemoryStream();
+
+                                bundle.Position = entry.pkgIndexRec.Offset;
+                                bundle.CopyBytes(ms, entry.pkgIndexRec.Size);
+
+                                return ms;
+                            }
+                        }
+                    }
+                }
+            }
 
             if (CASCConfig.ThrowOnFileNotFound)
                 throw new FileNotFoundException(string.Format("{0:X16}", hash));
@@ -184,17 +197,36 @@ namespace CASCExplorer
                 return;
             }
 
-            //var rootInfos = RootHandler.GetEntries(hash);
-            //if (rootInfos.Any())
-            //{
-            //    var rootEntry = rootInfos.First();
-            //    if((rootEntry.ContentFlags & ContentFlags.Bundle) != ContentFlags.None)
-            //    {
-            //        var key = rootEntry.MD5.ToHexString();
-            //        SaveFileTo(rootEntry.MD5, extractPath, fullName);
-            //        return;
-            //    }
-            //}
+            if (RootHandler is OwRootHandler)
+            {
+                OWRootEntry entry;
+
+                if ((RootHandler as OwRootHandler).GetEntry(hash, out entry))
+                {
+                    if ((entry.baseEntry.ContentFlags & ContentFlags.Bundle) != ContentFlags.None)
+                    {
+                        if (Encoding.GetEntry(entry.pkgIndex.bundleContentKey, out encInfo))
+                        {
+                            using (Stream bundle = OpenFile(encInfo.Key))
+                            {
+                                string fullPath = Path.Combine(extractPath, fullName);
+                                string dir = Path.GetDirectoryName(fullPath);
+
+                                if (!Directory.Exists(dir))
+                                    Directory.CreateDirectory(dir);
+
+                                using (var fileStream = File.Open(fullPath, FileMode.Create))
+                                {
+                                    bundle.Position = entry.pkgIndexRec.Offset;
+                                    bundle.CopyBytes(fileStream, entry.pkgIndexRec.Size);
+                                }
+                            }
+
+                            return;
+                        }
+                    }
+                }
+            }
 
             if (CASCConfig.ThrowOnFileNotFound)
                 throw new FileNotFoundException(fullName);

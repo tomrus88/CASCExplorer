@@ -452,7 +452,20 @@ namespace CASCExplorer
                     if (_casc.Encoding.GetEntry(rootInfosLocale.First().MD5, out enc))
                     {
                         size = enc.Size.ToString("N", sizeNumberFmt) ?? "0";
+                    }
+                    else
+                    {
+                        size = "NYI";
 
+                        if (_casc.Root is OwRootHandler)
+                        {
+                            OWRootEntry rootEntry;
+
+                            if ((_casc.Root as OwRootHandler).GetEntry(entry.Hash, out rootEntry))
+                            {
+                                size = rootEntry.pkgIndexRec.Size.ToString("N", sizeNumberFmt) ?? "0";
+                            }
+                        }
                     }
 
                     foreach (var rootInfo in rootInfosLocale)
