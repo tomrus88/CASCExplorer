@@ -453,11 +453,12 @@ namespace CASCExplorer
                     {
                         size = enc.Size.ToString("N", sizeNumberFmt) ?? "0";
 
-                        foreach (var rootInfo in rootInfosLocale)
-                        {
-                            localeFlags |= rootInfo.LocaleFlags;
-                            contentFlags |= rootInfo.ContentFlags;
-                        }
+                    }
+
+                    foreach (var rootInfo in rootInfosLocale)
+                    {
+                        localeFlags |= rootInfo.LocaleFlags;
+                        contentFlags |= rootInfo.ContentFlags;
                     }
                 }
                 else
