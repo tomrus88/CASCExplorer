@@ -124,6 +124,15 @@ namespace CASCExplorer
             return true;
         }
 
+        public static unsafe bool EqualsTo(this MD5Hash key, MD5Hash other)
+        {
+            for (var i = 0; i < 16; ++i)
+                if (key.Value[i] != other.Value[i])
+                    return false;
+
+            return true;
+        }
+
         public static unsafe string ToHexString(this MD5Hash key)
         {
             byte[] array = new byte[16];

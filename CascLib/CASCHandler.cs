@@ -158,6 +158,17 @@ namespace CASCExplorer
             if (GetEncodingEntry(hash, out encInfo))
                 return OpenFile(encInfo.Key);
 
+            //var rootInfos = RootHandler.GetEntries(hash);
+            //if (rootInfos.Any())
+            //{
+            //    var rootEntry = rootInfos.First();
+            //    if ((rootEntry.ContentFlags & ContentFlags.Bundle) != ContentFlags.None)
+            //    {
+            //        var key = rootEntry.MD5.ToHexString();
+            //        return OpenFile(rootEntry.MD5);
+            //    }
+            //}
+
             if (CASCConfig.ThrowOnFileNotFound)
                 throw new FileNotFoundException(string.Format("{0:X16}", hash));
             return null;
@@ -172,6 +183,18 @@ namespace CASCExplorer
                 SaveFileTo(encInfo.Key, extractPath, fullName);
                 return;
             }
+
+            //var rootInfos = RootHandler.GetEntries(hash);
+            //if (rootInfos.Any())
+            //{
+            //    var rootEntry = rootInfos.First();
+            //    if((rootEntry.ContentFlags & ContentFlags.Bundle) != ContentFlags.None)
+            //    {
+            //        var key = rootEntry.MD5.ToHexString();
+            //        SaveFileTo(rootEntry.MD5, extractPath, fullName);
+            //        return;
+            //    }
+            //}
 
             if (CASCConfig.ThrowOnFileNotFound)
                 throw new FileNotFoundException(fullName);

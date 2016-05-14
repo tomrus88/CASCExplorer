@@ -65,6 +65,8 @@ namespace CASCExplorer
     {
         private readonly Dictionary<ulong, RootEntry> _rootData = new Dictionary<ulong, RootEntry>();
 
+        public override int Count => _rootData.Count;
+
         public unsafe OwRootHandler(BinaryReader stream, BackgroundWorkerEx worker, CASCHandler casc)
         {
             worker?.ReportProgress(0, "Loading \"root\"...");
@@ -127,9 +129,19 @@ namespace CASCExplorer
 
                             string pkgIndexMD5String = pkgIndexMD5.ToHexString();
                             string apmName = Path.GetFileNameWithoutExtension(name);
-                            string fakeName = string.Format("{0}/packageIndex_{1:X4}_{2}", apmName, j, pkgIndexMD5String);
+                            string fakeName = string.Format("{0}/packages/package_{1:X4}_{2:X16}/index", apmName, j, packages[j].packageKey);
 
                             ulong fileHash = Hasher.ComputeHash(fakeName);
+                            //ulong fileHash = packages[j].packageKey;
+                            Logger.WriteLine("Adding package: {0:X16} {1}", fileHash, packages[j].indexContentKey.ToHexString());
+                            if (_rootData.ContainsKey(fileHash))
+                            {
+                                if (!_rootData[fileHash].MD5.EqualsTo(packages[j].indexContentKey))
+                                    Logger.WriteLine("Weird duplicate package: {0:X16} {1}", fileHash, packages[j].indexContentKey.ToHexString());
+                                else
+                                    Logger.WriteLine("Duplicate package: {0:X16} {1}", fileHash, packages[j].indexContentKey.ToHexString());
+                                continue;
+                            }
                             _rootData[fileHash] = new RootEntry() { MD5 = pkgIndexMD5, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
 
                             CASCFile.FileNames[fileHash] = fakeName;
@@ -139,9 +151,19 @@ namespace CASCExplorer
                             {
                                 PackageIndex pkgIndex = pkgIndexReader.Read<PackageIndex>();
 
-                                fakeName = string.Format("{0}/package_{1:X4}_{2}/bundle_{3}", apmName, j, pkgIndexMD5String, pkgIndex.bundleContentKey.ToHexString());
+                                fakeName = string.Format("{0}/packages/package_{1:X4}_{2:X16}/bundle_{3:X16}", apmName, j, packages[j].packageKey, pkgIndex.bundleKey);
 
-                                fileHash = Hasher.ComputeHash(fakeName);
+                                //fileHash = Hasher.ComputeHash(fakeName);
+                                fileHash = pkgIndex.bundleKey;
+                                Logger.WriteLine("Adding bundle: {0:X16} {1}", fileHash, pkgIndex.bundleContentKey.ToHexString());
+                                if (_rootData.ContainsKey(fileHash))
+                                {
+                                    if (!_rootData[fileHash].MD5.EqualsTo(pkgIndex.bundleContentKey))
+                                        Logger.WriteLine("Weird duplicate bundle: {0:X16} {1}", fileHash, pkgIndex.bundleContentKey.ToHexString());
+                                    else
+                                        Logger.WriteLine("Duplicate bundle: {0:X16} {1}", fileHash, pkgIndex.bundleContentKey.ToHexString());
+                                    continue;
+                                }
                                 _rootData[fileHash] = new RootEntry() { MD5 = pkgIndex.bundleContentKey, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
 
                                 CASCFile.FileNames[fileHash] = fakeName;
@@ -157,16 +179,26 @@ namespace CASCExplorer
                                     {
                                         records[k] = recordsReader.Read<PackageIndexRecord>();
 
-                                        // skip files not in encoding (what do we do with them?)
-                                        if ((records[k].flags & 0x40000000) == 0)
+                                        //// skip files not in encoding (what do we do with them?)
+                                        //if ((records[k].flags & 0x40000000) == 0)
+                                        //{
+                                        fakeName = string.Format("{0}/files/{1:X3}/{2:X12}", apmName, keyToTypeID(records[k].key), records[k].key & 0xFFFFFFFFFFFF);
+
+                                        //fileHash = Hasher.ComputeHash(fakeName);
+                                        fileHash = records[k].key;
+                                        Logger.WriteLine("Adding package record: key {0:X16} hash {1} flags {2:X8}", fileHash, records[k].contentKey.ToHexString(), records[k].flags);
+                                        if (_rootData.ContainsKey(fileHash))
                                         {
-                                            fakeName = string.Format("{0}/package_{1:X4}_{2}/record_{3:X4}_{4}", apmName, j, pkgIndexMD5String, k, records[k].contentKey.ToHexString());
-
-                                            fileHash = Hasher.ComputeHash(fakeName);
-                                            _rootData[fileHash] = new RootEntry() { MD5 = records[k].contentKey, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
-
-                                            CASCFile.FileNames[fileHash] = fakeName;
+                                            if (!_rootData[fileHash].MD5.EqualsTo(records[k].contentKey))
+                                                Logger.WriteLine("Weird duplicate package record: {0:X16} {1}", fileHash, records[k].contentKey.ToHexString());
+                                            else
+                                                Logger.WriteLine("Duplicate package record: {0:X16} {1}", fileHash, records[k].contentKey.ToHexString());
+                                            continue;
                                         }
+                                        _rootData[fileHash] = new RootEntry() { MD5 = records[k].contentKey, LocaleFlags = LocaleFlags.All, ContentFlags = (ContentFlags)records[k].flags };
+
+                                        CASCFile.FileNames[fileHash] = fakeName;
+                                        //}
                                     }
                                 }
 
@@ -180,6 +212,75 @@ namespace CASCExplorer
                                 }
                             }
                         }
+
+                        //for (int j = 0; j < packageCount; j++)
+                        //{
+                        //    packages[j] = apmReader.Read<APMPackage>();
+
+                        //    MD5Hash pkgIndexMD5 = packages[j].indexContentKey;
+
+                        //    EncodingEntry pkgIndexEnc;
+
+                        //    if (!casc.Encoding.GetEntry(pkgIndexMD5, out pkgIndexEnc))
+                        //    {
+                        //        throw new Exception("pkgIndexEnc missing");
+                        //    }
+
+                        //    string pkgIndexMD5String = pkgIndexMD5.ToHexString();
+                        //    string apmName = Path.GetFileNameWithoutExtension(name);
+                        //    string fakeName = string.Format("{0}/packageIndex_{1:X4}_{2}", apmName, j, pkgIndexMD5String);
+
+                        //    ulong fileHash = Hasher.ComputeHash(fakeName);
+                        //    _rootData[fileHash] = new RootEntry() { MD5 = pkgIndexMD5, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
+
+                        //    CASCFile.FileNames[fileHash] = fakeName;
+
+                        //    using (Stream pkgIndexStream = casc.OpenFile(pkgIndexEnc.Key))
+                        //    using (BinaryReader pkgIndexReader = new BinaryReader(pkgIndexStream))
+                        //    {
+                        //        PackageIndex pkgIndex = pkgIndexReader.Read<PackageIndex>();
+
+                        //        fakeName = string.Format("{0}/package_{1:X4}_{2}/bundle_{3}", apmName, j, pkgIndexMD5String, pkgIndex.bundleContentKey.ToHexString());
+
+                        //        fileHash = Hasher.ComputeHash(fakeName);
+                        //        _rootData[fileHash] = new RootEntry() { MD5 = pkgIndex.bundleContentKey, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
+
+                        //        CASCFile.FileNames[fileHash] = fakeName;
+
+                        //        pkgIndexStream.Position = pkgIndex.recordsOffset;
+
+                        //        using (GZipStream recordsStream = new GZipStream(pkgIndexStream, CompressionMode.Decompress, true))
+                        //        using (BinaryReader recordsReader = new BinaryReader(recordsStream))
+                        //        {
+                        //            PackageIndexRecord[] records = new PackageIndexRecord[pkgIndex.numRecords];
+
+                        //            for (int k = 0; k < records.Length; k++)
+                        //            {
+                        //                records[k] = recordsReader.Read<PackageIndexRecord>();
+
+                        //                // skip files not in encoding (what do we do with them?)
+                        //                if ((records[k].flags & 0x40000000) == 0)
+                        //                {
+                        //                    fakeName = string.Format("{0}/package_{1:X4}_{2}/record_{3:X4}_{4}", apmName, j, pkgIndexMD5String, k, records[k].contentKey.ToHexString());
+
+                        //                    fileHash = Hasher.ComputeHash(fakeName);
+                        //                    _rootData[fileHash] = new RootEntry() { MD5 = records[k].contentKey, LocaleFlags = LocaleFlags.All, ContentFlags = ContentFlags.None };
+
+                        //                    CASCFile.FileNames[fileHash] = fakeName;
+                        //                }
+                        //            }
+                        //        }
+
+                        //        pkgIndexStream.Position = pkgIndex.depsOffset;
+
+                        //        uint[] dependencies = new uint[pkgIndex.numDeps];
+
+                        //        for (int k = 0; k < dependencies.Length; k++)
+                        //        {
+                        //            dependencies[k] = pkgIndexReader.ReadUInt32();
+                        //        }
+                        //    }
+                        //}
                     }
                 }
             }
@@ -210,6 +311,18 @@ namespace CASCExplorer
 
             //    worker?.ReportProgress((int)(++current / (float)casc.Encoding.Count * 100));
             //}
+        }
+
+        static ulong keyToTypeID(ulong key)
+        {
+            var num = (key >> 48);
+            num = (((num >> 1) & 0x55555555) | ((num & 0x55555555) << 1));
+            num = (((num >> 2) & 0x33333333) | ((num & 0x33333333) << 2));
+            num = (((num >> 4) & 0x0F0F0F0F) | ((num & 0x0F0F0F0F) << 4));
+            num = (((num >> 8) & 0x00FF00FF) | ((num & 0x00FF00FF) << 8));
+            num = ((num >> 16) | (num << 16));
+            num >>= 20;
+            return num + 1;
         }
 
         public override IEnumerable<KeyValuePair<ulong, RootEntry>> GetAllEntries()
