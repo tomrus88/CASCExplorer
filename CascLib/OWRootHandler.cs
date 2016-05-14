@@ -153,8 +153,8 @@ namespace CASCExplorer
 
                                 fakeName = string.Format("{0}/packages/package_{1:X4}_{2:X16}/bundle_{3:X16}", apmName, j, packages[j].packageKey, pkgIndex.bundleKey);
 
-                                //fileHash = Hasher.ComputeHash(fakeName);
-                                fileHash = pkgIndex.bundleKey;
+                                fileHash = Hasher.ComputeHash(fakeName);
+                                //fileHash = pkgIndex.bundleKey;
                                 Logger.WriteLine("Adding bundle: {0:X16} {1}", fileHash, pkgIndex.bundleContentKey.ToHexString());
                                 if (_rootData.ContainsKey(fileHash))
                                 {
@@ -182,17 +182,17 @@ namespace CASCExplorer
                                         //// skip files not in encoding (what do we do with them?)
                                         //if ((records[k].flags & 0x40000000) == 0)
                                         //{
-                                        fakeName = string.Format("{0}/files/{1:X3}/{2:X12}", apmName, keyToTypeID(records[k].key), records[k].key & 0xFFFFFFFFFFFF);
+                                        fakeName = string.Format("files/{0:X3}/{1:X12}", keyToTypeID(records[k].key), records[k].key & 0xFFFFFFFFFFFF);
 
-                                        //fileHash = Hasher.ComputeHash(fakeName);
-                                        fileHash = records[k].key;
-                                        Logger.WriteLine("Adding package record: key {0:X16} hash {1} flags {2:X8}", fileHash, records[k].contentKey.ToHexString(), records[k].flags);
+                                        fileHash = Hasher.ComputeHash(fakeName);
+                                        //fileHash = records[k].key;
+                                        //Logger.WriteLine("Adding package record: key {0:X16} hash {1} flags {2:X8}", fileHash, records[k].contentKey.ToHexString(), records[k].flags);
                                         if (_rootData.ContainsKey(fileHash))
                                         {
                                             if (!_rootData[fileHash].MD5.EqualsTo(records[k].contentKey))
                                                 Logger.WriteLine("Weird duplicate package record: {0:X16} {1}", fileHash, records[k].contentKey.ToHexString());
-                                            else
-                                                Logger.WriteLine("Duplicate package record: {0:X16} {1}", fileHash, records[k].contentKey.ToHexString());
+                                            //else
+                                            //    Logger.WriteLine("Duplicate package record: {0:X16} {1}", fileHash, records[k].contentKey.ToHexString());
                                             continue;
                                         }
                                         _rootData[fileHash] = new RootEntry() { MD5 = records[k].contentKey, LocaleFlags = LocaleFlags.All, ContentFlags = (ContentFlags)records[k].flags };
