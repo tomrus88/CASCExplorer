@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -241,6 +242,10 @@ namespace CASCExplorer
         protected override Stream GetLocalDataStream(MD5Hash key)
         {
             IndexEntry idxInfo = LocalIndex.GetIndexInfo(key);
+            if (idxInfo == null)
+            {
+                Debug.Print("Local index missing: {0}", key.ToHexString());
+            }
             return GetLocalDataStreamInternal(idxInfo, key);
         }
 

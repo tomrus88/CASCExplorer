@@ -117,18 +117,32 @@ namespace CASCExplorer
             fixed (byte* ptr = array)
                 other = *(MD5Hash*)ptr;
 
-            for (var i = 0; i < 16; ++i)
-                if (key.Value[i] != other.Value[i])
-                    return false;
+            //for (var i = 0; i < 16; ++i)
+            //    if (key.Value[i] != other.Value[i])
+            //        return false;
 
+            //return key.EqualsTo(other);
+            for (int i = 0; i < 2; ++i)
+            {
+                ulong keyPart = *(ulong*)(key.Value + i * 8);
+                ulong otherPart = *(ulong*)(other.Value + i * 8);
+
+                if (keyPart != otherPart)
+                    return false;
+            }
             return true;
         }
 
         public static unsafe bool EqualsTo(this MD5Hash key, MD5Hash other)
         {
-            for (var i = 0; i < 16; ++i)
-                if (key.Value[i] != other.Value[i])
+            for (int i = 0; i < 2; ++i)
+            {
+                ulong keyPart = *(ulong*)(key.Value + i * 8);
+                ulong otherPart = *(ulong*)(other.Value + i * 8);
+
+                if (keyPart != otherPart)
                     return false;
+            }
 
             return true;
         }

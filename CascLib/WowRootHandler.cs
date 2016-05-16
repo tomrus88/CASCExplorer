@@ -433,7 +433,12 @@ namespace CASCExplorer
                 if (!CASCFile.FileNames.TryGetValue(fd.Key, out name))
                     name = fd.Key.ToString("X16");
 
-                Logger.WriteLine("{0:D7} {1:X16} {2} {3}", GetFileDataIdByHash(fd.Key), fd.Key, string.Join(",", fd.Value.Select(r => r.LocaleFlags.ToString())), name);
+                Logger.WriteLine("{0:D7} {1:X16} {2} {3}", GetFileDataIdByHash(fd.Key), fd.Key, fd.Value.Aggregate(LocaleFlags.None, (a, b) => a | b.LocaleFlags), name);
+
+                foreach (var entry in fd.Value)
+                {
+                    Logger.WriteLine("\t{0} - {1}", entry.MD5.ToHexString(), entry.LocaleFlags);
+                }
             }
         }
     }
