@@ -116,7 +116,7 @@ namespace CASCExplorer
                     }
                 }
 
-                worker?.ReportProgress((int)(i / (float)array.Length * 100));
+                worker?.ReportProgress((int)(i / (array.Length / 100f)));
             }
         }
 
@@ -163,7 +163,7 @@ namespace CASCExplorer
 
             Logger.WriteLine("OWRootHandler: loading file names...");
 
-            int numPackages = apmFiles.Sum(a => a.Packages.Length);
+            float pkgOnePct = apmFiles.Sum(a => a.Packages.Length) / 100f;
 
             int pkgCount = 0;
 
@@ -222,7 +222,7 @@ namespace CASCExplorer
 
                     for (int k = 0; k < records.Length; k++)
                     {
-                        fakeName = string.Format("files/{0:X3}/{1:X12}", keyToTypeID(records[k].Key), records[k].Key & 0xFFFFFFFFFFFF);
+                        fakeName = string.Format("files/{0:X3}/{1:X12}.{0:X3}", keyToTypeID(records[k].Key), records[k].Key & 0xFFFFFFFFFFFF);
 
                         fileHash = Hasher.ComputeHash(fakeName);
                         //Logger.WriteLine("Adding package record: key {0:X16} hash {1} flags {2:X8}", fileHash, records[k].contentKey.ToHexString(), records[k].flags);
@@ -244,7 +244,7 @@ namespace CASCExplorer
                         CASCFile.FileNames[fileHash] = fakeName;
                     }
 
-                    worker?.ReportProgress((int)(++pkgCount / (float)numPackages * 100));
+                    worker?.ReportProgress((int)(++pkgCount / pkgOnePct));
                 }
             }
 
@@ -346,9 +346,7 @@ namespace CASCExplorer
                             PackageIndexRecord[] recs = new PackageIndexRecord[indexes[j].numRecords];
 
                             for (int k = 0; k < recs.Length; k++)
-                            {
                                 recs[k] = recordsReader.Read<PackageIndexRecord>();
-                            }
 
                             records[j] = recs;
                         }
@@ -358,9 +356,7 @@ namespace CASCExplorer
                         uint[] deps = new uint[indexes[j].numDeps];
 
                         for (int k = 0; k < deps.Length; k++)
-                        {
                             deps[k] = pkgIndexReader.ReadUInt32();
-                        }
 
                         dependencies[j] = deps;
                     }
