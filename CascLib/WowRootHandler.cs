@@ -41,6 +41,7 @@ namespace CASCExplorer
         F00000004 = 0x4,
         LowViolence = 0x80, // many models have this flag
         F10000000 = 0x10000000,
+        F20000000 = 0x20000000, // added in 21737
         Bundle = 0x40000000,
         NoCompression = 0x80000000 // sounds have this flag
     }
@@ -80,7 +81,7 @@ namespace CASCExplorer
                 if (localeFlags == LocaleFlags.None)
                     throw new Exception("block.LocaleFlags == LocaleFlags.None");
 
-                if (contentFlags != ContentFlags.None && (contentFlags & (ContentFlags.LowViolence | ContentFlags.NoCompression)) == 0)
+                if (contentFlags != ContentFlags.None && (contentFlags & (ContentFlags.LowViolence | ContentFlags.NoCompression | ContentFlags.F20000000)) == 0)
                     throw new Exception("block.ContentFlags != ContentFlags.None");
 
                 RootEntry[] entries = new RootEntry[count];
