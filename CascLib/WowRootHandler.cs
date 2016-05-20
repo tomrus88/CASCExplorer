@@ -438,7 +438,7 @@ namespace CASCExplorer
 
                 foreach (var entry in fd.Value)
                 {
-                    Logger.WriteLine("\t{0} - {1}", entry.MD5.ToHexString(), entry.LocaleFlags);
+                    Logger.WriteLine("\t{0} - {1} - {2}", entry.MD5.ToHexString(), entry.LocaleFlags, entry.ContentFlags);
                 }
             }
         }
