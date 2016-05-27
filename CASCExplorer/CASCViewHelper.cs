@@ -571,7 +571,10 @@ namespace CASCExplorer
             using (StreamWriter sw = new StreamWriter("listfile_export.txt"))
             {
                 foreach (var file in CASCFolder.GetFiles(_root.Entries.Select(kv => kv.Value), null, true).OrderBy(f => f.FullName, StringComparer.OrdinalIgnoreCase))
-                    sw.WriteLine(file.FullName);
+                {
+                    if (CASC.FileExists(file.Hash))
+                        sw.WriteLine(file.FullName);
+                }
             }
         }
 
