@@ -190,8 +190,12 @@ namespace CASCExplorer
                         if (ext == ".m2")
                         {
                             using (var m2file = _casc.OpenFile(unknownFile.Hash))
+                            using (var br = new BinaryReader(m2file))
                             {
-                                // TODO: read name
+                                m2file.Position = 0x138;
+                                string m2name = br.ReadCString();
+
+                                unknownFile.FullName = m2name + ".m2";
                             }
                         }
                     }
