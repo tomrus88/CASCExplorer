@@ -223,7 +223,7 @@ namespace CASCExplorer
                     {
                         string dirName = br.ReadString();
 
-                        //Logger.WriteLine(dirName);
+                        Logger.WriteLine(dirName);
 
                         int numFiles = br.ReadInt32();
 
@@ -350,7 +350,7 @@ namespace CASCExplorer
                     {
                         bw.Write(dir.Key); // dir name
 
-                        //Logger.WriteLine(dir.Key);
+                        Logger.WriteLine(dir.Key);
 
                         bw.Write(dirData[dir.Key].Count); // count of files in dir
 
@@ -410,7 +410,7 @@ namespace CASCExplorer
             return root;
         }
 
-        public bool IsUnknownFile(ulong hash) => !CASCFile.FileNames.ContainsKey(hash);
+        public bool IsUnknownFile(ulong hash) => RootData.ContainsKey(hash) && !CASCFile.FileNames.ContainsKey(hash);
 
         public override void Clear()
         {
