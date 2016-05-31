@@ -190,8 +190,12 @@ namespace CASCExplorer
                         if (ext == ".m2")
                         {
                             using (var m2file = _casc.OpenFile(unknownFile.Hash))
+                            using (var br = new BinaryReader(m2file))
                             {
-                                // TODO: read name
+                                m2file.Position = 0x138;
+                                string m2name = br.ReadCString();
+
+                                unknownFile.FullName = "unknown\\" + m2name + ".m2";
                             }
                         }
                     }
@@ -452,12 +456,26 @@ namespace CASCExplorer
                     if (_casc.Encoding.GetEntry(rootInfosLocale.First().MD5, out enc))
                     {
                         size = enc.Size.ToString("N", sizeNumberFmt) ?? "0";
+                    }
+                    else
+                    {
+                        size = "NYI";
 
-                        foreach (var rootInfo in rootInfosLocale)
+                        if (_casc.Root is OwRootHandler)
                         {
-                            localeFlags |= rootInfo.LocaleFlags;
-                            contentFlags |= rootInfo.ContentFlags;
+                            OWRootEntry rootEntry;
+
+                            if ((_casc.Root as OwRootHandler).GetEntry(entry.Hash, out rootEntry))
+                            {
+                                size = rootEntry.pkgIndexRec.Size.ToString("N", sizeNumberFmt) ?? "0";
+                            }
                         }
+                    }
+
+                    foreach (var rootInfo in rootInfosLocale)
+                    {
+                        localeFlags |= rootInfo.LocaleFlags;
+                        contentFlags |= rootInfo.ContentFlags;
                     }
                 }
                 else
@@ -553,7 +571,10 @@ namespace CASCExplorer
             using (StreamWriter sw = new StreamWriter("listfile_export.txt"))
             {
                 foreach (var file in CASCFolder.GetFiles(_root.Entries.Select(kv => kv.Value), null, true).OrderBy(f => f.FullName, StringComparer.OrdinalIgnoreCase))
-                    sw.WriteLine(file.FullName);
+                {
+                    if (CASC.FileExists(file.Hash))
+                        sw.WriteLine(file.FullName);
+                }
             }
         }
 

@@ -1,4 +1,5 @@
 ﻿using System;
+using System.Diagnostics;
 using System.IO;
 using System.Linq;
 
@@ -158,6 +159,30 @@ namespace CASCExplorer
             if (GetEncodingEntry(hash, out encInfo))
                 return OpenFile(encInfo.Key);
 
+            if (RootHandler is OwRootHandler)
+            {
+                OWRootEntry entry;
+
+                if ((RootHandler as OwRootHandler).GetEntry(hash, out entry))
+                {
+                    if ((entry.baseEntry.ContentFlags & ContentFlags.Bundle) != ContentFlags.None)
+                    {
+                        if (Encoding.GetEntry(entry.pkgIndex.bundleContentKey, out encInfo))
+                        {
+                            using (Stream bundle = OpenFile(encInfo.Key))
+                            {
+                                MemoryStream ms = new MemoryStream();
+
+                                bundle.Position = entry.pkgIndexRec.Offset;
+                                bundle.CopyBytes(ms, entry.pkgIndexRec.Size);
+
+                                return ms;
+                            }
+                        }
+                    }
+                }
+            }
+
             if (CASCConfig.ThrowOnFileNotFound)
                 throw new FileNotFoundException(string.Format("{0:X16}", hash));
             return null;
@@ -173,6 +198,37 @@ namespace CASCExplorer
                 return;
             }
 
+            if (RootHandler is OwRootHandler)
+            {
+                OWRootEntry entry;
+
+                if ((RootHandler as OwRootHandler).GetEntry(hash, out entry))
+                {
+                    if ((entry.baseEntry.ContentFlags & ContentFlags.Bundle) != ContentFlags.None)
+                    {
+                        if (Encoding.GetEntry(entry.pkgIndex.bundleContentKey, out encInfo))
+                        {
+                            using (Stream bundle = OpenFile(encInfo.Key))
+                            {
+                                string fullPath = Path.Combine(extractPath, fullName);
+                                string dir = Path.GetDirectoryName(fullPath);
+
+                                if (!Directory.Exists(dir))
+                                    Directory.CreateDirectory(dir);
+
+                                using (var fileStream = File.Open(fullPath, FileMode.Create))
+                                {
+                                    bundle.Position = entry.pkgIndexRec.Offset;
+                                    bundle.CopyBytes(fileStream, entry.pkgIndexRec.Size);
+                                }
+                            }
+
+                            return;
+                        }
+                    }
+                }
+            }
+
             if (CASCConfig.ThrowOnFileNotFound)
                 throw new FileNotFoundException(fullName);
         }
@@ -186,6 +242,10 @@ namespace CASCExplorer
         protected override Stream GetLocalDataStream(MD5Hash key)
         {
             IndexEntry idxInfo = LocalIndex.GetIndexInfo(key);
+            if (idxInfo == null)
+            {
+                Debug.Print("Local index missing: {0}", key.ToHexString());
+            }
             return GetLocalDataStreamInternal(idxInfo, key);
         }
 

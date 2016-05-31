@@ -36,7 +36,13 @@ namespace CASCExplorer
     public enum ContentFlags : uint
     {
         None = 0,
+        F00000001 = 0x1,
+        F00000002 = 0x2,
+        F00000004 = 0x4,
         LowViolence = 0x80, // many models have this flag
+        F10000000 = 0x10000000,
+        F20000000 = 0x20000000, // added in 21737
+        Bundle = 0x40000000,
         NoCompression = 0x80000000 // sounds have this flag
     }
 
@@ -75,7 +81,7 @@ namespace CASCExplorer
                 if (localeFlags == LocaleFlags.None)
                     throw new Exception("block.LocaleFlags == LocaleFlags.None");
 
-                if (contentFlags != ContentFlags.None && (contentFlags & (ContentFlags.LowViolence | ContentFlags.NoCompression)) == 0)
+                if (contentFlags != ContentFlags.None && (contentFlags & (ContentFlags.LowViolence | ContentFlags.NoCompression | ContentFlags.F20000000)) == 0)
                     throw new Exception("block.ContentFlags != ContentFlags.None");
 
                 RootEntry[] entries = new RootEntry[count];
@@ -217,7 +223,7 @@ namespace CASCExplorer
                     {
                         string dirName = br.ReadString();
 
-                        //Logger.WriteLine(dirName);
+                        Logger.WriteLine(dirName);
 
                         int numFiles = br.ReadInt32();
 
@@ -344,7 +350,7 @@ namespace CASCExplorer
                     {
                         bw.Write(dir.Key); // dir name
 
-                        //Logger.WriteLine(dir.Key);
+                        Logger.WriteLine(dir.Key);
 
                         bw.Write(dirData[dir.Key].Count); // count of files in dir
 
@@ -404,7 +410,7 @@ namespace CASCExplorer
             return root;
         }
 
-        public bool IsUnknownFile(ulong hash) => !CASCFile.FileNames.ContainsKey(hash);
+        public bool IsUnknownFile(ulong hash) => RootData.ContainsKey(hash) && !CASCFile.FileNames.ContainsKey(hash);
 
         public override void Clear()
         {
@@ -428,7 +434,12 @@ namespace CASCExplorer
                 if (!CASCFile.FileNames.TryGetValue(fd.Key, out name))
                     name = fd.Key.ToString("X16");
 
-                Logger.WriteLine("{0:D7} {1:X16} {2} {3}", GetFileDataIdByHash(fd.Key), fd.Key, string.Join(",", fd.Value.Select(r => r.LocaleFlags.ToString())), name);
+                Logger.WriteLine("{0:D7} {1:X16} {2} {3}", GetFileDataIdByHash(fd.Key), fd.Key, fd.Value.Aggregate(LocaleFlags.None, (a, b) => a | b.LocaleFlags), name);
+
+                foreach (var entry in fd.Value)
+                {
+                    Logger.WriteLine("\t{0} - {1} - {2}", entry.MD5.ToHexString(), entry.LocaleFlags, entry.ContentFlags);
+                }
             }
         }
     }
