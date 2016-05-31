@@ -68,7 +68,6 @@ namespace CASCExplorer
         private readonly int HeaderSize;
         private const uint DB3FmtSig = 0x33424457;          // WDB3
         private const uint DB4FmtSig = 0x34424457;          // WDB4
-        private const uint DB5FmtSig = 0x35424457;          // WDB5
 
         public int RecordsCount { get; private set; }
         public int FieldsCount { get; private set; }
@@ -94,7 +93,7 @@ namespace CASCExplorer
 
                 uint magic = reader.ReadUInt32();
 
-                if (magic != DB3FmtSig && magic != DB4FmtSig && magic != DB5FmtSig)
+                if (magic != DB3FmtSig && magic != DB4FmtSig)
                 {
                     throw new InvalidDataException(string.Format("DB3 file is corrupted!"));
                 }
@@ -114,10 +113,7 @@ namespace CASCExplorer
                 uint tableHash = reader.ReadUInt32();
                 uint build = reader.ReadUInt32();
 
-                if (magic != DB5FmtSig)
-                {
-                    uint unk1 = reader.ReadUInt32(); // timemodified
-                }
+                uint unk1 = reader.ReadUInt32(); // timemodified
 
                 int MinId = reader.ReadInt32();
                 int MaxId = reader.ReadInt32();
@@ -127,11 +123,6 @@ namespace CASCExplorer
                 if (magic == DB4FmtSig)
                 {
                     int metaFlags = reader.ReadInt32();
-                }
-
-                if (magic == DB5FmtSig)
-                {
-                    reader.BaseStream.Position += FieldsCount * 4;
                 }
 
                 int stringTableStart = HeaderSize + RecordsCount * RecordSize;

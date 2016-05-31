@@ -119,31 +119,31 @@ namespace CASCExplorer
                         }
                     }
 
-                    if (false && _casc.FileExists("DBFilesClient\\SoundKit.db2") && _casc.FileExists("DBFilesClient\\SoundKitEntry.db2"))
+                    if (_casc.FileExists("DBFilesClient\\SoundKit.db2") && _casc.FileExists("DBFilesClient\\SoundKitEntry.db2"))
                     {
                         using (Stream skStream = _casc.OpenFile("DBFilesClient\\SoundKit.db2"))
                         using (Stream skeStream = _casc.OpenFile("DBFilesClient\\SoundKitEntry.db2"))
                         {
-                            DB3Reader sk = new DB3Reader(skStream);
-                            DB3Reader ske = new DB3Reader(skeStream);
+                            DB5Reader sk = new DB5Reader(skStream);
+                            DB5Reader ske = new DB5Reader(skeStream);
 
                             Dictionary<int, List<int>> lookup = new Dictionary<int, List<int>>();
 
                             foreach (var row in ske)
                             {
-                                int soundKitId = row.Value.GetField<ushort>(0xC);
+                                int soundKitId = row.Value.GetField<int>(3);
 
                                 if (!lookup.ContainsKey(soundKitId))
                                     lookup[soundKitId] = new List<int>();
 
-                                lookup[soundKitId].Add(row.Value.GetField<int>(0x4));
+                                lookup[soundKitId].Add(row.Value.GetField<int>(0));
                             }
 
                             foreach (var row in sk)
                             {
-                                string name = row.Value.GetField<string>(0x4).Replace(':', '_');
+                                string name = row.Value.GetField<string>(0).Replace(':', '_');
 
-                                int type = row.Value.GetField<byte>(0x2C);
+                                int type = row.Value.GetField<byte>(12);
 
                                 List<int> ske_entries;
 

@@ -263,12 +263,12 @@ namespace CASCExplorer
 
             using (var s = casc.OpenFile("DBFilesClient\\FileDataComplete.db2"))
             {
-                DB3Reader fd = new DB3Reader(s);
+                DB5Reader fd = new DB5Reader(s);
 
                 foreach (var row in fd)
                 {
-                    string path = row.Value.GetField<string>(4);
-                    string name = row.Value.GetField<string>(8);
+                    string path = row.Value.GetField<string>(0);
+                    string name = row.Value.GetField<string>(1);
 
                     string fullname = path + name;
 
