@@ -195,7 +195,7 @@ namespace CASCExplorer
                                 m2file.Position = 0x138;
                                 string m2name = br.ReadCString();
 
-                                unknownFile.FullName = m2name + ".m2";
+                                unknownFile.FullName = "unknown\\" + m2name + ".m2";
                             }
                         }
                     }
