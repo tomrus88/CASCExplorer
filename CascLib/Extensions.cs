@@ -99,7 +99,7 @@ namespace CASCExplorer
         {
             StringBuilder sb = new StringBuilder(bits.Length);
 
-            for (int i = 0; i < bits.Count; ++i)
+            for (int i = 0; i < bits.Length; ++i)
             {
                 sb.Append(bits[i] ? "1" : "0");
             }

@@ -244,7 +244,7 @@ namespace CASCExplorer
             IndexEntry idxInfo = LocalIndex.GetIndexInfo(key);
             if (idxInfo == null)
             {
-                Debug.Print("Local index missing: {0}", key.ToHexString());
+                Logger.WriteLine("Local index missing: {0}", key.ToHexString());
             }
             return GetLocalDataStreamInternal(idxInfo, key);
         }
@@ -261,7 +261,7 @@ namespace CASCExplorer
             CDNIndex = null;
 
             foreach (var stream in DataStreams)
-                stream.Value.Close();
+                stream.Value.Dispose();
 
             DataStreams.Clear();
 
