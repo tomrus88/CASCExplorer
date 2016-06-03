@@ -308,7 +308,8 @@ namespace CASCExplorer
 
                 using (var fs = new FileStream("listfile.bin", FileMode.Create))
                 using (var bw = new BinaryWriter(fs))
-                using (var sr = new StreamReader(path))
+                using (var fs2 = File.Open(path, FileMode.Open))
+                using (var sr = new StreamReader(fs2))
                 {
                     string file;
 

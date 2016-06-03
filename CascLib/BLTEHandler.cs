@@ -251,10 +251,10 @@ namespace CASCExplorer
 
         public void Dispose()
         {
-            _reader.Close();
+            _reader.Dispose();
 
             if (!_leaveOpen)
-                _memStream.Close();
+                _memStream.Dispose();
         }
     }
 }
