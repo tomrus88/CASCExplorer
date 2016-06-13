@@ -64,6 +64,21 @@ namespace CASCExplorer
             }
         }
 
+        public static void ExtractToFile(this Stream input, string path, string name)
+        {
+            string fullPath = Path.Combine(path, name);
+            string dir = Path.GetDirectoryName(fullPath);
+
+            if (!Directory.Exists(dir))
+                Directory.CreateDirectory(dir);
+
+            using (var fileStream = File.Open(fullPath, FileMode.Create))
+            {
+                input.Position = 0;
+                input.CopyTo(fileStream);
+            }
+        }
+
         public static string ToHexString(this byte[] data)
         {
             return BitConverter.ToString(data).Replace("-", string.Empty);

@@ -102,7 +102,7 @@ namespace CASCExplorer
             if (idxInfo == null)
                 CDNIndexData.TryGetValue(key, out idxInfo);
 
-            return OpenFileLocalInternal(idxInfo, key);
+            return OpenFileOnlineInternal(idxInfo, key);
         }
 
         protected override Stream GetLocalDataStream(MD5Hash key)

@@ -236,7 +236,7 @@ namespace CASCExplorer
         protected override Stream OpenFileOnline(MD5Hash key)
         {
             IndexEntry idxInfo = CDNIndex.GetIndexInfo(key);
-            return OpenFileLocalInternal(idxInfo, key);
+            return OpenFileOnlineInternal(idxInfo, key);
         }
 
         protected override Stream GetLocalDataStream(MD5Hash key)

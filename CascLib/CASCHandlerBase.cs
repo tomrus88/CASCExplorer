@@ -72,23 +72,17 @@ namespace CASCExplorer
 
         protected abstract Stream OpenFileOnline(MD5Hash key);
 
-        protected Stream OpenFileLocalInternal(IndexEntry idxInfo, MD5Hash key)
+        protected Stream OpenFileOnlineInternal(IndexEntry idxInfo, MD5Hash key)
         {
             if (idxInfo != null)
             {
-                using (Stream s = CDNIndex.OpenDataFile(idxInfo))
-                using (BLTEHandler blte = new BLTEHandler(s, key))
-                {
-                    return blte.OpenFile(true);
-                }
+                Stream s = CDNIndex.OpenDataFile(idxInfo);
+                return new BLTEStream(s, key);
             }
             else
             {
-                using (Stream s = CDNIndex.OpenDataFileDirect(key))
-                using (BLTEHandler blte = new BLTEHandler(s, key))
-                {
-                    return blte.OpenFile(true);
-                }
+                Stream s = CDNIndex.OpenDataFileDirect(key);
+                return new BLTEStream(s, key);
             }
         }
 
@@ -96,10 +90,7 @@ namespace CASCExplorer
         {
             Stream stream = GetLocalDataStream(key);
 
-            using (BLTEHandler blte = new BLTEHandler(stream, key))
-            {
-                return blte.OpenFile(true);
-            }
+            return new BLTEStream(stream, key);
         }
 
         protected abstract Stream GetLocalDataStream(MD5Hash key);
@@ -157,7 +148,7 @@ namespace CASCExplorer
             if (idxInfo != null)
             {
                 using (Stream s = CDNIndex.OpenDataFile(idxInfo))
-                using (BLTEHandler blte = new BLTEHandler(s, key))
+                using (BLTEStream blte = new BLTEStream(s, key))
                 {
                     blte.ExtractToFile(path, name);
                 }
@@ -165,7 +156,7 @@ namespace CASCExplorer
             else
             {
                 using (Stream s = CDNIndex.OpenDataFileDirect(key))
-                using (BLTEHandler blte = new BLTEHandler(s, key))
+                using (BLTEStream blte = new BLTEStream(s, key))
                 {
                     blte.ExtractToFile(path, name);
                 }
@@ -176,7 +167,7 @@ namespace CASCExplorer
         {
             Stream stream = GetLocalDataStream(key);
 
-            using (BLTEHandler blte = new BLTEHandler(stream, key))
+            using (BLTEStream blte = new BLTEStream(stream, key))
             {
                 blte.ExtractToFile(path, name);
             }

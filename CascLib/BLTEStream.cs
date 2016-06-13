@@ -3,7 +3,6 @@ using System.IO;
 using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
-using System.Text;
 
 namespace CASCExplorer
 {
@@ -26,43 +25,47 @@ namespace CASCExplorer
         public byte[] Data;
     }
 
-    class BLTEHandler : IDisposable
+    class BLTEStream : Stream
     {
         private BinaryReader _reader;
         private MD5 _md5 = MD5.Create();
         private MemoryStream _memStream;
-        private bool _leaveOpen;
+        private DataBlock[] _dataBlocks;
+        private Stream _stream;
+        private int _blocksIndex;
+        private long _length;
 
         private const byte ENCRYPTION_SALSA20 = 0x53;
         private const byte ENCRYPTION_ARC4 = 0x41;
         private const int BLTE_MAGIC = 0x45544c42;
 
-        public BLTEHandler(Stream stream, MD5Hash md5)
+        public override bool CanRead => true;
+
+        public override bool CanSeek => true;
+
+        public override bool CanWrite => false;
+
+        public override long Length => _length;
+
+        public override long Position
         {
-            _reader = new BinaryReader(stream, Encoding.ASCII, true);
-            Parse(md5);
-        }
-
-        public void ExtractToFile(string path, string name)
-        {
-            string fullPath = Path.Combine(path, name);
-            string dir = Path.GetDirectoryName(fullPath);
-
-            if (!Directory.Exists(dir))
-                Directory.CreateDirectory(dir);
-
-            using (var fileStream = File.Open(fullPath, FileMode.Create))
+            get { return _memStream.Position; }
+            set
             {
-                _memStream.Position = 0;
-                _memStream.CopyTo(fileStream);
+                while (value > _memStream.Length)
+                    if (!ProcessNextBlock())
+                        break;
+
+                _memStream.Position = value;
             }
         }
 
-        public MemoryStream OpenFile(bool leaveOpen = false)
+        public BLTEStream(Stream src, MD5Hash md5)
         {
-            _leaveOpen = leaveOpen;
-            _memStream.Position = 0;
-            return _memStream;
+            _stream = src;
+            _reader = new BinaryReader(src);
+
+            Parse(md5);
         }
 
         private void Parse(MD5Hash md5)
@@ -116,7 +119,7 @@ namespace CASCExplorer
                     throw new BLTEDecoderException("not enough data: {0}", frameHeaderSize);
             }
 
-            DataBlock[] blocks = new DataBlock[numBlocks];
+            _dataBlocks = new DataBlock[numBlocks];
 
             for (int i = 0; i < numBlocks; i++)
             {
@@ -135,27 +138,19 @@ namespace CASCExplorer
                     block.Hash = default(MD5Hash);
                 }
 
-                blocks[i] = block;
+                _dataBlocks[i] = block;
             }
 
-            _memStream = new MemoryStream(blocks.Sum(b => b.DecompSize));
+            _memStream = new MemoryStream(_dataBlocks.Sum(b => b.DecompSize));
 
-            for (int i = 0; i < blocks.Length; i++)
-            {
-                DataBlock block = blocks[i];
+            ProcessNextBlock();
 
-                block.Data = _reader.ReadBytes(block.CompSize);
+            _length = headerSize == 0 ? _memStream.Length : _memStream.Capacity;
 
-                if (!block.Hash.IsZeroed() && CASCConfig.ValidateData)
-                {
-                    byte[] blockHash = _md5.ComputeHash(block.Data);
-
-                    if (!block.Hash.EqualsTo(blockHash))
-                        throw new BLTEDecoderException("MD5 mismatch");
-                }
-
-                HandleDataBlock(block.Data, i);
-            }
+            //for (int i = 0; i < _dataBlocks.Length; i++)
+            //{
+            //    ProcessNextBlock();
+            //}
         }
 
         private void HandleDataBlock(byte[] data, int index)
@@ -207,7 +202,7 @@ namespace CASCExplorer
             byte encType = data[dataOffset];
 
             if (encType != ENCRYPTION_SALSA20 && encType != ENCRYPTION_ARC4) // 'S' or 'A'
-                throw new BLTEDecoderException("encType != 0x53 && encType != 0x41");
+                throw new BLTEDecoderException("encType != ENCRYPTION_SALSA20 && encType != ENCRYPTION_ARC4");
 
             dataOffset++;
 
@@ -235,7 +230,7 @@ namespace CASCExplorer
             else
             {
                 // ARC4 ?
-                throw new BLTEDecoderException("encType A not implemented");
+                throw new BLTEDecoderException("encType ENCRYPTION_ARC4 not implemented");
             }
         }
 
@@ -249,12 +244,101 @@ namespace CASCExplorer
             }
         }
 
-        public void Dispose()
+        public override void Flush()
         {
-            _reader.Dispose();
+            throw new NotSupportedException();
+        }
 
-            if (!_leaveOpen)
-                _memStream.Dispose();
+        public override int Read(byte[] buffer, int offset, int count)
+        {
+            if (_memStream.Position + count > _memStream.Length && _blocksIndex < _dataBlocks.Length)
+            {
+                if (!ProcessNextBlock())
+                    return 0;
+
+                return Read(buffer, offset, count);
+            }
+            else
+            {
+                return _memStream.Read(buffer, offset, count);
+            }
+        }
+
+        private bool ProcessNextBlock()
+        {
+            if (_blocksIndex == _dataBlocks.Length)
+                return false;
+
+            long oldPos = _memStream.Position;
+            _memStream.Position = _memStream.Length;
+
+            DataBlock block = _dataBlocks[_blocksIndex];
+
+            block.Data = _reader.ReadBytes(block.CompSize);
+
+            if (!block.Hash.IsZeroed() && CASCConfig.ValidateData)
+            {
+                byte[] blockHash = _md5.ComputeHash(block.Data);
+
+                if (!block.Hash.EqualsTo(blockHash))
+                    throw new BLTEDecoderException("MD5 mismatch");
+            }
+
+            HandleDataBlock(block.Data, _blocksIndex);
+            _blocksIndex++;
+
+            _memStream.Position = oldPos;
+
+            return true;
+        }
+
+        public override long Seek(long offset, SeekOrigin origin)
+        {
+            switch (origin)
+            {
+                case SeekOrigin.Begin:
+                    Position = offset;
+                    break;
+                case SeekOrigin.Current:
+                    Position += offset;
+                    break;
+                case SeekOrigin.End:
+                    Position = Length + offset;
+                    break;
+            }
+
+            return Position;
+        }
+
+        public override void SetLength(long value)
+        {
+            throw new NotSupportedException();
+        }
+
+        public override void Write(byte[] buffer, int offset, int count)
+        {
+            throw new InvalidOperationException();
+        }
+
+        protected override void Dispose(bool disposing)
+        {
+            try
+            {
+                if (disposing)
+                {
+                    if (_stream != null)
+                        _stream.Dispose();
+                    if (_reader != null)
+                        _reader.Dispose();
+                }
+            }
+            finally
+            {
+                _stream = null;
+                _reader = null;
+
+                base.Dispose(disposing);
+            }
         }
     }
 }

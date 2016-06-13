@@ -2,6 +2,8 @@
 using System.Collections.Generic;
 using System.IO;
 using System.Net;
+//using System.Net.Http;
+//using System.Net.Http.Headers;
 
 namespace CASCExplorer
 {
@@ -143,6 +145,18 @@ namespace CASCExplorer
                 return ms;
             }
 
+            //using (HttpClient client = new HttpClient())
+            //{
+            //    client.DefaultRequestHeaders.Range = new RangeHeaderValue(entry.Offset, entry.Offset + entry.Size - 1);
+
+            //    var resp = client.GetStreamAsync(url).Result;
+
+            //    MemoryStream ms = new MemoryStream(entry.Size);
+            //    resp.CopyBytes(ms, entry.Size);
+            //    ms.Position = 0;
+            //    return ms;
+            //}
+
             HttpWebRequest req = WebRequest.CreateHttp(url);
             req.AddRange(entry.Offset, entry.Offset + entry.Size - 1);
             using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
@@ -186,6 +200,16 @@ namespace CASCExplorer
 
         public static Stream OpenFileDirect(string url)
         {
+            //using (HttpClient client = new HttpClient())
+            //{
+            //    var resp = client.GetStreamAsync(url).Result;
+
+            //    MemoryStream ms = new MemoryStream();
+            //    resp.CopyTo(ms);
+            //    ms.Position = 0;
+            //    return ms;
+            //}
+
             HttpWebRequest req = WebRequest.CreateHttp(url);
             using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
             {

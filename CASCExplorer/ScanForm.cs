@@ -18,7 +18,7 @@ namespace CASCExplorer
 
         private int NumFiles;
         private int NumScanned;
-        private bool running = false;
+        private bool running;
 
         private class ScanResult
         {
@@ -92,6 +92,8 @@ namespace CASCExplorer
             running = !running;
             if (running)
             {
+                Reset();
+                running = true;
                 scanButton.Text = "Cancel";
                 scanBackgroundWorker.RunWorkerAsync();
             }
@@ -128,6 +130,7 @@ namespace CASCExplorer
         private void scanBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
         {
             running = false;
+            scanButton.Text = "Start";
             scanButton.Enabled = true;
             scanLabel.Text = "Scan completed.";
             scanProgressBar.Value = 100;
@@ -154,12 +157,7 @@ namespace CASCExplorer
             foreach (var entry in folder.Entries)
             {
                 if (entry.Value is CASCFile)
-                {
-                    var rootEntries = CASC.Root.GetEntries(entry.Value.Hash);
-
-                    foreach (var rootEntry in rootEntries)
-                        ScanFile(entry.Value as CASCFile);
-                }
+                    ScanFile(entry.Value as CASCFile);
                 else
                     ScanFolder(entry.Value as CASCFolder);
             }

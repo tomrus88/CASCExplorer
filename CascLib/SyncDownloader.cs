@@ -1,5 +1,6 @@
 ﻿using System.IO;
 using System.Net;
+//using System.Net.Http;
 
 namespace CASCExplorer
 {
@@ -15,6 +16,19 @@ namespace CASCExplorer
         public void DownloadFile(string url, string path)
         {
             Directory.CreateDirectory(Path.GetDirectoryName(path));
+
+            //using (var client = new HttpClient())
+            //{
+            //    var msg = client.GetAsync(url).Result;
+
+            //    using (Stream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
+            //    {
+            //        //CacheMetaData.AddToCache(resp, path);
+            //        //CopyToStream(stream, fs, resp.ContentLength);
+
+            //        msg.Content.CopyToAsync(fs).Wait();
+            //    }
+            //}
 
             HttpWebRequest request = WebRequest.CreateHttp(url);
 
