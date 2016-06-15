@@ -63,9 +63,11 @@ namespace CASCExplorer
         private MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
         private Dictionary<int, ulong> FileDataStore = new Dictionary<int, ulong>();
         private Dictionary<ulong, int> FileDataStoreReverse = new Dictionary<ulong, int>();
+        private Dictionary<ulong, bool> UnknownFiles = new Dictionary<ulong, bool>();
 
         public override int Count => RootData.Count;
         public override int CountTotal => RootData.Sum(re => re.Value.Count);
+        public override int CountUnknown => UnknownFiles.Count;
 
         public WowRootHandler(BinaryReader stream, BackgroundWorkerEx worker)
         {
@@ -375,7 +377,7 @@ namespace CASCExplorer
 
             // Reset counts
             CountSelect = 0;
-            CountUnknown = 0;
+            UnknownFiles.Clear();
 
             // Create new tree based on specified locale
             foreach (var rootEntry in RootData)
@@ -399,7 +401,7 @@ namespace CASCExplorer
                 {
                     file = "unknown\\" + rootEntry.Key.ToString("X16") + "_" + GetFileDataIdByHash(rootEntry.Key);
 
-                    CountUnknown++;
+                    UnknownFiles[rootEntry.Key] = true;
                 }
 
                 CreateSubTree(root, rootEntry.Key, file);
@@ -411,7 +413,7 @@ namespace CASCExplorer
             return root;
         }
 
-        public bool IsUnknownFile(ulong hash) => RootData.ContainsKey(hash) && !CASCFile.FileNames.ContainsKey(hash);
+        public bool IsUnknownFile(ulong hash) => UnknownFiles.ContainsKey(hash);
 
         public override void Clear()
         {
@@ -421,6 +423,8 @@ namespace CASCExplorer
             FileDataStore = null;
             FileDataStoreReverse.Clear();
             FileDataStoreReverse = null;
+            UnknownFiles.Clear();
+            UnknownFiles = null;
             Root?.Entries.Clear();
             Root = null;
             CASCFile.FileNames.Clear();

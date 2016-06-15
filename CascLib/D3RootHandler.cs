@@ -73,30 +73,27 @@ namespace CASCExplorer
 
                 using (BinaryReader s = new BinaryReader(casc.OpenFile(enc.Key)))
                 {
-                    if (s != null)
+                    uint magic = s.ReadUInt32();
+
+                    int nEntries0 = s.ReadInt32();
+
+                    for (int i = 0; i < nEntries0; i++)
                     {
-                        uint magic = s.ReadUInt32();
+                        entries.Add(D3RootEntry.Read(0, s));
+                    }
 
-                        int nEntries0 = s.ReadInt32();
+                    int nEntries1 = s.ReadInt32();
 
-                        for (int i = 0; i < nEntries0; i++)
-                        {
-                            entries.Add(D3RootEntry.Read(0, s));
-                        }
+                    for (int i = 0; i < nEntries1; i++)
+                    {
+                        entries.Add(D3RootEntry.Read(1, s));
+                    }
 
-                        int nEntries1 = s.ReadInt32();
+                    int nNamedEntries = s.ReadInt32();
 
-                        for (int i = 0; i < nEntries1; i++)
-                        {
-                            entries.Add(D3RootEntry.Read(1, s));
-                        }
-
-                        int nNamedEntries = s.ReadInt32();
-
-                        for (int i = 0; i < nNamedEntries; i++)
-                        {
-                            entries.Add(D3RootEntry.Read(2, s));
-                        }
+                    for (int i = 0; i < nNamedEntries; i++)
+                    {
+                        entries.Add(D3RootEntry.Read(2, s));
                     }
                 }
 

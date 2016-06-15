@@ -108,7 +108,7 @@ namespace CASCExplorer
         {
             try
             {
-                Scan();
+                ScanFolder(Root);
             }
             catch (OperationCanceledException)
             {
@@ -145,11 +145,6 @@ namespace CASCExplorer
                 Reset();
                 scanLabel.Text = "Scan cancelled.";
             }
-        }
-
-        private void Scan()
-        {
-            ScanFolder(Root);
         }
 
         private void ScanFolder(CASCFolder folder)
