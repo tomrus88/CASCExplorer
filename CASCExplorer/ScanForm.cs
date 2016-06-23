@@ -119,12 +119,8 @@ namespace CASCExplorer
         private void scanBackgroundWorker_ProgressChanged(object sender, ProgressChangedEventArgs e)
         {
             scanProgressBar.Value = e.ProgressPercentage;
-            if (e.UserState is ScanProgressState)
-            {
-                ScanProgressState state = (ScanProgressState)e.UserState;
-                scanLabel.Text = "Scanning '" + state.CurrentFileName + "' ...";
-                progressLabel.Text = state.NumFilesScanned + "/" + state.NumFilesTotal;
-            }
+            scanLabel.Text = string.Format("Scanning '{0}' ...", e.UserState);
+            progressLabel.Text = NumScanned + "/" + NumFiles;
         }
 
         private void scanBackgroundWorker_RunWorkerCompleted(object sender, RunWorkerCompletedEventArgs e)
@@ -137,6 +133,7 @@ namespace CASCExplorer
 
             // display unique file names without finding place
             filenameTextBox.Clear();
+
             foreach (var uniqueFileName in uniqueFileNames)
                 filenameTextBox.AppendText(uniqueFileName.NewFile + Environment.NewLine);
 
@@ -158,13 +155,6 @@ namespace CASCExplorer
             }
         }
 
-        private class ScanProgressState
-        {
-            public int NumFilesScanned;
-            public int NumFilesTotal;
-            public string CurrentFileName;
-        }
-
         private void ScanFile(CASCFile file)
         {
             if (scanBackgroundWorker.CancellationPending)
@@ -178,11 +168,8 @@ namespace CASCExplorer
             {
                 // only report progress when not skipping a file, it's faster that way
                 int progress = (int)(NumScanned / (float)NumFiles * 100);
-                ScanProgressState state = new ScanProgressState();
-                state.NumFilesScanned = NumScanned;
-                state.NumFilesTotal = NumFiles;
-                state.CurrentFileName = file.FullName;
-                scanBackgroundWorker.ReportProgress(progress, state);
+
+                scanBackgroundWorker.ReportProgress(progress, file.FullName);
 
                 foreach (var fileName in fileNames)
                 {

@@ -79,7 +79,7 @@ namespace CASCExplorer
                     if (_casc.Encoding.GetEntry(file.MD5, out enc))
                         _casc.SaveFileTo(enc.Key, Path.Combine("data", build, "install_files"), file.Name);
 
-                    progress.Report((int)(++numDone / (float)numFiles * 100.0f));
+                    progress.Report((int)(++numDone / (float)numFiles * 100));
                 }
             });
         }
@@ -200,7 +200,7 @@ namespace CASCExplorer
                         }
                     }
 
-                    progress.Report((int)(++numDone / (float)numTotal * 100.0f));
+                    progress.Report((int)(++numDone / (float)numTotal * 100));
                 }
 
                 _casc.Root.Dump();
