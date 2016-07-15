@@ -587,6 +587,8 @@ namespace CASCExplorer
 
             _casc.SaveFileTo(_casc.Config.EncodingKey, ".", "encoding");
 
+            //_casc.SaveFileTo(_casc.Config.PatchKey, ".", "patch");
+
             if (_casc.Encoding.GetEntry(_casc.Config.RootMD5, out enc))
                 _casc.SaveFileTo(enc.Key, ".", "root");
 
@@ -595,6 +597,9 @@ namespace CASCExplorer
 
             if (_casc.Encoding.GetEntry(_casc.Config.DownloadMD5, out enc))
                 _casc.SaveFileTo(enc.Key, ".", "download");
+
+            if (_casc.Encoding.GetEntry(_casc.Config.PartialPriorityMD5, out enc))
+                _casc.SaveFileTo(enc.Key, ".", "partial-priority");
         }
     }
 }

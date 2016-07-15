@@ -127,6 +127,8 @@ namespace CASCExplorer
         public static bool ThrowOnFileNotFound { get; set; } = true;
         public static LoadFlags LoadFlags { get; set; } = LoadFlags.None;
 
+        private int _versionsIndex;
+
         public static CASCConfig LoadOnlineStorageConfig(string product, string region, bool useCurrentBuild = false)
         {
             var config = new CASCConfig { OnlineMode = true };
@@ -144,20 +146,18 @@ namespace CASCExplorer
                 config._VersionsData = VerBarConfig.ReadVerBarConfig(versionsStream);
             }
 
-            int versionIndex = 0;
-
             for (int i = 0; i < config._VersionsData.Count; ++i)
             {
                 if (config._VersionsData[i]["Region"] == region)
                 {
-                    versionIndex = i;
+                    config._versionsIndex = i;
                     break;
                 }
             }
 
             config.GameType = CASCGame.DetectOnlineGame(product);
 
-            string cdnKey = config._VersionsData[versionIndex]["CDNConfig"];
+            string cdnKey = config._VersionsData[config._versionsIndex]["CDNConfig"];
             using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, cdnKey))
             {
                 config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
@@ -193,7 +193,7 @@ namespace CASCExplorer
             //        config.ActiveBuild = buildIndex;
             //}
 
-            using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, config._VersionsData[versionIndex]["BuildConfig"]))
+            using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, config._VersionsData[config._versionsIndex]["BuildConfig"]))
             {
                 var cfg = KeyValueConfig.ReadKeyValueConfig(stream);
                 config._Builds.Add(cfg);
@@ -218,16 +218,7 @@ namespace CASCExplorer
                 config._BuildInfo = VerBarConfig.ReadVerBarConfig(buildInfoStream);
             }
 
-            Dictionary<string, string> bi = null;
-
-            for (int i = 0; i < config._BuildInfo.Count; ++i)
-            {
-                if (config._BuildInfo[i]["Active"] == "1")
-                {
-                    bi = config._BuildInfo[i];
-                    break;
-                }
-            }
+            Dictionary<string, string> bi = config.GetActiveBuild();
 
             if (bi == null)
                 throw new Exception("Can't find active BuildInfoEntry");
@@ -255,13 +246,29 @@ namespace CASCExplorer
             return config;
         }
 
+        private Dictionary<string, string> GetActiveBuild()
+        {
+            if (_BuildInfo == null)
+                return null;
+
+            for (int i = 0; i < _BuildInfo.Count; ++i)
+            {
+                if (_BuildInfo[i]["Active"] == "1")
+                {
+                    return _BuildInfo[i];
+                }
+            }
+
+            return null;
+        }
+
         public string BasePath { get; private set; }
 
         public bool OnlineMode { get; private set; }
 
         public int ActiveBuild { get; set; }
 
-        public string BuildName { get { return _Builds[ActiveBuild]["root"][0]; } }
+        public string BuildName { get { return GetActiveBuild()?["Version"] ?? _VersionsData[_versionsIndex]["VersionsName"]; } }
 
         public string Product { get; private set; }
 
@@ -270,14 +277,34 @@ namespace CASCExplorer
             get { return _Builds[ActiveBuild]["root"][0].ToByteArray().ToMD5(); }
         }
 
+        public MD5Hash InstallMD5
+        {
+            get { return _Builds[ActiveBuild]["install"][0].ToByteArray().ToMD5(); }
+        }
+
+        public string InstallSize
+        {
+            get { return _Builds[ActiveBuild]["install-size"][0]; }
+        }
+
         public MD5Hash DownloadMD5
         {
             get { return _Builds[ActiveBuild]["download"][0].ToByteArray().ToMD5(); }
         }
 
-        public MD5Hash InstallMD5
+        public string DownloadSize
         {
-            get { return _Builds[ActiveBuild]["install"][0].ToByteArray().ToMD5(); }
+            get { return _Builds[ActiveBuild]["download-size"][0]; }
+        }
+
+        public MD5Hash PartialPriorityMD5
+        {
+            get { return _Builds[ActiveBuild]["partial-priority"][0].ToByteArray().ToMD5(); }
+        }
+
+        public string PartialPrioritySize
+        {
+            get { return _Builds[ActiveBuild]["partial-priority-size"][0]; }
         }
 
         public MD5Hash EncodingMD5
@@ -288,6 +315,21 @@ namespace CASCExplorer
         public MD5Hash EncodingKey
         {
             get { return _Builds[ActiveBuild]["encoding"][1].ToByteArray().ToMD5(); }
+        }
+
+        public string EncodingSize
+        {
+            get { return _Builds[ActiveBuild]["encoding-size"][0]; }
+        }
+
+        public MD5Hash PatchKey
+        {
+            get { return _Builds[ActiveBuild]["patch"][0].ToByteArray().ToMD5(); }
+        }
+
+        public string PatchSize
+        {
+            get { return _Builds[ActiveBuild]["patch-size"][0]; }
         }
 
         public string BuildUID
