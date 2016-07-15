@@ -32,7 +32,7 @@ namespace CASCExplorer
 
             HttpWebRequest request = WebRequest.CreateHttp(url);
 
-            using (HttpWebResponse resp = (HttpWebResponse)request.GetResponse())
+            using (HttpWebResponse resp = (HttpWebResponse)request.GetResponseAsync().Result)
             using (Stream stream = resp.GetResponseStream())
             using (Stream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
             {
@@ -45,7 +45,7 @@ namespace CASCExplorer
         {
             HttpWebRequest request = WebRequest.CreateHttp(url);
 
-            using (HttpWebResponse resp = (HttpWebResponse)request.GetResponse())
+            using (HttpWebResponse resp = (HttpWebResponse)request.GetResponseAsync().Result)
             using (Stream stream = resp.GetResponseStream())
             {
                 MemoryStream ms = new MemoryStream();
@@ -64,7 +64,7 @@ namespace CASCExplorer
                 HttpWebRequest request = WebRequest.CreateHttp(url);
                 request.Method = "HEAD";
 
-                using (HttpWebResponse resp = (HttpWebResponse)request.GetResponse())
+                using (HttpWebResponse resp = (HttpWebResponse)request.GetResponseAsync().Result)
                 {
                     return CacheMetaData.AddToCache(resp, file);
                 }

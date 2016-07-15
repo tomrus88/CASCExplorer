@@ -167,30 +167,36 @@ namespace CASCExplorer
 
             config._Builds = new List<KeyValueConfig>();
 
-            for (int i = 0; i < config._CDNConfig["builds"].Count; i++)
+            //for (int i = 0; i < config._CDNConfig["builds"].Count; i++)
+            //{
+            //    try
+            //    {
+            //        using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, config._CDNConfig["builds"][i]))
+            //        {
+            //            var cfg = KeyValueConfig.ReadKeyValueConfig(stream);
+            //            config._Builds.Add(cfg);
+            //        }
+            //    }
+            //    catch
+            //    {
+
+            //    }
+            //}
+
+            //if (useCurrentBuild)
+            //{
+            //    string buildKey = config._VersionsData[versionIndex]["BuildConfig"];
+
+            //    int buildIndex = config._CDNConfig["builds"].IndexOf(buildKey);
+
+            //    if (buildIndex != -1)
+            //        config.ActiveBuild = buildIndex;
+            //}
+
+            using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, config._VersionsData[versionIndex]["BuildConfig"]))
             {
-                try
-                {
-                    using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, config._CDNConfig["builds"][i]))
-                    {
-                        var cfg = KeyValueConfig.ReadKeyValueConfig(stream);
-                        config._Builds.Add(cfg);
-                    }
-                }
-                catch
-                {
-
-                }
-            }
-
-            if (useCurrentBuild)
-            {
-                string buildKey = config._VersionsData[versionIndex]["BuildConfig"];
-
-                int buildIndex = config._CDNConfig["builds"].IndexOf(buildKey);
-
-                if (buildIndex != -1)
-                    config.ActiveBuild = buildIndex;
+                var cfg = KeyValueConfig.ReadKeyValueConfig(stream);
+                config._Builds.Add(cfg);
             }
 
             return config;
@@ -255,7 +261,7 @@ namespace CASCExplorer
 
         public int ActiveBuild { get; set; }
 
-        public string BuildName { get { return _Builds[ActiveBuild]["build-name"][0]; } }
+        public string BuildName { get { return _Builds[ActiveBuild]["root"][0]; } }
 
         public string Product { get; private set; }
 

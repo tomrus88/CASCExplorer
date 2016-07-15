@@ -125,7 +125,7 @@ namespace CASCExplorer
                 CDNBuildsToolStripMenuItem.Enabled = true;
                 foreach (var bld in cfg.Builds)
                 {
-                    CDNBuildsToolStripMenuItem.DropDownItems.Add(bld["build-name"][0]);
+                    CDNBuildsToolStripMenuItem.DropDownItems.Add(bld["root"][0]);
                 }
             }
 

@@ -158,8 +158,9 @@ namespace CASCExplorer
             //}
 
             HttpWebRequest req = WebRequest.CreateHttp(url);
+            //req.Headers[HttpRequestHeader.Range] = string.Format("bytes={0}-{1}", entry.Offset, entry.Offset + entry.Size - 1);
             req.AddRange(entry.Offset, entry.Offset + entry.Size - 1);
-            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponseAsync().Result)
             {
                 MemoryStream ms = new MemoryStream(entry.Size);
                 resp.GetResponseStream().CopyBytes(ms, entry.Size);
@@ -211,7 +212,7 @@ namespace CASCExplorer
             //}
 
             HttpWebRequest req = WebRequest.CreateHttp(url);
-            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponse())
+            using (HttpWebResponse resp = (HttpWebResponse)req.GetResponseAsync().Result)
             {
                 MemoryStream ms = new MemoryStream();
                 resp.GetResponseStream().CopyTo(ms);

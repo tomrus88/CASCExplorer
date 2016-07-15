@@ -109,7 +109,7 @@ namespace CASCExplorer
             int MndxEntriesValid = stream.ReadInt32();                         // Number of valid MNDX root entries
             int MndxEntrySize = stream.ReadInt32();                            // Size of one MNDX root entry
 
-            if (MarInfoCount > CASC_MAX_MAR_FILES || MarInfoSize != Marshal.SizeOf(typeof(MARInfo)))
+            if (MarInfoCount > CASC_MAX_MAR_FILES || MarInfoSize != Marshal.SizeOf<MARInfo>())
                 throw new Exception("invalid root file (1)");
 
             for (int i = 0; i < MarInfoCount; i++)

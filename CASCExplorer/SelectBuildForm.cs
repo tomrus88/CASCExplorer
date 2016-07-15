@@ -12,7 +12,7 @@ namespace CASCExplorer
 
             foreach (var cfg in config.Builds)
             {
-                listBox1.Items.Add(cfg["build-name"][0]);
+                listBox1.Items.Add(cfg["root"][0]);
             }
 
             listBox1.SelectedIndex = 0;
