@@ -19,7 +19,7 @@ namespace CASCExplorer
         {
             if (fix)
             {
-                var tempstr = str.Replace('/', '\\').ToUpper();
+                var tempstr = str.Replace('/', '\\').ToUpperInvariant();
                 byte[] data = Encoding.ASCII.GetBytes(tempstr);
                 ComputeHash(data);
                 return hashValue;
