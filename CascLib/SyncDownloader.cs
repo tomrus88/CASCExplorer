@@ -36,7 +36,7 @@ namespace CASCExplorer
             using (Stream stream = resp.GetResponseStream())
             using (Stream fs = new FileStream(path, FileMode.Create, FileAccess.Write))
             {
-                CacheMetaData.AddToCache(resp, path);
+                //CacheMetaData.AddToCache(resp, path);
                 CopyToStream(stream, fs, resp.ContentLength);
             }
         }

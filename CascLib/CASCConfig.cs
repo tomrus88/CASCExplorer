@@ -343,6 +343,11 @@ namespace CASCExplorer
             {
                 if (OnlineMode)
                 {
+                    for (int i = 0; i < _CDNData.Count; i++)
+                    {
+                        if (_CDNData[i]["Name"] == Region)
+                            return _CDNData[i]["Hosts"].Split(' ')[0]; // use first
+                    }
                     return _CDNData[0]["Hosts"].Split(' ')[0]; // use first
                 }
                 else
