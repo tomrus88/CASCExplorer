@@ -79,7 +79,12 @@ namespace CASCExplorer
 
         public List<string> this[string key]
         {
-            get { return Data[key]; }
+            get
+            {
+                List<string> ret;
+                Data.TryGetValue(key, out ret);
+                return ret;
+            }
         }
 
         public static KeyValueConfig ReadKeyValueConfig(Stream stream)
@@ -157,7 +162,7 @@ namespace CASCExplorer
 
             config.GameType = CASCGame.DetectOnlineGame(product);
 
-            string cdnKey = config._VersionsData[config._versionsIndex]["CDNConfig"];
+            string cdnKey = config._VersionsData[config._versionsIndex]["CDNConfig"].ToLower();
             using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, cdnKey))
             {
                 config._CDNConfig = KeyValueConfig.ReadKeyValueConfig(stream);
@@ -167,33 +172,37 @@ namespace CASCExplorer
 
             config._Builds = new List<KeyValueConfig>();
 
-            //for (int i = 0; i < config._CDNConfig["builds"].Count; i++)
-            //{
-            //    try
-            //    {
-            //        using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, config._CDNConfig["builds"][i]))
-            //        {
-            //            var cfg = KeyValueConfig.ReadKeyValueConfig(stream);
-            //            config._Builds.Add(cfg);
-            //        }
-            //    }
-            //    catch
-            //    {
+            if (config._CDNConfig["builds"] != null)
+            {
+                for (int i = 0; i < config._CDNConfig["builds"].Count; i++)
+                {
+                    try
+                    {
+                        using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, config._CDNConfig["builds"][i]))
+                        {
+                            var cfg = KeyValueConfig.ReadKeyValueConfig(stream);
+                            config._Builds.Add(cfg);
+                        }
+                    }
+                    catch
+                    {
 
-            //    }
-            //}
+                    }
+                }
 
-            //if (useCurrentBuild)
-            //{
-            //    string buildKey = config._VersionsData[versionIndex]["BuildConfig"];
+                if (useCurrentBuild)
+                {
+                    string curBuildKey = config._VersionsData[config._versionsIndex]["BuildConfig"];
 
-            //    int buildIndex = config._CDNConfig["builds"].IndexOf(buildKey);
+                    int buildIndex = config._CDNConfig["builds"].IndexOf(curBuildKey);
 
-            //    if (buildIndex != -1)
-            //        config.ActiveBuild = buildIndex;
-            //}
+                    if (buildIndex != -1)
+                        config.ActiveBuild = buildIndex;
+                }
+            }
 
-            using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, config._VersionsData[config._versionsIndex]["BuildConfig"]))
+            string buildKey = config._VersionsData[config._versionsIndex]["BuildConfig"].ToLower();
+            using (Stream stream = CDNIndexHandler.OpenConfigFileDirect(config, buildKey))
             {
                 var cfg = KeyValueConfig.ReadKeyValueConfig(stream);
                 config._Builds.Add(cfg);

@@ -123,10 +123,15 @@ namespace CASCExplorer
             if (cfg.OnlineMode)
             {
                 CDNBuildsToolStripMenuItem.Enabled = true;
-                foreach (var bld in cfg.Builds)
+                if (cfg.Builds.Count > 1)
                 {
-                    CDNBuildsToolStripMenuItem.DropDownItems.Add(bld["root"][0]);
+                    foreach (var bld in cfg.Builds)
+                    {
+                        CDNBuildsToolStripMenuItem.DropDownItems.Add(bld["build-name"][0]);
+                    }
                 }
+                else
+                    CDNBuildsToolStripMenuItem.DropDownItems.Add(cfg.BuildName);
             }
 
             statusProgress.Visible = false;
