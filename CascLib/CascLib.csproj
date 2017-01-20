@@ -51,6 +51,7 @@
     <Compile Include="CASCHandlerLite.cs" />
     <Compile Include="DB2Reader.cs" />
     <Compile Include="DB3Reader.cs" />
+    <Compile Include="DB6Reader.cs" />
     <Compile Include="DB5Reader.cs" />
     <Compile Include="DBCReader.cs" />
     <Compile Include="DownloadHandler.cs" />

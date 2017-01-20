@@ -124,8 +124,8 @@ namespace CASCExplorer
                         using (Stream skStream = _casc.OpenFile("DBFilesClient\\SoundKit.db2"))
                         using (Stream skeStream = _casc.OpenFile("DBFilesClient\\SoundKitEntry.db2"))
                         {
-                            DB5Reader sk = new DB5Reader(skStream);
-                            DB5Reader ske = new DB5Reader(skeStream);
+                            DB6Reader sk = new DB6Reader(skStream);
+                            DB6Reader ske = new DB6Reader(skeStream);
 
                             Dictionary<int, List<int>> lookup = new Dictionary<int, List<int>>();
 
