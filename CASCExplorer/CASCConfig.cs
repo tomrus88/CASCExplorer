@@ -17,6 +17,9 @@ namespace CASCExplorer
 
                 while ((line = sr.ReadLine()) != null)
                 {
+                    if (line == string.Empty) // skip empty lines
+                        continue;
+
                     if (line.StartsWith("#")) // skip comments
                         continue;
 
@@ -71,7 +74,21 @@ namespace CASCExplorer
                             continue;
 
                         for (int i = 0; i < Data.Count; ++i)
-                            Data.ElementAt(i).Value.Add(tokens[i]);
+                        {
+                            var element = Data.ElementAt(i);
+
+                            switch (element.Key)
+                            {
+                                case "CDN Hosts":
+                                    var cdnHosts = tokens[i].Split(' ');
+                                    foreach (var cdnHost in cdnHosts)
+                                        element.Value.Add(cdnHost);
+                                    break;
+                                default:
+                                    element.Value.Add(tokens[i]);
+                                    break;
+                            }
+                        }
                     }
 
                     lineNum++;

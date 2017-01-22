@@ -8,7 +8,11 @@ namespace CASCExplorer
 {
     public partial class ExtractProgress : Form
     {
-        private string ExtractPath;
+        private string ExtractPath
+        {
+            get { return textBox1.Text; }
+            set { textBox1.Text = value; }
+        }
         private int NumFiles;
         private int NumExtracted;
         private CASCHandler cascHandler;
@@ -20,9 +24,20 @@ namespace CASCExplorer
         {
             InitializeComponent();
 
-            comboBox1.Items.AddRange(Enum.GetNames(typeof(LocaleFlags)));
+            // Show locales except All and None
+            var localeFlagValues = Enum.GetValues(typeof(LocaleFlags));
+            foreach (int localeFlagValue in localeFlagValues)
+            {
+                if (localeFlagValue > 0)
+                {
+                    comboBox1.Items.Add(Enum.GetName(typeof(LocaleFlags), localeFlagValue));
+                }
+            }
 
             comboBox1.SelectedIndex = comboBox1.Items.Count - 1;
+
+            var exePath = System.Reflection.Assembly.GetExecutingAssembly().Location;
+            ExtractPath = System.IO.Path.GetDirectoryName(exePath) + "\\Work";
         }
 
         public void SetExtractData(CASCHandler _cascHandler, CASCFolder _folder, ListView.SelectedIndexCollection _selection)
@@ -129,8 +144,7 @@ namespace CASCExplorer
             if (result != DialogResult.OK)
                 return;
 
-            ExtractPath = folderBrowserDialog1.SelectedPath;
-            textBox1.Text = ExtractPath;
+            textBox1.Text = folderBrowserDialog1.SelectedPath;
         }
 
         private void button3_Click(object sender, EventArgs e)
