@@ -12,7 +12,7 @@ namespace CASCExplorer
         private byte[] m_data;
         private DB5Reader m_reader;
 
-        public byte[] Data { get { return m_data; } }
+        public byte[] Data => m_data;
 
         public DB5Row(DB5Reader reader, byte[] data)
         {

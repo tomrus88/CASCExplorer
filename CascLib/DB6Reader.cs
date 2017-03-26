@@ -12,7 +12,11 @@ namespace CASCExplorer
         private byte[] m_data;
         private DB6Reader m_reader;
 
-        public byte[] Data { get { return m_data; } }
+        public byte[] Data
+        {
+            get => m_data;
+            set => m_data = value;
+        }
 
         public DB6Row(DB6Reader reader, byte[] data)
         {
@@ -151,7 +155,7 @@ namespace CASCExplorer
                 int idIndex = reader.ReadUInt16();
 
                 int totalFieldsCount = reader.ReadInt32();
-                int unk2 = reader.ReadInt32(); // size of "common" data I guess
+                int commonDataSize = reader.ReadInt32();
 
                 bool isSparse = (flags & 0x1) != 0;
                 bool hasIndex = (flags & 0x4) != 0;
@@ -210,6 +214,82 @@ namespace CASCExplorer
 
                         m_index[newId] = m_index[oldId];
                     }
+                }
+
+                if (commonDataSize > 0)
+                {
+                    Array.Resize(ref m_meta, totalFieldsCount);
+
+                    Dictionary<byte, short> typeToBits = new Dictionary<byte, short>()
+                    {
+                        [1] = 16,
+                        [2] = 24,
+                        [3] = 0,
+                        [4] = 0,
+                    };
+
+                    int fieldsCount = reader.ReadInt32();
+                    Dictionary<int, byte[]>[] fieldData = new Dictionary<int, byte[]>[fieldsCount];
+
+                    for (int i = 0; i < fieldsCount; i++)
+                    {
+                        int count = reader.ReadInt32();
+                        byte type = reader.ReadByte();
+
+                        if (i >= FieldsCount)
+                            m_meta[i] = new DB2Meta() { Bits = typeToBits[type], Offset = (short)(m_meta[i - 1].Offset + ((32 - m_meta[i - 1].Bits) >> 3)) };
+
+                        fieldData[i] = new Dictionary<int, byte[]>();
+
+                        for (int j = 0; j < count; j++)
+                        {
+                            int id = reader.ReadInt32();
+
+                            byte[] data;
+
+                            switch (type)
+                            {
+                                case 1: // 2 bytes
+                                    data = reader.ReadBytes(2);
+                                    break;
+                                case 2: // 1 bytes
+                                    data = reader.ReadBytes(1);
+                                    break;
+                                case 3: // 4 bytes
+                                case 4:
+                                    data = reader.ReadBytes(4);
+                                    break;
+                                default:
+                                    throw new Exception("Invalid data type " + type);
+                            }
+
+                            fieldData[i].Add(id, data);
+                        }
+                    }
+
+                    var keys = m_index.Keys.ToArray();
+                    foreach (var row in keys)
+                    {
+                        for (int i = 0; i < fieldData.Length; i++)
+                        {
+                            var col = fieldData[i];
+
+                            if (col.Count == 0)
+                                continue;
+
+                            var rowRef = m_index[row];
+                            byte[] rowData = m_index[row].Data;
+
+                            byte[] data = col.ContainsKey(row) ? col[row] : new byte[col.First().Value.Length];
+
+                            Array.Resize(ref rowData, rowData.Length + data.Length);
+                            Array.Copy(data, 0, rowData, m_meta[i].Offset, data.Length);
+
+                            rowRef.Data = rowData;
+                        }
+                    }
+
+                    FieldsCount = totalFieldsCount;
                 }
             }
         }

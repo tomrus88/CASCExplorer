@@ -6,6 +6,7 @@ using System.Security.Cryptography;
 
 namespace CASCExplorer
 {
+    [Serializable]
     class BLTEDecoderException : Exception
     {
         public BLTEDecoderException(string message) : base(message)

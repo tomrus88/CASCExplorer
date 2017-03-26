@@ -8,7 +8,7 @@ namespace CASCExplorer
     public class Jenkins96 : HashAlgorithm
     {
         private ulong hashValue;
-        private static byte[] fakeHash = new byte[0];
+        private static byte[] hashBytes = new byte[0];
 
         private uint Rot(uint x, int k)
         {
@@ -17,19 +17,10 @@ namespace CASCExplorer
 
         public ulong ComputeHash(string str, bool fix = true)
         {
-            if (fix)
-            {
-                var tempstr = str.Replace('/', '\\').ToUpperInvariant();
-                byte[] data = Encoding.ASCII.GetBytes(tempstr);
-                ComputeHash(data);
-                return hashValue;
-            }
-            else
-            {
-                byte[] data = Encoding.ASCII.GetBytes(str);
-                ComputeHash(data);
-                return hashValue;
-            }
+            var tempstr = fix ? str.Replace('/', '\\').ToUpperInvariant() : str;
+            byte[] data = Encoding.ASCII.GetBytes(tempstr);
+            ComputeHash(data);
+            return hashValue;
         }
 
         public override void Initialize()
@@ -95,7 +86,7 @@ namespace CASCExplorer
 
         protected override byte[] HashFinal()
         {
-            return fakeHash;
+            return hashBytes;
         }
     }
 }

@@ -36,48 +36,23 @@ namespace CASCExplorer
 
         public static IEnumerable<CASCFile> GetFiles(IEnumerable<ICASCEntry> entries, IEnumerable<int> selection = null, bool recursive = true)
         {
-            if (selection != null)
+            var entries2 = selection != null ? selection.Select(index => entries.ElementAt(index)) : entries;
+
+            foreach (var entry in entries2)
             {
-                foreach (int index in selection)
+                if (entry is CASCFile file1)
                 {
-                    var entry = entries.ElementAt(index);
-
-                    if (entry is CASCFile file1)
-                    {
-                        yield return file1;
-                    }
-                    else
-                    {
-                        if (recursive)
-                        {
-                            var folder = entry as CASCFolder;
-
-                            foreach (var file in GetFiles(folder.Entries.Select(kv => kv.Value)))
-                            {
-                                yield return file;
-                            }
-                        }
-                    }
+                    yield return file1;
                 }
-            }
-            else
-            {
-                foreach (var entry in entries)
+                else
                 {
-                    if (entry is CASCFile file1)
+                    if (recursive)
                     {
-                        yield return file1;
-                    }
-                    else
-                    {
-                        if (recursive)
-                        {
-                            var folder = entry as CASCFolder;
+                        var folder = entry as CASCFolder;
 
-                            foreach (var file in GetFiles(folder.Entries.Select(kv => kv.Value)))
-                            {
-                                yield return file;
-                            }
+                        foreach (var file in GetFiles(folder.Entries.Select(kv => kv.Value)))
+                        {
+                            yield return file;
                         }
                     }
                 }

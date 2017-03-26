@@ -132,11 +132,6 @@ namespace CASCExplorer
             fixed (byte* ptr = array)
                 other = *(MD5Hash*)ptr;
 
-            //for (var i = 0; i < 16; ++i)
-            //    if (key.Value[i] != other.Value[i])
-            //        return false;
-
-            //return key.EqualsTo(other);
             for (int i = 0; i < 2; ++i)
             {
                 ulong keyPart = *(ulong*)(key.Value + i * 8);
@@ -158,7 +153,6 @@ namespace CASCExplorer
                 if (keyPart != otherPart)
                     return false;
             }
-
             return true;
         }
 
