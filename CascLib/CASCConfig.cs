@@ -138,12 +138,12 @@ namespace CASCExplorer
             config.Region = region;
             config.Product = product;
 
-            using (var cdnsStream = CDNIndexHandler.OpenFileDirect(string.Format("http://us.patch.battle.net/{0}/cdns", product)))
+            using (var cdnsStream = CDNIndexHandler.OpenFileDirect(string.Format("http://us.patch.battle.net:1119/{0}/cdns", product)))
             {
                 config._CDNData = VerBarConfig.ReadVerBarConfig(cdnsStream);
             }
 
-            using (var versionsStream = CDNIndexHandler.OpenFileDirect(string.Format("http://us.patch.battle.net/{0}/versions", product)))
+            using (var versionsStream = CDNIndexHandler.OpenFileDirect(string.Format("http://us.patch.battle.net:1119/{0}/versions", product)))
             {
                 config._VersionsData = VerBarConfig.ReadVerBarConfig(versionsStream);
             }
