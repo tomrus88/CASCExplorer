@@ -30,6 +30,8 @@ namespace CASCConsole
             BackgroundWorkerEx bgLoader = new BackgroundWorkerEx();
             bgLoader.ProgressChanged += BgLoader_ProgressChanged;
 
+            //CASCConfig.LoadFlags |= LoadFlags.Install;
+
             CASCConfig config = Settings.Default.OnlineMode
                 ? CASCConfig.LoadOnlineStorageConfig(Settings.Default.Product, "us")
                 : CASCConfig.LoadLocalStorageConfig(Settings.Default.StoragePath);
@@ -43,6 +45,7 @@ namespace CASCConsole
 
             cascHandler.Root.LoadListFile(Path.Combine(Environment.CurrentDirectory, "listfile.txt"), bgLoader);
             CASCFolder root = cascHandler.Root.SetFlags(locale, content);
+            //cascHandler.Root.MergeInstall(cascHandler.Install);
 
             Console.WriteLine("Loaded.");
 

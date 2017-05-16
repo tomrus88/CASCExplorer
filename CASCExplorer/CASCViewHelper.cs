@@ -604,8 +604,8 @@ namespace CASCExplorer
             if (_casc.Encoding.GetEntry(_casc.Config.DownloadMD5, out enc))
                 _casc.SaveFileTo(enc.Key, ".", "download");
 
-            if (_casc.Encoding.GetEntry(_casc.Config.PartialPriorityMD5, out enc))
-                _casc.SaveFileTo(enc.Key, ".", "partial-priority");
+            //if (_casc.Encoding.GetEntry(_casc.Config.PartialPriorityMD5, out enc))
+            //    _casc.SaveFileTo(enc.Key, ".", "partial-priority");
         }
     }
 }

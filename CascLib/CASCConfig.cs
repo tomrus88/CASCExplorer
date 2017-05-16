@@ -288,9 +288,9 @@ namespace CASCExplorer
 
         public string DownloadSize => _Builds[ActiveBuild]["download-size"][0];
 
-        public MD5Hash PartialPriorityMD5 => _Builds[ActiveBuild]["partial-priority"][0].ToByteArray().ToMD5();
+        //public MD5Hash PartialPriorityMD5 => _Builds[ActiveBuild]["partial-priority"][0].ToByteArray().ToMD5();
 
-        public string PartialPrioritySize => _Builds[ActiveBuild]["partial-priority-size"][0];
+        //public string PartialPrioritySize => _Builds[ActiveBuild]["partial-priority-size"][0];
 
         public MD5Hash EncodingMD5 => _Builds[ActiveBuild]["encoding"][0].ToByteArray().ToMD5();
 

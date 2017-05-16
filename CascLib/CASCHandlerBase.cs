@@ -108,7 +108,7 @@ namespace CASCExplorer
                 byte[] md5 = reader.ReadBytes(16);
                 Array.Reverse(md5);
 
-                if (!key.EqualsTo(md5))
+                if (!key.EqualsTo9(md5))
                     throw new Exception("local data corrupted");
 
                 int size = reader.ReadInt32();
