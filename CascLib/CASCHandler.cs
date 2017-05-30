@@ -55,12 +55,18 @@ namespace CASCExplorer
                         RootHandler = new WowRootHandler(fs, worker);
                     else if (config.GameType == CASCGameType.Agent || config.GameType == CASCGameType.Bna || config.GameType == CASCGameType.Client)
                         RootHandler = new AgentRootHandler(fs, worker);
+                    else if (config.GameType == CASCGameType.S1)
+                        RootHandler = new S1RootHandler(fs, worker);
                     else if (config.GameType == CASCGameType.Hearthstone)
                         RootHandler = new HSRootHandler(fs, worker);
                     else if (config.GameType == CASCGameType.Overwatch)
                         RootHandler = new OwRootHandler(fs, worker, this);
                     else
+                    {
+                        //using (var ufs = new FileStream("unk_root", FileMode.Create))
+                        //    fs.BaseStream.CopyTo(ufs);
                         throw new Exception("Unsupported game " + config.BuildUID);
+                    }
                 }
             }
 
@@ -125,7 +131,11 @@ namespace CASCExplorer
 
             if ((CASCConfig.LoadFlags & LoadFlags.Install) != 0)
             {
-                var installInfos = Install.GetEntries().Where(e => Hasher.ComputeHash(e.Name) == hash);
+                var installInfos = Install.GetEntries().Where(e => Hasher.ComputeHash(e.Name) == hash && e.Tags.Any(t => t.Type == 1 && t.Name == RootHandler.Locale.ToString()));
+                if (installInfos.Any())
+                    return EncodingHandler.GetEntry(installInfos.First().MD5, out enc);
+
+                installInfos = Install.GetEntries().Where(e => Hasher.ComputeHash(e.Name) == hash);
                 if (installInfos.Any())
                     return EncodingHandler.GetEntry(installInfos.First().MD5, out enc);
             }

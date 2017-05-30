@@ -174,12 +174,6 @@
     </None>
   </ItemGroup>
   <ItemGroup>
-    <None Include="Icons\folder.ico" />
-  </ItemGroup>
-  <ItemGroup>
-    <None Include="Icons\openFolder.ico" />
-  </ItemGroup>
-  <ItemGroup>
     <ProjectReference Include="..\CascLib\CascLib.csproj">
       <Project>{E08E1E48-6585-4137-8405-661C62C10713}</Project>
       <Name>CascLib</Name>
@@ -190,10 +184,11 @@
     </ProjectReference>
   </ItemGroup>
   <ItemGroup>
+    <None Include="Icons\CASCExplorer.ico" />
+    <None Include="Icons\folder.ico" />
+    <None Include="Icons\openFolder.ico" />
+    <None Include="Resources\logo.png" />
     <None Include="Resources\transparent.png" />
-  </ItemGroup>
-  <ItemGroup>
-    <Content Include="Icons\CASCExplorer.ico" />
   </ItemGroup>
   <Import Project="$(MSBuildToolsPath)\Microsoft.CSharp.targets" />
   <!-- To modify your build process, add your task inside one of the targets below and uncomment it. 
