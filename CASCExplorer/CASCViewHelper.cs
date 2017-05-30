@@ -586,6 +586,40 @@ namespace CASCExplorer
             }
         }
 
+        public void ExportFolders()
+        {
+            WowRootHandler wowRoot = CASC.Root as WowRootHandler;
+
+            using (StreamWriter sw = new StreamWriter("dirs.txt"))
+            {
+                HashSet<string> dirData = new HashSet<string>(StringComparer.OrdinalIgnoreCase);
+
+                foreach (var file in CASCFile.FileNames.OrderBy(f => f.Value, StringComparer.OrdinalIgnoreCase))
+                {
+                    if (CASC.FileExists(file.Key) && (wowRoot == null || !wowRoot.IsUnknownFile(file.Key)))
+                    {
+                        ulong fileHash = file.Key;
+
+                        int dirSepIndex = file.Value.LastIndexOf('\\');
+
+                        if (dirSepIndex >= 0)
+                        {
+                            string dir = file.Value.Substring(0, dirSepIndex);
+
+                            dirData.Add(dir);
+                        }
+                    }
+                }
+
+                foreach (var dir in dirData)
+                {
+                    sw.WriteLine(dir);
+                }
+
+                Logger.WriteLine("WowRootHandler: loaded {0} valid file names", CASCFile.FileNames.Count);
+            }
+        }
+
         public void ExtractCASCSystemFiles()
         {
             if (_casc == null)

@@ -65,7 +65,7 @@ namespace CASCExplorer
         private MultiDictionary<ulong, RootEntry> RootData = new MultiDictionary<ulong, RootEntry>();
         private Dictionary<int, ulong> FileDataStore = new Dictionary<int, ulong>();
         private Dictionary<ulong, int> FileDataStoreReverse = new Dictionary<ulong, int>();
-        private Dictionary<ulong, bool> UnknownFiles = new Dictionary<ulong, bool>();
+        private HashSet<ulong> UnknownFiles = new HashSet<ulong>();
 
         public override int Count => RootData.Count;
         public override int CountTotal => RootData.Sum(re => re.Value.Count);
@@ -397,7 +397,7 @@ namespace CASCExplorer
                 {
                     file = "unknown\\" + rootEntry.Key.ToString("X16") + "_" + GetFileDataIdByHash(rootEntry.Key);
 
-                    UnknownFiles[rootEntry.Key] = true;
+                    UnknownFiles.Add(rootEntry.Key);
                 }
 
                 CreateSubTree(root, rootEntry.Key, file);
@@ -409,7 +409,7 @@ namespace CASCExplorer
             return root;
         }
 
-        public bool IsUnknownFile(ulong hash) => UnknownFiles.ContainsKey(hash);
+        public bool IsUnknownFile(ulong hash) => UnknownFiles.Contains(hash);
 
         public override void Clear()
         {

@@ -28,6 +28,8 @@ namespace CASCExplorer
 
         private void Form1_Load(object sender, EventArgs e)
         {
+            Icon = Icon.ExtractAssociatedIcon(Application.ExecutablePath);
+
             viewHelper.OnCleanup += ViewHelper_OnCleanup;
             viewHelper.OnStorageChanged += ViewHelper_OnStorageChanged;
 
@@ -458,6 +460,11 @@ namespace CASCExplorer
         private void openStorageToolStripButton_Click(object sender, EventArgs e)
         {
             OpenStorage();
+        }
+
+        private void exportFoldersToolStripMenuItem_Click(object sender, EventArgs e)
+        {
+            viewHelper.ExportFolders();
         }
     }
 }
