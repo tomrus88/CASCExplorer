@@ -191,9 +191,9 @@ namespace CASCExplorer
                             using (var br = new BinaryReader(m2file))
                             {
                                 m2file.Position = 0x14;
-                                int nameOfs = br.ReadInt32();
+                                int nameOffs = br.ReadInt32();
 
-                                m2file.Position = nameOfs + 8;
+                                m2file.Position = nameOffs + 8; // + sizeof(MD21)
                                 string m2name = br.ReadCString();
 
                                 unknownFile.FullName = "unknown\\" + m2name + ".m2";
