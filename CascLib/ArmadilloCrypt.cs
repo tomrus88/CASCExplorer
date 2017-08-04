@@ -18,7 +18,8 @@ namespace CascLib
 
         public ArmadilloCrypt(string keyName)
         {
-            LoadKeyFile(keyName, out _key);
+            if (!LoadKeyFile(keyName, out _key))
+                throw new ArgumentException("keyName");
         }
 
         static bool LoadKeyFile(string keyName, out byte[] key)
