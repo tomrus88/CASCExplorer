@@ -49,8 +49,13 @@ namespace CASCExplorer
                 {
                     if (isFile)
                     {
-                        entry = new CASCFile(filehash);
-                        CASCFile.FileNames[filehash] = file;
+                        if (!CASCFile.Files.ContainsKey(filehash))
+                        {
+                            entry = new CASCFile(filehash, file);
+                            CASCFile.Files[filehash] = (CASCFile)entry;
+                        }
+                        else
+                            entry = CASCFile.Files[filehash];
                     }
                     else
                     {

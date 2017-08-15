@@ -45,7 +45,7 @@ namespace CASCExplorer
                         MD5 = tokens[1].ToByteArray().ToMD5()
                     };
 
-                    CASCFile.FileNames[fileHash] = file;
+                    CASCFile.Files[fileHash] = new CASCFile(fileHash, file);
                 }
             }
 
@@ -85,7 +85,7 @@ namespace CASCExplorer
                 if ((entry.Value.LocaleFlags & Locale) == 0)
                     continue;
 
-                CreateSubTree(root, entry.Key, CASCFile.FileNames[entry.Key]);
+                CreateSubTree(root, entry.Key, CASCFile.Files[entry.Key].FullName);
                 CountSelect++;
             }
 
@@ -100,7 +100,7 @@ namespace CASCExplorer
         public override void Clear()
         {
             Root.Entries.Clear();
-            CASCFile.FileNames.Clear();
+            CASCFile.Files.Clear();
         }
 
         public override void Dump()

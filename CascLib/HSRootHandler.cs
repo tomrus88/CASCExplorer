@@ -52,7 +52,7 @@ namespace CASCExplorer
         public override void Clear()
         {
             Root.Entries.Clear();
-            CASCFile.FileNames.Clear();
+            CASCFile.Files.Clear();
         }
 
         public override void Dump()
