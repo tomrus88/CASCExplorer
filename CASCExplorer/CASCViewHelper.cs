@@ -201,6 +201,8 @@ namespace CASCExplorer
 
                             foreach (var file in name)
                             {
+                                Logger.WriteLine(file);
+
                                 string[] parts = file.Split(PathDelimiters);
 
                                 string entryName = parts[parts.Length - 1];

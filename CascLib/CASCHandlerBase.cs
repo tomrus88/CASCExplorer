@@ -64,7 +64,7 @@ namespace CASCExplorer
                 else
                     return OpenFileLocal(key);
             }
-            catch (Exception exc) when (!(exc is BLTEDecoderException))
+            catch// (Exception exc) when (!(exc is BLTEDecoderException))
             {
                 return OpenFileOnline(key);
             }
