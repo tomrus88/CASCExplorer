@@ -15,7 +15,8 @@ namespace CASCLib
         Bna,
         Client,
         S1,
-        WC3
+        WC3,
+        Destiny2
     }
 
     public class CASCGame
@@ -98,6 +99,9 @@ namespace CASCLib
 
             if (uid.StartsWith("clnt"))
                 return CASCGameType.Client;
+
+            if (uid.StartsWith("dst2"))
+                return CASCGameType.Destiny2;
 
             return CASCGameType.Unknown;
         }
