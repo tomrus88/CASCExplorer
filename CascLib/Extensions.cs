@@ -29,7 +29,7 @@ namespace CASCExplorer
         {
             byte[] result = reader.ReadBytes(FastStruct<T>.Size);
 
-            return FastStruct<T>.PtrToStructure(ref result[0]);
+            return FastStruct<T>.ArrayToStructure(result);
         }
 
         public static T[] ReadArray<T>(this BinaryReader reader) where T : struct

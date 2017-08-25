@@ -5,14 +5,14 @@ namespace CASCExplorer
 {
     public static class FastStruct<T> where T : struct
     {
-        private unsafe delegate T PtrToStructureDelegateByteRef(ref byte source);
-        private unsafe delegate void CopyMemoryDelegate(ref T dest, ref byte src, int count);
+        private delegate T PtrToStructureDelegateByteRef(ref byte source);
+        private delegate void CopyMemoryDelegate(ref T dest, ref byte src, int count);
 
         private readonly static PtrToStructureDelegateByteRef PtrToStructureByteRef = BuildLoadFromByteRefMethod();
         private readonly static CopyMemoryDelegate CopyMemory = BuildCopyMemoryMethod();
 
         private static DynamicMethod methodLoadByteRef;
-        private static DynamicMethod methodCopyMemory2;
+        private static DynamicMethod methodCopyMemory;
 
         public static readonly int Size = Marshal.SizeOf<T>();
 
@@ -31,22 +31,22 @@ namespace CASCExplorer
 
         private static CopyMemoryDelegate BuildCopyMemoryMethod()
         {
-            methodCopyMemory2 = new DynamicMethod("CopyMemory<" + typeof(T).FullName + ">",
+            methodCopyMemory = new DynamicMethod("CopyMemory<" + typeof(T).FullName + ">",
                 typeof(void), new[] { typeof(T).MakeByRefType(), typeof(byte).MakeByRefType(), typeof(int) }, typeof(FastStruct<T>));
 
-            ILGenerator generator = methodCopyMemory2.GetILGenerator();
+            ILGenerator generator = methodCopyMemory.GetILGenerator();
             generator.Emit(OpCodes.Ldarg_0);
             generator.Emit(OpCodes.Ldarg_1);
             generator.Emit(OpCodes.Ldarg_2);
             generator.Emit(OpCodes.Cpblk);
             generator.Emit(OpCodes.Ret);
 
-            return (CopyMemoryDelegate)methodCopyMemory2.CreateDelegate(typeof(CopyMemoryDelegate));
+            return (CopyMemoryDelegate)methodCopyMemory.CreateDelegate(typeof(CopyMemoryDelegate));
         }
 
-        public static unsafe T PtrToStructure(ref byte src)
+        public static T ArrayToStructure(byte[] src)
         {
-            return PtrToStructureByteRef(ref src);
+            return PtrToStructureByteRef(ref src[0]);
         }
 
         public static T[] ReadArray(byte[] source)
