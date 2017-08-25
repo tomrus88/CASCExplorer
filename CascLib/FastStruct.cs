@@ -1,96 +1,62 @@
-﻿using System;
-using System.Reflection.Emit;
+﻿using System.Reflection.Emit;
 using System.Runtime.InteropServices;
-using System.Security;
 
 namespace CASCExplorer
 {
-    internal class UnsafeNativeMethods
-    {
-        [DllImport("kernel32.dll", EntryPoint = "CopyMemory", SetLastError = false)]
-        [SecurityCritical]
-        internal static extern void CopyMemory(IntPtr dest, IntPtr src, uint count);
-
-        [DllImport("kernel32.dll", EntryPoint = "CopyMemory", SetLastError = false)]
-        [SecurityCritical]
-        internal static extern unsafe void CopyMemoryPtr(void* dest, void* src, uint count);
-    }
-
     public static class FastStruct<T> where T : struct
     {
-        private delegate IntPtr GetPtrDelegate(ref T value);
-        private delegate T PtrToStructureDelegateIntPtr(IntPtr pointer);
-        private unsafe delegate T PtrToStructureDelegateBytePtr(byte* pointer);
+        private unsafe delegate T PtrToStructureDelegateByteRef(ref byte source);
+        private unsafe delegate void CopyMemoryDelegate(ref T dest, ref byte src, int count);
 
-        private readonly static GetPtrDelegate GetPtr = BuildGetPtrMethod();
-        private readonly static PtrToStructureDelegateIntPtr PtrToStructureIntPtr = BuildLoadFromIntPtrMethod();
-        private readonly static PtrToStructureDelegateBytePtr PtrToStructureBytePtr = BuildLoadFromBytePtrMethod();
+        private readonly static PtrToStructureDelegateByteRef PtrToStructureByteRef = BuildLoadFromByteRefMethod();
+        private readonly static CopyMemoryDelegate CopyMemory = BuildCopyMemoryMethod();
+
+        private static DynamicMethod methodLoadByteRef;
+        private static DynamicMethod methodCopyMemory2;
 
         public static readonly int Size = Marshal.SizeOf<T>();
 
-        private static DynamicMethod methodGetPtr;
-        private static DynamicMethod methodLoadIntPtr;
-        private static DynamicMethod methodLoadBytePtr;
-
-        private static GetPtrDelegate BuildGetPtrMethod()
+        private static PtrToStructureDelegateByteRef BuildLoadFromByteRefMethod()
         {
-            methodGetPtr = new DynamicMethod("GetStructPtr<" + typeof(T).FullName + ">",
-                typeof(IntPtr), new[] { typeof(T).MakeByRefType() }, typeof(FastStruct<T>));
+            methodLoadByteRef = new DynamicMethod("PtrToStructureByteRef<" + typeof(T).FullName + ">",
+                typeof(T), new[] { typeof(byte).MakeByRefType() }, typeof(FastStruct<T>));
 
-            ILGenerator generator = methodGetPtr.GetILGenerator();
-            generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Conv_U);
-            generator.Emit(OpCodes.Ret);
-            return (GetPtrDelegate)methodGetPtr.CreateDelegate(typeof(GetPtrDelegate));
-        }
-
-        private static PtrToStructureDelegateIntPtr BuildLoadFromIntPtrMethod()
-        {
-            methodLoadIntPtr = new DynamicMethod("PtrToStructureIntPtr<" + typeof(T).FullName + ">",
-                typeof(T), new[] { typeof(IntPtr) }, typeof(FastStruct<T>));
-
-            ILGenerator generator = methodLoadIntPtr.GetILGenerator();
+            ILGenerator generator = methodLoadByteRef.GetILGenerator();
             generator.Emit(OpCodes.Ldarg_0);
             generator.Emit(OpCodes.Ldobj, typeof(T));
             generator.Emit(OpCodes.Ret);
 
-            return (PtrToStructureDelegateIntPtr)methodLoadIntPtr.CreateDelegate(typeof(PtrToStructureDelegateIntPtr));
+            return (PtrToStructureDelegateByteRef)methodLoadByteRef.CreateDelegate(typeof(PtrToStructureDelegateByteRef));
         }
 
-        private static PtrToStructureDelegateBytePtr BuildLoadFromBytePtrMethod()
+        private static CopyMemoryDelegate BuildCopyMemoryMethod()
         {
-            methodLoadBytePtr = new DynamicMethod("PtrToStructureBytePtr<" + typeof(T).FullName + ">",
-                typeof(T), new[] { typeof(byte*) }, typeof(FastStruct<T>));
+            methodCopyMemory2 = new DynamicMethod("CopyMemory<" + typeof(T).FullName + ">",
+                typeof(void), new[] { typeof(T).MakeByRefType(), typeof(byte).MakeByRefType(), typeof(int) }, typeof(FastStruct<T>));
 
-            ILGenerator generator = methodLoadBytePtr.GetILGenerator();
+            ILGenerator generator = methodCopyMemory2.GetILGenerator();
             generator.Emit(OpCodes.Ldarg_0);
-            generator.Emit(OpCodes.Ldobj, typeof(T));
+            generator.Emit(OpCodes.Ldarg_1);
+            generator.Emit(OpCodes.Ldarg_2);
+            generator.Emit(OpCodes.Cpblk);
             generator.Emit(OpCodes.Ret);
 
-            return (PtrToStructureDelegateBytePtr)methodLoadBytePtr.CreateDelegate(typeof(PtrToStructureDelegateBytePtr));
+            return (CopyMemoryDelegate)methodCopyMemory2.CreateDelegate(typeof(CopyMemoryDelegate));
         }
 
-        public static T PtrToStructure(IntPtr ptr)
+        public static unsafe T PtrToStructure(ref byte src)
         {
-            return PtrToStructureIntPtr(ptr);
+            return PtrToStructureByteRef(ref src);
         }
 
-        public static unsafe T PtrToStructure(byte* ptr)
-        {
-            return PtrToStructureBytePtr(ptr);
-        }
-
-        public static T[] ReadArray(IntPtr source, int bytesCount)
+        public static T[] ReadArray(byte[] source)
         {
             uint elementSize = (uint)Size;
 
-            T[] buffer = new T[bytesCount / elementSize];
+            T[] buffer = new T[source.Length / elementSize];
 
-            if (bytesCount > 0)
-            {
-                IntPtr p = GetPtr(ref buffer[0]);
-                UnsafeNativeMethods.CopyMemory(p, source, (uint)bytesCount);
-            }
+            if (source.Length > 0)
+                CopyMemory(ref buffer[0], ref source[0], source.Length);
 
             return buffer;
         }
