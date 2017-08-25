@@ -4,7 +4,7 @@ using System.IO.Compression;
 using System.Linq;
 using System.Security.Cryptography;
 
-namespace CASCExplorer
+namespace CASCLib
 {
     [Serializable]
     class BLTEDecoderException : Exception

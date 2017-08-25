@@ -4,7 +4,7 @@ using System.IO;
 using System.Linq;
 using System.Runtime.InteropServices;
 
-namespace CASCExplorer
+namespace CASCLib
 {
     struct D3RootEntry
     {

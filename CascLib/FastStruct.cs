@@ -1,7 +1,7 @@
 ﻿using System.Reflection.Emit;
 using System.Runtime.InteropServices;
 
-namespace CASCExplorer
+namespace CASCLib
 {
     public static class FastStruct<T> where T : struct
     {

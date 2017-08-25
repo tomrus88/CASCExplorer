@@ -62,9 +62,9 @@ namespace CASCConsole.Properties {
         [global::System.Configuration.UserScopedSettingAttribute()]
         [global::System.Diagnostics.DebuggerNonUserCodeAttribute()]
         [global::System.Configuration.DefaultSettingValueAttribute("enUS")]
-        public global::CASCExplorer.LocaleFlags Locale {
+        public global::CASCLib.LocaleFlags Locale {
             get {
-                return ((global::CASCExplorer.LocaleFlags)(this["Locale"]));
+                return ((global::CASCLib.LocaleFlags)(this["Locale"]));
             }
             set {
                 this["Locale"] = value;

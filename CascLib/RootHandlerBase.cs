@@ -1,7 +1,7 @@
 ﻿using System.Collections.Generic;
 using System.Linq;
 
-namespace CASCExplorer
+namespace CASCLib
 {
     public abstract class RootHandlerBase
     {

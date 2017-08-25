@@ -2,7 +2,7 @@
 using System.Collections.Generic;
 using System.IO;
 
-namespace CASCExplorer
+namespace CASCLib
 {
     public class S1RootHandler : RootHandlerBase
     {

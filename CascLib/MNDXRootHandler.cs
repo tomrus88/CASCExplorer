@@ -6,7 +6,7 @@ using System.Runtime.InteropServices;
 using System.Text;
 using System.Text.RegularExpressions;
 
-namespace CASCExplorer
+namespace CASCLib
 {
     public struct MNDXHeader
     {

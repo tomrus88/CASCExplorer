@@ -1,6 +1,6 @@
 ﻿using System.Collections.Generic;
 
-namespace CASCExplorer
+namespace CASCLib
 {
     class KeyService
     {

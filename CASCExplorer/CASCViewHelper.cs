@@ -1,4 +1,5 @@
 ﻿using CASCExplorer.Properties;
+using CASCLib;
 using SereniaBLPLib;
 using System;
 using System.Collections.Generic;

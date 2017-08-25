@@ -1,6 +1,6 @@
 ﻿using System.IO;
 
-namespace CASCExplorer
+namespace CASCLib
 {
     public enum CASCGameType
     {

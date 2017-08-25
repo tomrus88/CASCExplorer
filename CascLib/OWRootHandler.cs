@@ -6,7 +6,7 @@ using System.Linq;
 using System.Runtime.InteropServices;
 using System.Text;
 
-namespace CASCExplorer
+namespace CASCLib
 {
     [StructLayout(LayoutKind.Sequential, Pack = 4)]
     public struct APMEntry

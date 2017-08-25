@@ -2,7 +2,7 @@
 using System.IO;
 using System.Linq;
 
-namespace CASCExplorer
+namespace CASCLib
 {
     public sealed class CASCHandler : CASCHandlerBase
     {

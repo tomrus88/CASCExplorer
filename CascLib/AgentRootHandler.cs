@@ -2,7 +2,7 @@
 using System.IO;
 using System.Text;
 
-namespace CASCExplorer
+namespace CASCLib
 {
     public class AgentRootHandler : RootHandlerBase
     {
