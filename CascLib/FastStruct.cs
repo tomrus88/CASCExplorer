@@ -5,33 +5,30 @@ namespace CASCExplorer
 {
     public static class FastStruct<T> where T : struct
     {
-        private delegate T PtrToStructureDelegateByteRef(ref byte source);
+        private delegate T LoadFromByteRefDelegate(ref byte source);
         private delegate void CopyMemoryDelegate(ref T dest, ref byte src, int count);
 
-        private readonly static PtrToStructureDelegateByteRef PtrToStructureByteRef = BuildLoadFromByteRefMethod();
+        private readonly static LoadFromByteRefDelegate LoadFromByteRef = BuildLoadFromByteRefMethod();
         private readonly static CopyMemoryDelegate CopyMemory = BuildCopyMemoryMethod();
-
-        private static DynamicMethod methodLoadByteRef;
-        private static DynamicMethod methodCopyMemory;
 
         public static readonly int Size = Marshal.SizeOf<T>();
 
-        private static PtrToStructureDelegateByteRef BuildLoadFromByteRefMethod()
+        private static LoadFromByteRefDelegate BuildLoadFromByteRefMethod()
         {
-            methodLoadByteRef = new DynamicMethod("PtrToStructureByteRef<" + typeof(T).FullName + ">",
+            var methodLoadFromByteRef = new DynamicMethod("LoadFromByteRef<" + typeof(T).FullName + ">",
                 typeof(T), new[] { typeof(byte).MakeByRefType() }, typeof(FastStruct<T>));
 
-            ILGenerator generator = methodLoadByteRef.GetILGenerator();
+            ILGenerator generator = methodLoadFromByteRef.GetILGenerator();
             generator.Emit(OpCodes.Ldarg_0);
             generator.Emit(OpCodes.Ldobj, typeof(T));
             generator.Emit(OpCodes.Ret);
 
-            return (PtrToStructureDelegateByteRef)methodLoadByteRef.CreateDelegate(typeof(PtrToStructureDelegateByteRef));
+            return (LoadFromByteRefDelegate)methodLoadFromByteRef.CreateDelegate(typeof(LoadFromByteRefDelegate));
         }
 
         private static CopyMemoryDelegate BuildCopyMemoryMethod()
         {
-            methodCopyMemory = new DynamicMethod("CopyMemory<" + typeof(T).FullName + ">",
+            var methodCopyMemory = new DynamicMethod("CopyMemory<" + typeof(T).FullName + ">",
                 typeof(void), new[] { typeof(T).MakeByRefType(), typeof(byte).MakeByRefType(), typeof(int) }, typeof(FastStruct<T>));
 
             ILGenerator generator = methodCopyMemory.GetILGenerator();
@@ -46,14 +43,12 @@ namespace CASCExplorer
 
         public static T ArrayToStructure(byte[] src)
         {
-            return PtrToStructureByteRef(ref src[0]);
+            return LoadFromByteRef(ref src[0]);
         }
 
         public static T[] ReadArray(byte[] source)
         {
-            uint elementSize = (uint)Size;
-
-            T[] buffer = new T[source.Length / elementSize];
+            T[] buffer = new T[source.Length / Size];
 
             if (source.Length > 0)
                 CopyMemory(ref buffer[0], ref source[0], source.Length);
