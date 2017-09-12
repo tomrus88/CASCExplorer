@@ -53,7 +53,7 @@ namespace CASCLib
                         RootHandler = new D3RootHandler(fs, worker, this);
                     else if (config.GameType == CASCGameType.WoW)
                         RootHandler = new WowRootHandler(fs, worker);
-                    else if (config.GameType == CASCGameType.Agent || config.GameType == CASCGameType.Bna || config.GameType == CASCGameType.Client || config.GameType == CASCGameType.Destiny2)
+                    else if (config.GameType == CASCGameType.Agent || config.GameType == CASCGameType.Bna || config.GameType == CASCGameType.Client)
                         RootHandler = new AgentRootHandler(fs, worker);
                     else if (config.GameType == CASCGameType.S1)
                         RootHandler = new S1RootHandler(fs, worker);
@@ -63,6 +63,8 @@ namespace CASCLib
                         RootHandler = new HSRootHandler(fs, worker);
                     else if (config.GameType == CASCGameType.Overwatch)
                         RootHandler = new OwRootHandler(fs, worker, this);
+                    else if (config.GameType == CASCGameType.Destiny2)
+                        RootHandler = new Destiny2RootHandler(fs, worker);
                     else
                     {
                         using (var ufs = new FileStream("unk_root", FileMode.Create))
