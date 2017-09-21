@@ -127,6 +127,7 @@ namespace CASCLib
         public CASCGameType GameType { get; private set; }
         public static bool ValidateData { get; set; } = true;
         public static bool ThrowOnFileNotFound { get; set; } = true;
+        public static bool ThrowOnMissingDecryptionKey { get; set; } = true;
         public static LoadFlags LoadFlags { get; set; } = LoadFlags.None;
 
         private int _versionsIndex;

@@ -64,6 +64,12 @@ namespace CASCLib
                 else
                     return OpenFileLocal(key);
             }
+            catch (BLTEDecoderException exc) when (exc.ErrorCode == 2)
+            {
+                if (CASCConfig.ThrowOnMissingDecryptionKey)
+                    throw exc;
+                return null;
+            }
             catch// (Exception exc) when (!(exc is BLTEDecoderException))
             {
                 return OpenFileOnline(key);
