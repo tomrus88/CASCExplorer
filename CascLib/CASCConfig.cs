@@ -317,8 +317,19 @@ namespace CASCLib
                 {
                     for (int i = 0; i < _CDNData.Count; i++)
                     {
-                        if (_CDNData[i]["Name"] == Region)
-                            return _CDNData[i]["Hosts"].Split(' ')[0]; // use first
+                        var cdn = _CDNData[i];
+
+                        if (cdn["Name"] == Region)
+                        {
+                            var hosts = cdn["Hosts"].Split(' ');
+
+                            for (int j = 0; j < hosts.Length; j++)
+                            {
+                                if (hosts[j].Contains("edgecast"))
+                                    continue;
+                                return hosts[j];
+                            }
+                        }
                     }
                     return _CDNData[0]["Hosts"].Split(' ')[0]; // use first
                 }
