@@ -131,15 +131,15 @@ namespace CASCExplorer
                         using (Stream skeStream = _casc.OpenFile("DBFilesClient\\SoundKitEntry.db2"))
                         using (Stream sknStream = _casc.OpenFile("DBFilesClient\\SoundKitName.db2"))
                         {
-                            DB6Reader sk = new DB6Reader(skStream);
-                            DB6Reader ske = new DB6Reader(skeStream);
-                            DB6Reader skn = new DB6Reader(sknStream);
+                            WDC1Reader sk = new WDC1Reader(skStream);
+                            WDC1Reader ske = new WDC1Reader(skeStream);
+                            WDC1Reader skn = new WDC1Reader(sknStream);
 
-                            Dictionary<int, List<int>> lookup = new Dictionary<int, List<int>>();
+                            Dictionary<uint, List<int>> lookup = new Dictionary<uint, List<int>>();
 
                             foreach (var row in ske)
                             {
-                                int soundKitId = row.Value.GetField<int>(3);
+                                uint soundKitId = row.Value.GetField<uint>(3);
 
                                 if (!lookup.ContainsKey(soundKitId))
                                     lookup[soundKitId] = new List<int>();
