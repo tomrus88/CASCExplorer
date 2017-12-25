@@ -7,6 +7,6 @@ You can download compiled binaries [here][Binaries].
 
 [Donate][Donate] to support developer!
 
-[Repo]: https://github.com/WoW-Tools/CASCExplorer/releases
+[Repo]: https://github.com/WoW-Tools/CASCExplorer
 [Binaries]: https://github.com/WoW-Tools/CASCExplorer/releases
 [Donate]: https://www.paypal.com/cgi-bin/webscr?cmd=_s-xclick&hosted_button_id=CFDMAA6ELV2G8
